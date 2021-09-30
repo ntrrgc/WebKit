@@ -1,3 +1,43 @@
+2021-10-15  Alicia Boya García  <aboya@igalia.com>
+
+        [MSE][GStreamer] Honor MP4 edit lists, bis
+        https://bugs.webkit.org/show_bug.cgi?id=231019
+
+        Reviewed by Xabier Rodriguez-Calvar.
+
+        This patch takes into consideration the GstSegment attached to a
+        sample to offset the PTS and DTS. This ensures accurate timestamps are
+        obtained for MP4 files containing edit lists (commonly necessary for
+        files containing video with B frames to have PTS starting at zero).
+
+        Before this was implemented, a workaround was in place based on a
+        heuristic (DTS = 0 && PTS > 0 && PTS < 0.1). The workaround is
+        preserved for the sake of content without proper edit lists, but
+        any edit list takes preference.
+
+        The time fudge factor has been modified from 0.083 seconds up to
+        0.100 seconds to accomodate the size of the empty edit in test.mp4
+        used by Web Platform Tests.
+
+        This test fixes improves expectation results and fixes two subtests in
+        imported/w3c/web-platform-tests/media-source/mediasource-remove.html.
+
+        This is a reworked version that avoids using gst_sample_set_buffer()
+        which is not available on GStreamer 1.14, and fixes an issue where
+        frames that would get a negative DTS were not being enqueued properly.
+
+        * Modules/mediasource/MediaSource.cpp:
+        (WebCore::MediaSource::currentTimeFudgeFactor):
+        * platform/graphics/SourceBufferPrivate.h:
+        (WebCore::SourceBufferPrivate::timeFudgeFactor const):
+        * platform/graphics/gstreamer/GStreamerCommon.h:
+        (WebCore::toGstClockTime):
+        * platform/graphics/gstreamer/MediaSampleGStreamer.cpp:
+        (WebCore::MediaSampleGStreamer::MediaSampleGStreamer):
+        * platform/graphics/gstreamer/mse/AppendPipeline.cpp:
+        (WebCore::bufferTimeToStreamTime):
+        (WebCore::AppendPipeline::appsinkNewSample):
+
 2021-10-13  Alicia Boya García  <aboya@igalia.com>
 
         Unreviewed, reverting r283609
