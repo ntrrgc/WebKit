@@ -1,5 +1,40 @@
 2021-09-27  Alicia Boya García  <aboya@igalia.com>
 
+        [MSE][GStreamer] Honor MP4 edit lists
+        https://bugs.webkit.org/show_bug.cgi?id=231019
+
+        Reviewed by Xabier Rodriguez-Calvar.
+
+        This patch takes into consideration the GstSegment attached to a
+        sample to offset the PTS and DTS. This ensures accurate timestamps are
+        obtained for MP4 files containing edit lists (commonly necessary for
+        files containing video with B frames to have PTS starting at zero).
+
+        Before this was implemented, a workaround was in place based on a
+        heuristic (DTS = 0 && PTS > 0 && PTS < 0.1). The workaround is
+        preserved for the sake of content without proper edit lists, but
+        any edit list takes preference.
+
+        The time fudge factor has been modified from 0.083 seconds up to
+        0.100 seconds to accomodate the size of the empty edit in test.mp4
+        used by Web Platform Tests.
+
+        This test fixes improves expectation results and fixes two subtests in
+        imported/w3c/web-platform-tests/media-source/mediasource-remove.html.
+
+        * Modules/mediasource/MediaSource.cpp:
+        (WebCore::MediaSource::currentTimeFudgeFactor):
+        * platform/graphics/SourceBufferPrivate.h:
+        (WebCore::SourceBufferPrivate::timeFudgeFactor const):
+        * platform/graphics/gstreamer/MediaSampleGStreamer.cpp:
+        (WebCore::MediaSampleGStreamer::extendToTheBeginning): Deleted.
+        * platform/graphics/gstreamer/MediaSampleGStreamer.h:
+        * platform/graphics/gstreamer/mse/AppendPipeline.cpp:
+        (WebCore::bufferTimeToStreamTimeClamped):
+        (WebCore::AppendPipeline::appsinkNewSample):
+
+2021-09-27  Alicia Boya García  <aboya@igalia.com>
+
         [MSE][GStreamer] Don't create MediaSourceTrackGStreamer objects twice for the same track
         https://bugs.webkit.org/show_bug.cgi?id=230829
 
