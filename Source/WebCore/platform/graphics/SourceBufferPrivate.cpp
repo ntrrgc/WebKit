@@ -569,7 +569,7 @@ void SourceBufferPrivate::removeCodedFrames(const MediaTime& start, const MediaT
         divideSampleIfPossibleAtPresentationTime(start);
         divideSampleIfPossibleAtPresentationTime(end);
 
-        auto removePresentationStart = trackBuffer.samples.presentationOrder().findSampleContainingOrAfterPresentationTime(start);
+        auto removePresentationStart = trackBuffer.samples.presentationOrder().findSampleStartingOnOrAfterPresentationTime(start);
         auto removePresentationEnd = trackBuffer.samples.presentationOrder().findSampleStartingOnOrAfterPresentationTime(end);
         if (removePresentationStart == removePresentationEnd)
             continue;
