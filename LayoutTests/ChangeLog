@@ -1,3 +1,13 @@
+2021-11-26  Alicia Boya García  <aboya@igalia.com>
+
+        [MSE] Fix erase range to prevent accidental deletion in files with changing durations
+        https://bugs.webkit.org/show_bug.cgi?id=233528
+
+        Reviewed by NOBODY (OOPS!).
+
+        * media/media-source/media-source-append-tiny-durations-expected.txt: Added.
+        * media/media-source/media-source-append-tiny-durations.html: Added.
+
 2021-11-04  Alicia Boya García  <aboya@igalia.com>
 
         [MSE][GStreamer] Use full nanosecond precision timestamps

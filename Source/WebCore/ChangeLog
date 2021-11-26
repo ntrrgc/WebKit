@@ -1,3 +1,22 @@
+2021-11-26  Alicia Boya García  <aboya@igalia.com>
+
+        [MSE] Fix erase range to prevent accidental deletion in files with changing durations
+        https://bugs.webkit.org/show_bug.cgi?id=233528
+
+        Reviewed by NOBODY (OOPS!).
+
+        In didReceiveSample(), eraseBeginTime was being set to
+        highestPresentationTimestamp minus a tolerance. The tolerance is not
+        needed since highestPresentationTimestamp is loaded from exact frame
+        timestamps, and can cause accidental frame erasure in situations where
+        there are frames with frames smaller than the tolerance, which is the
+        case for certain MP4 files.
+
+        Test: media/media-source/media-source-append-tiny-durations.html
+
+        * platform/graphics/SourceBufferPrivate.cpp:
+        (WebCore::SourceBufferPrivate::didReceiveSample):
+
 2021-11-04  Alicia Boya García  <aboya@igalia.com>
 
         [MSE][GStreamer] Use full nanosecond precision timestamps
