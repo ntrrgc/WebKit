@@ -221,6 +221,31 @@ PresentationOrderSampleMap::reverse_iterator PresentationOrderSampleMap::reverse
     return --reverse_iterator(--found);
 }
 
+PresentationOrderSampleMap::reverse_iterator PresentationOrderSampleMap::reverseFindSampleEndingAtOrBeforePresentationTime(const MediaTime& time)
+{
+    // In most situations, the order of frames in presentation time is the same as the order of frames in presentation end time.
+    auto iterCurrent = reverseFindSampleBeforePresentationTime(time);
+    if (iterCurrent == rend())
+        return iterCurrent;
+
+    // Unfortunately, this is not always the case, as a frame with an earlier PTS may have such a long duration that contains a frame
+    // with a latter PTS in its entirety.
+    // Searching this accurately would require a linear search of all samples since they are not indexed by PTS end.
+    // However, since the difference is unlikely to be many frames long in any practical case, we can put a limit to the search.
+    auto iterHighestPresentationEnd = iterCurrent;
+    auto highestPresentationEnd = iterCurrent->second->presentationTime() + iterCurrent->second->duration();
+    ++iterCurrent;
+    for (unsigned limit = 5; limit != 0 && iterCurrent != rend(); --limit, ++iterCurrent) {
+        auto currentPresentationEnd = iterCurrent->second->presentationTime() + iterCurrent->second->duration();
+        if (currentPresentationEnd > highestPresentationEnd) {
+            highestPresentationEnd = currentPresentationEnd;
+            iterHighestPresentationEnd = iterCurrent;
+        }
+    }
+
+    return iterHighestPresentationEnd;
+}
+
 DecodeOrderSampleMap::reverse_iterator DecodeOrderSampleMap::reverseFindSampleWithDecodeKey(const KeyType& key)
 {
     DecodeOrderSampleMap::iterator found = findSampleWithDecodeKey(key);

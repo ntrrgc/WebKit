@@ -455,6 +455,17 @@ static PlatformTimeRanges removeSamplesFromTrackBuffer(const DecodeOrderSampleMa
     auto& logger = sourceBufferPrivate->logger();
     auto willLog = logger.willLog(sourceBufferPrivate->logChannel(), WTFLogLevel::Debug);
 #endif
+    FILE *fp = fopen("/home/ntrrgc/tmp/buffer-removal.txt", "a");
+    fprintf(fp, "ERASE BEGIN %s\n", trackBuffer.description->isVideo() ? "Video" : "Audio");
+    fprintf(fp, "dts,pts,duration\n");
+    for (const auto& pair : samples) {
+        const auto& sample = pair.second;
+        fprintf(fp, "%ld,%ld,%ld\n",
+            sample->decodeTime().toTimeScale(1000000000).timeValue(),
+            sample->presentationTime().toTimeScale(1000000000).timeValue(),
+            sample->duration().toTimeScale(1000000000).timeValue());
+    }
+    fprintf(fp, "ERASE END\n");
 
     PlatformTimeRanges erasedRanges;
     for (const auto& sampleIt : samples) {
@@ -489,6 +500,14 @@ static PlatformTimeRanges removeSamplesFromTrackBuffer(const DecodeOrderSampleMa
 #endif
     }
 
+    auto rangesToString = [](const PlatformTimeRanges& ranges) {
+        StringPrintStream sps;
+        ranges.dump(sps);
+        return sps.toString();
+    };
+
+    fprintf(fp, "erasedRanges so far: %s\n", rangesToString(erasedRanges).utf8().data());
+
     // Because we may have added artificial padding in the buffered ranges when adding samples, we may
     // need to remove that padding when removing those same samples. Walk over the erased ranges looking
     // for unbuffered areas and expand erasedRanges to encompass those areas.
@@ -496,32 +515,49 @@ static PlatformTimeRanges removeSamplesFromTrackBuffer(const DecodeOrderSampleMa
     for (unsigned i = 0; i < erasedRanges.length(); ++i) {
         auto erasedStart = erasedRanges.start(i);
         auto erasedEnd = erasedRanges.end(i);
-        auto startIterator = trackBuffer.samples.presentationOrder().reverseFindSampleBeforePresentationTime(erasedStart);
+        if (erasedStart.timeValue() == 3'265'000'000) {
+            fprintf(fp, "Suspicious range BEGIN! erasedEnd = %s\n", erasedEnd.toString().utf8().data());
+        }
+        auto startIterator = trackBuffer.samples.presentationOrder().reverseFindSampleEndingAtOrBeforePresentationTime(erasedStart);
         if (startIterator == trackBuffer.samples.presentationOrder().rend())
             additionalErasedRanges.add(MediaTime::zeroTime(), erasedStart);
         else {
             auto& previousSample = *startIterator->second;
-            if (previousSample.presentationTime() + previousSample.duration() < erasedStart)
+            if (erasedStart.timeValue() == 3'265'000'000) {
+                fprintf(fp, "previousSample: %s\n", previousSample.toJSONString().utf8().data());
+            }
+            if (previousSample.presentationTime() + previousSample.duration() < erasedStart) {
+                fprintf(fp, "extending start\n");
                 additionalErasedRanges.add(previousSample.presentationTime() + previousSample.duration(), erasedStart);
+            }
         }
 
-        auto endIterator = trackBuffer.samples.presentationOrder().findSampleStartingOnOrAfterPresentationTime(erasedEnd);
+        auto endIterator = trackBuffer.samples.presentationOrder().findSampleStartingOnOrAfterPresentationTime(erasedEnd - MediaTime(1, 1'000));
         if (endIterator == trackBuffer.samples.presentationOrder().end())
             additionalErasedRanges.add(erasedEnd, MediaTime::positiveInfiniteTime());
         else {
             auto& nextSample = *endIterator->second;
-            if (nextSample.presentationTime() > erasedEnd)
+            fprintf(fp, "nextSample: %s\n", nextSample.toJSONString().utf8().data());
+            if (nextSample.presentationTime() > erasedEnd) {
+                fprintf(fp, "extending end\n");
                 additionalErasedRanges.add(erasedEnd, nextSample.presentationTime());
+            }
+        }
+        if (erasedStart.timeValue() == 3'265'000'000) {
+            fprintf(fp, "Suspicious range END!\n");
         }
     }
+    fprintf(fp, "additionalErasedRanges: %s\n", rangesToString(additionalErasedRanges).utf8().data());
     if (additionalErasedRanges.length())
         erasedRanges.unionWith(additionalErasedRanges);
+    fprintf(fp, "erasedRanges after: %s\n", rangesToString(erasedRanges).utf8().data());
 
 #if !RELEASE_LOG_DISABLED
     if (bytesRemoved && willLog)
         logger.debug(sourceBufferPrivate->logChannel(), logIdentifier, "removed ", bytesRemoved, ", start = ", earliestSample, ", end = ", latestSample);
 #endif
 
+    fclose(fp);
     return erasedRanges;
 }
 
@@ -535,6 +571,19 @@ void SourceBufferPrivate::removeCodedFrames(const MediaTime& start, const MediaT
 
     // 3.5.9 Coded Frame Removal Algorithm
     // https://dvcs.w3.org/hg/html-media/raw-file/tip/media-source/media-source.html#sourcebuffer-coded-frame-removal
+    for (auto& trackBufferKeyValue : m_trackBufferMap) {
+        TrackBuffer& trackBuffer = trackBufferKeyValue.value;
+        AtomString trackID = trackBufferKeyValue.key;
+        FILE * fp = fopen(makeString("/home/ntrrgc/tmp/trackBuffer-", trackID.string(), "-before.csv").utf8().data(), "w");
+        fprintf(fp, "pts,dts,duration,pts_scale,dts_scale,duration_scale\n");
+        for (auto& pair : trackBuffer.samples.presentationOrder()) {
+            auto& sample = *pair.second;
+            fprintf(fp, "%ld,%ld,%ld,%u,%u,%u\n",
+                sample.presentationTime().timeValue(), sample.decodeTime().timeValue(), sample.duration().timeValue(),
+                sample.presentationTime().timeScale(), sample.decodeTime().timeScale(), sample.duration().timeScale());
+        }
+        fclose(fp);
+    }
 
     // 1. Let start be the starting presentation timestamp for the removal range.
     // 2. Let end be the end presentation timestamp for the removal range.
@@ -542,6 +591,7 @@ void SourceBufferPrivate::removeCodedFrames(const MediaTime& start, const MediaT
     for (auto& trackBufferKeyValue : m_trackBufferMap) {
         TrackBuffer& trackBuffer = trackBufferKeyValue.value;
         AtomString trackID = trackBufferKeyValue.key;
+        FILE* fp = fopen(makeString("/home/ntrrgc/tmp/trackBuffer-", trackID.string(), "-remove.txt").utf8().data(), "a");
 
         // 3.1. Let remove end timestamp be the current value of duration
         // 3.2 If this track buffer has a random access point timestamp that is greater than or equal to end, then update
@@ -605,8 +655,19 @@ void SourceBufferPrivate::removeCodedFrames(const MediaTime& start, const MediaT
             }
         }
 
+        auto rangesToString = [](const PlatformTimeRanges& ranges) {
+            StringPrintStream sps;
+            ranges.dump(sps);
+            return sps.toString();
+        };
+
+        fprintf(fp, "Erased ranges: %s\n", rangesToString(erasedRanges).utf8().data());
         erasedRanges.invert();
+
+        fprintf(fp, "Buffered before: %s\n", rangesToString(trackBuffer.buffered).utf8().data());
         trackBuffer.buffered.intersectWith(erasedRanges);
+        fprintf(fp, "Buffered after: %s\n", rangesToString(trackBuffer.buffered).utf8().data());
+        fclose(fp);
         setBufferedDirty(true);
 
         // 3.4 If this object is in activeSourceBuffers, the current playback position is greater than or equal to start
@@ -614,6 +675,19 @@ void SourceBufferPrivate::removeCodedFrames(const MediaTime& start, const MediaT
         // the HTMLMediaElement.readyState attribute to HAVE_METADATA and stall playback.
         if (isActive() && currentTime >= start && currentTime < end && readyState() > MediaPlayer::ReadyState::HaveMetadata)
             setReadyState(MediaPlayer::ReadyState::HaveMetadata);
+    }
+    for (auto& trackBufferKeyValue : m_trackBufferMap) {
+        TrackBuffer& trackBuffer = trackBufferKeyValue.value;
+        AtomString trackID = trackBufferKeyValue.key;
+        FILE * fp = fopen(makeString("/home/ntrrgc/tmp/trackBuffer-", trackID.string(), "-after.csv").utf8().data(), "w");
+        fprintf(fp, "pts,dts,duration,pts_scale,dts_scale,duration_scale\n");
+        for (auto& pair : trackBuffer.samples.presentationOrder()) {
+            auto& sample = *pair.second;
+            fprintf(fp, "%ld,%ld,%ld,%u,%u,%u\n",
+                sample.presentationTime().timeValue(), sample.decodeTime().timeValue(), sample.duration().timeValue(),
+                sample.presentationTime().timeScale(), sample.decodeTime().timeScale(), sample.duration().timeScale());
+        }
+        fclose(fp);
     }
 
     updateBufferedFromTrackBuffers(isEnded);
@@ -1187,6 +1261,11 @@ void SourceBufferPrivate::didReceiveSample(Ref<MediaSample>&& originalSample)
         // 1.15 Remove decoding dependencies of the coded frames removed in the previous step:
         DecodeOrderSampleMap::MapType dependentSamples;
         if (!erasedSamples.empty()) {
+
+            FILE *fp = fopen("/home/ntrrgc/Dropbox/tmp/buffer-removal.txt", "a+");
+            fprintf(fp, "didReceiveSample which causes erasure DTS=%ld\n",
+                (long) decodeTimestamp.toTimeScale(GST_SECOND).timeValue());
+            fclose(fp);
             // If detailed information about decoding dependencies is available:
             // FIXME: Add support for detailed dependency information
 
