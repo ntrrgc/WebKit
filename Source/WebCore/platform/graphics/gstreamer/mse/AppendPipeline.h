@@ -145,6 +145,7 @@ private:
     bool m_hasReceivedFirstInitializationSegment { false };
     // Used only for asserting EOS events are only caused by demuxing errors.
     bool m_errorReceived { false };
+    bool m_hasDemuxer { false };
 
     SourceBufferPrivateGStreamer& m_sourceBufferPrivate;
     MediaPlayerPrivateGStreamerMSE* m_playerPrivate;

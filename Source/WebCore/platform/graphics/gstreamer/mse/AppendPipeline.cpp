@@ -42,6 +42,7 @@
 #include <gst/pbutils/pbutils.h>
 #include <gst/video/video.h>
 #include <wtf/Condition.h>
+#include <wtf/Deque.h>
 #include <wtf/glib/GLibUtilities.h>
 #include <wtf/glib/RunLoopSourcePriority.h>
 #include <wtf/text/StringConcatenateNumbers.h>
@@ -80,7 +81,7 @@ static GstPadProbeReturn appendPipelineAppsinkPadEventProbe(GstPad*, GstPadProbe
 #endif
 static GstPadProbeReturn appendPipelineDemuxerBlackHolePadProbe(GstPad*, GstPadProbeInfo*, gpointer);
 static GstPadProbeReturn matroskademuxForceSegmentStartToEqualZero(GstPad*, GstPadProbeInfo*, void*);
-static GRefPtr<GstElement> createOptionalParserForFormat(const AtomString&, const GstCaps*);
+static GRefPtr<GstElement> createOptionalParserForFormat(const AtomString&, const GstCaps*, bool hasDemuxer);
 
 // Wrapper for gst_element_set_state() that emits a critical if the state change fails or is not synchronous.
 static void assertedElementSetState(GstElement* element, GstState desiredState)
@@ -155,6 +156,7 @@ AppendPipeline::AppendPipeline(SourceBufferPrivateGStreamer& sourceBufferPrivate
         hasDemuxer = false;
     } else
         ASSERT_NOT_REACHED();
+    m_hasDemuxer = hasDemuxer;
 
 #if !LOG_DISABLED
     GRefPtr<GstPad> demuxerPad = adoptGRef(gst_element_get_static_pad(m_demux.get(), "sink"));
@@ -637,8 +639,68 @@ void AppendPipeline::handleAppsinkNewSampleFromStreamingThread(GstElement*)
     }
 }
 
+class ParserDurationPreservingProbes {
+    WTF_MAKE_FAST_ALLOCATED;
+public:
+    static void setUp(GstElement* parser)
+    {
+        new ParserDurationPreservingProbes(parser);
+    }
+
+private:
+    Deque<GstClockTime> m_inputDurations;
+
+    ParserDurationPreservingProbes(GstElement* parser)
+    {
+        GRefPtr<GstPad> sinkPad = adoptGRef(gst_element_get_static_pad(parser, "sink"));
+        GRefPtr<GstPad> srcPad = adoptGRef(gst_element_get_static_pad(parser, "src"));
+
+        gst_pad_add_probe(sinkPad.get(), static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_EVENT_FLUSH),
+            sinkPadProbeCallback, this, ParserDurationPreservingProbes::operator delete);
+        gst_pad_add_probe(srcPad.get(), GST_PAD_PROBE_TYPE_BUFFER,
+            srcPadProbeCallback, this, nullptr);
+    }
+
+    static GstPadProbeReturn sinkPadProbeCallback(GstPad* pad, GstPadProbeInfo* info, void* userData)
+    {
+        UNUSED_PARAM(pad);
+
+        auto self = reinterpret_cast<ParserDurationPreservingProbes*>(userData);
+        if (info->type & GST_PAD_PROBE_TYPE_EVENT_FLUSH) {
+            GstEvent* event = GST_EVENT(info->data);
+            ASSERT(GST_IS_EVENT(event));
+            if (event->type == GST_EVENT_FLUSH_STOP)
+                self->m_inputDurations.clear();
+        } else if (info->type & GST_PAD_PROBE_TYPE_BUFFER) {
+            GstBuffer* buffer = GST_BUFFER(info->data);
+            ASSERT(GST_IS_BUFFER(buffer));
+            GST_TRACE_OBJECT(pad, "Storing duration from buffer: %" GST_PTR_FORMAT, buffer);
+            self->m_inputDurations.append(GST_BUFFER_DURATION(buffer));
+        }
+        return GST_PAD_PROBE_OK;
+    }
+
+    static GstPadProbeReturn srcPadProbeCallback(GstPad* pad, GstPadProbeInfo* info, void* userData)
+    {
+        UNUSED_PARAM(pad);
+
+        auto self = reinterpret_cast<ParserDurationPreservingProbes*>(userData);
+        GstBuffer* buffer = GST_BUFFER(info->data);
+        ASSERT(GST_IS_BUFFER(buffer));
+        ASSERT(!self->m_inputDurations.isEmpty());
+        GstClockTime demuxerDuration = self->m_inputDurations.takeFirst();
+        GstClockTime parserDuration = GST_BUFFER_DURATION(buffer);
+        if (GST_CLOCK_TIME_IS_VALID(demuxerDuration) && demuxerDuration != parserDuration) {
+            GST_TRACE_OBJECT(pad, "Restoring parser-set duration from %" GST_TIME_FORMAT " to %" GST_TIME_FORMAT,
+                GST_TIME_ARGS(parserDuration), GST_TIME_ARGS(demuxerDuration));
+            GST_BUFFER_DURATION(buffer) = demuxerDuration;
+        }
+        return GST_PAD_PROBE_OK;
+    }
+};
+
 static GRefPtr<GstElement>
-createOptionalParserForFormat(const AtomString& trackId, const GstCaps* caps)
+createOptionalParserForFormat(const AtomString& trackId, const GstCaps* caps, bool hasDemuxer)
 {
     GstStructure* structure = gst_caps_get_structure(caps, 0);
     const char* mediaType = gst_structure_get_name(structure);
@@ -666,7 +728,11 @@ createOptionalParserForFormat(const AtomString& trackId, const GstCaps* caps)
         }
         }
     }
-    return GRefPtr<GstElement>(makeGStreamerElement(elementClass, parserName.get()));
+    GRefPtr<GstElement> parser = makeGStreamerElement(elementClass, parserName.get());
+    if (hasDemuxer && strcmp(elementClass, "identity")) {
+        ParserDurationPreservingProbes::setUp(parser.get());
+    }
+    return parser;
 }
 
 AtomString AppendPipeline::generateTrackId(StreamType streamType, int padIndex)
@@ -825,7 +891,7 @@ void AppendPipeline::Track::initializeElements(AppendPipeline* appendPipeline, G
     // the contained audio streams in order to know the duration of the frames.
     // This is known to be an issue with YouTube WebM files containing Opus audio as of YTTV2018.
     // If no parser is needed, a GstIdentity element will be created instead.
-    parser = createOptionalParserForFormat(trackId, caps.get());
+    parser = createOptionalParserForFormat(trackId, caps.get(), appendPipeline->m_hasDemuxer);
     gst_bin_add(bin, parser.get());
     gst_element_sync_state_with_parent(parser.get());
     gst_element_link(parser.get(), appsink.get());
