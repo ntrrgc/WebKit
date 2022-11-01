@@ -51,6 +51,7 @@
 #include "WebKitNavigationClient.h"
 #include "WebKitNotificationPrivate.h"
 #include "WebKitPermissionStateQueryPrivate.h"
+#include "WebKitPointerLockPermissionRequest.h"
 #include "WebKitPrivate.h"
 #include "WebKitResponsePolicyDecision.h"
 #include "WebKitScriptDialogPrivate.h"
@@ -91,7 +92,6 @@
 #if PLATFORM(GTK)
 #include "WebKitFaviconDatabasePrivate.h"
 #include "WebKitInputMethodContextImplGtk.h"
-#include "WebKitPointerLockPermissionRequest.h"
 #include "WebKitPrintOperationPrivate.h"
 #include "WebKitWebInspectorPrivate.h"
 #include "WebKitWebViewBasePrivate.h"
