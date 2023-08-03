@@ -90,7 +90,7 @@ class GLibPort(Port):
         environment['TEST_RUNNER_TEST_PLUGIN_PATH'] = self._build_path('lib', 'plugins')
         environment['WEBKIT_EXEC_PATH'] = self._build_path('bin')
         environment['WEBKIT_FONTS_CONF_DIR'] = self.path_from_webkit_base('Tools', 'WebKitTestRunner', 'gtk', 'fonts')
-        environment['LD_LIBRARY_PATH'] = self._prepend_to_env_value(self._build_path('lib'), environment.get('LD_LIBRAY_PATH', ''))
+        environment['LD_LIBRARY_PATH'] = self._prepend_to_env_value(self._build_path('lib'), environment.get('LD_LIBRARY_PATH', ''))
         self._copy_value_from_environ_if_set(environment, 'LIBGL_ALWAYS_SOFTWARE')
         self._copy_value_from_environ_if_set(environment, 'WEBKIT_OUTPUTDIR')
         self._copy_value_from_environ_if_set(environment, 'WEBKIT_JHBUILD')
@@ -142,7 +142,7 @@ class GLibPort(Port):
         env = os.environ.copy()
         env['WEBKIT_EXEC_PATH'] = self._build_path('bin')
         env['WEBKIT_INJECTED_BUNDLE_PATH'] = self._build_path('lib')
-        env['LD_LIBRARY_PATH'] = self._prepend_to_env_value(self._build_path('lib'), env.get('LD_LIBRAY_PATH', ''))
+        env['LD_LIBRARY_PATH'] = self._prepend_to_env_value(self._build_path('lib'), env.get('LD_LIBRARY_PATH', ''))
         return env
 
     def _get_crash_log(self, name, pid, stdout, stderr, newer_than, target_host=None):
