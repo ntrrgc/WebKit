@@ -618,7 +618,7 @@ bool hasCapacityToUseLargeGigacage();
     v(Bool, useWasmRelaxedSIMD, false, Normal, "Allow the relaxed simd instructions and types from the wasm relaxed simd spec."_s) \
     v(Bool, useWasmTailCalls, true, Normal, "Allow the new instructions from the wasm tail calls spec."_s) \
     v(Unsigned, markedBlockDumpInfoCount, 0, Normal, nullptr) /* FIXME: rdar://139998916 */ \
-
+    v(Bool, disableConsoleLog, false, Normal, "Disable printing of JS console logs."_s) \
 
 
 enum OptionEquivalence {
