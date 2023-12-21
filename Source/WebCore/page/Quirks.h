@@ -207,6 +207,10 @@ public:
     bool needsRelaxedCorsMixedContentCheckQuirk() const;
     bool needsLaxSameSiteCookieQuirk(const URL&) const;
 
+#if ENABLE(MEDIA_SOURCE)
+    bool shouldBypassAudioFlushOnSampleReplacement() const;
+#endif
+
 private:
     bool needsQuirks() const;
     bool isDomain(const String&) const;
@@ -283,6 +287,9 @@ private:
     mutable std::optional<bool> m_needsYouTubeDarkModeQuirk;
 
     Vector<RegistrableDomain> m_subFrameDomainsForStorageAccessQuirk;
+#if ENABLE(MEDIA_SOURCE)
+    mutable std::optional<bool> m_shouldBypassAudioFlushOnSampleReplacementQuirk;
+#endif
 };
 
 } // namespace WebCore

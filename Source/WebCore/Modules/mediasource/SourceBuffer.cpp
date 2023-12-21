@@ -40,6 +40,7 @@
 #include "BufferSource.h"
 #include "BufferedChangeEvent.h"
 #include "ContentTypeUtilities.h"
+#include "DocumentInlines.h"
 #include "Event.h"
 #include "EventNames.h"
 #include "HTMLMediaElement.h"
@@ -48,6 +49,7 @@
 #include "Logging.h"
 #include "MediaDescription.h"
 #include "MediaSource.h"
+#include "Quirks.h"
 #include "Settings.h"
 #include "SharedBuffer.h"
 #include "SourceBufferList.h"
@@ -185,6 +187,11 @@ SourceBuffer::SourceBuffer(Ref<SourceBufferPrivate>&& sourceBufferPrivate, Media
 
     m_private->setClient(m_client);
     m_private->setMaximumBufferSize(maximumBufferSize());
+
+    RefPtr document = dynamicDowncast<Document>(scriptExecutionContext());
+    if (document && document->quirks().shouldBypassAudioFlushOnSampleReplacement()) {
+        m_private->setShouldBypassAudioFlushOnSampleReplacement(true);
+    }
 }
 
 SourceBuffer::~SourceBuffer()

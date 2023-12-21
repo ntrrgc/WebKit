@@ -165,6 +165,7 @@ public:
     virtual void attemptToDecrypt() { }
 #endif
 
+    void setShouldBypassAudioFlushOnSampleReplacement(bool flag) { m_shouldBypassAudioFlushOnSampleReplacement = flag; }
 protected:
     WEBCORE_EXPORT explicit SourceBufferPrivate(MediaSourcePrivate&, RefCountedSerialFunctionDispatcher&);
     MediaTime currentTime() const;
@@ -275,6 +276,8 @@ private:
     MediaTime m_groupEndTimestamp { MediaTime::zeroTime() };
 
     bool m_isMediaSourceEnded { false };
+
+    bool m_shouldBypassAudioFlushOnSampleReplacement { false };
 };
 
 } // namespace WebCore
