@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2015 Yusuke Suzuki <utatane.tea@gmail.com>.
- * Copyright (C) 2019-2022 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,41 +23,32 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "config.h"
+#include "JSIteratorPrototype.h"
 
-#include "JSObject.h"
+#include "JSCBuiltins.h"
+#include "JSCInlines.h"
 
 namespace JSC {
 
-class IteratorPrototype final : public JSNonFinalObject {
-public:
-    using Base = JSNonFinalObject;
-    static constexpr unsigned StructureFlags = Base::StructureFlags;
+const ClassInfo JSIteratorPrototype::s_info = { "Iterator"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(JSIteratorPrototype) };
 
-    template<typename CellType, SubspaceAccess>
-    static GCClient::IsoSubspace* subspaceFor(VM& vm)
-    {
-        STATIC_ASSERT_ISO_SUBSPACE_SHARABLE(IteratorPrototype, Base);
-        return &vm.plainObjectSpace();
-    }
+<<<<<<< HEAD:Source/JavaScriptCore/runtime/IteratorPrototype.cpp
+void IteratorPrototype::finishCreation(VM& vm, JSGlobalObject* globalObject)
+=======
+static JSC_DECLARE_HOST_FUNCTION(iteratorProtoFuncIterator);
+static JSC_DECLARE_CUSTOM_GETTER(iteratorProtoConstructorGetter);
+static JSC_DECLARE_CUSTOM_SETTER(iteratorProtoConstructorSetter);
+static JSC_DECLARE_CUSTOM_GETTER(iteratorProtoToStringTagGetter);
+static JSC_DECLARE_CUSTOM_SETTER(iteratorProtoToStringTagSetter);
 
-    static IteratorPrototype* create(VM& vm, JSGlobalObject* globalObject, Structure* structure)
-    {
-        IteratorPrototype* prototype = new (NotNull, allocateCell<IteratorPrototype>(vm)) IteratorPrototype(vm, structure);
-        prototype->finishCreation(vm, globalObject);
-        return prototype;
-    }
+void JSIteratorPrototype::finishCreation(VM& vm, JSGlobalObject* globalObject)
+>>>>>>> 2a5293362de4 ([JSC] Add JS-prefix to runtime/IteratorPrototype.h):Source/JavaScriptCore/runtime/JSIteratorPrototype.cpp
+{
+    Base::finishCreation(vm);
+    ASSERT(inherits(info()));
 
-    DECLARE_INFO;
-
-    inline static Structure* createStructure(VM&, JSGlobalObject*, JSValue);
-
-private:
-    IteratorPrototype(VM& vm, Structure* structure)
-        : Base(vm, structure)
-    {
-    }
-    void finishCreation(VM&, JSGlobalObject*);
-};
+    JSC_BUILTIN_FUNCTION_WITHOUT_TRANSITION(vm.propertyNames->iteratorSymbol, iteratorPrototypeSymbolIteratorGetterCodeGenerator, static_cast<unsigned>(PropertyAttribute::DontEnum));
+}
 
 } // namespace JSC

@@ -106,7 +106,10 @@
 #include "IntlSegmenterPrototype.h"
 #include "IntlSegments.h"
 #include "IntlSegmentsPrototype.h"
+<<<<<<< HEAD
 #include "IteratorPrototypeInlines.h"
+=======
+>>>>>>> 2a5293362de4 ([JSC] Add JS-prefix to runtime/IteratorPrototype.h)
 #include "JSAPIWrapperObject.h"
 #include "JSArrayBuffer.h"
 #include "JSArrayBufferConstructor.h"
@@ -140,6 +143,13 @@
 #include "JSInternalPromise.h"
 #include "JSInternalPromiseConstructor.h"
 #include "JSInternalPromisePrototype.h"
+<<<<<<< HEAD
+=======
+#include "JSIterator.h"
+#include "JSIteratorConstructor.h"
+#include "JSIteratorPrototype.h"
+#include "JSIteratorPrototypeInlines.h"
+>>>>>>> 2a5293362de4 ([JSC] Add JS-prefix to runtime/IteratorPrototype.h)
 #include "JSLexicalEnvironmentInlines.h"
 #include "JSMapInlines.h"
 #include "JSMapIteratorInlines.h"
@@ -1108,7 +1118,14 @@ void JSGlobalObject::init(VM& vm)
             init.setConstructor(JSSharedArrayBufferConstructor::create(init.vm, JSSharedArrayBufferConstructor::createStructure(init.vm, init.global, init.global->m_functionPrototype.get()), jsCast<JSArrayBufferPrototype*>(init.prototype)));
         });
 
+<<<<<<< HEAD
     m_iteratorPrototype.set(vm, this, IteratorPrototype::create(vm, this, IteratorPrototype::createStructure(vm, this, m_objectPrototype.get())));
+=======
+    m_iteratorPrototype.set(vm, this, JSIteratorPrototype::create(vm, this, JSIteratorPrototype::createStructure(vm, this, m_objectPrototype.get())));
+    if (Options::useIteratorHelpers())
+        m_iteratorStructure.set(vm, this, JSIterator::createStructure(vm, this, m_iteratorPrototype.get()));
+
+>>>>>>> 2a5293362de4 ([JSC] Add JS-prefix to runtime/IteratorPrototype.h)
     m_asyncIteratorPrototype.set(vm, this, AsyncIteratorPrototype::create(vm, this, AsyncIteratorPrototype::createStructure(vm, this, m_objectPrototype.get())));
 
     m_generatorPrototype.set(vm, this, GeneratorPrototype::create(vm, this, GeneratorPrototype::createStructure(vm, this, m_iteratorPrototype.get())));

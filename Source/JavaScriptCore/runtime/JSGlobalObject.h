@@ -73,13 +73,18 @@ class GetterSetter;
 class ImportMap;
 class IntlCollator;
 class IntlNumberFormat;
-class IteratorPrototype;
 class JSArrayBuffer;
 class JSCallee;
 class JSCustomGetterFunction;
 class JSCustomSetterFunction;
 class JSGlobalObjectDebuggable;
 class JSInternalPromise;
+<<<<<<< HEAD
+=======
+class JSIterator;
+class JSIteratorConstructor;
+class JSIteratorPrototype;
+>>>>>>> 2a5293362de4 ([JSC] Add JS-prefix to runtime/IteratorPrototype.h)
 class JSModuleLoader;
 class JSModuleRecord;
 class JSPromise;
@@ -284,7 +289,7 @@ public:
     WriteBarrier<ArrayPrototype> m_arrayPrototype;
     WriteBarrier<ShadowRealmPrototype> m_shadowRealmPrototype;
     WriteBarrier<RegExpPrototype> m_regExpPrototype;
-    WriteBarrier<IteratorPrototype> m_iteratorPrototype;
+    WriteBarrier<JSIteratorPrototype> m_iteratorPrototype;
     WriteBarrier<AsyncIteratorPrototype> m_asyncIteratorPrototype;
     WriteBarrier<GeneratorFunctionPrototype> m_generatorFunctionPrototype;
     WriteBarrier<GeneratorPrototype> m_generatorPrototype;
@@ -745,7 +750,7 @@ public:
     ShadowRealmPrototype* shadowRealmPrototype() const { return m_shadowRealmPrototype.get(); }
     RegExpPrototype* regExpPrototype() const { return m_regExpPrototype.get(); }
     JSObject* errorPrototype() const { return m_errorStructure.prototype(this); }
-    IteratorPrototype* iteratorPrototype() const { return m_iteratorPrototype.get(); }
+    JSIteratorPrototype* iteratorPrototype() const { return m_iteratorPrototype.get(); }
     AsyncIteratorPrototype* asyncIteratorPrototype() const { return m_asyncIteratorPrototype.get(); }
     GeneratorFunctionPrototype* generatorFunctionPrototype() const { return m_generatorFunctionPrototype.get(); }
     GeneratorPrototype* generatorPrototype() const { return m_generatorPrototype.get(); }

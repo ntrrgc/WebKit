@@ -1039,7 +1039,6 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/Intrinsic.h
     runtime/IterationKind.h
     runtime/IteratorOperations.h
-    runtime/IteratorPrototype.h
     runtime/JSArray.h
     runtime/JSArrayInlines.h
     runtime/JSArrayBuffer.h
@@ -1083,6 +1082,12 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/JSImmutableButterfly.h
     runtime/JSInternalFieldObjectImpl.h
     runtime/JSInternalPromise.h
+<<<<<<< HEAD
+=======
+    runtime/JSIterator.h
+    runtime/JSIteratorConstructor.h
+    runtime/JSIteratorPrototype.h
+>>>>>>> 2a5293362de4 ([JSC] Add JS-prefix to runtime/IteratorPrototype.h)
     runtime/JSLexicalEnvironment.h
     runtime/JSLock.h
     runtime/JSMap.h
