@@ -130,6 +130,7 @@ protected:
 #endif
 };
 
+<<<<<<< HEAD
 class JSEntrypointCallee : public Callee {
     WTF_MAKE_TZONE_ALLOCATED(JSEntrypointCallee);
 protected:
@@ -138,6 +139,10 @@ protected:
 
 class JSEntrypointJITCallee final : public JSEntrypointCallee {
     WTF_MAKE_TZONE_ALLOCATED(JSEntrypointJITCallee);
+=======
+class JSEntrypointCallee final : public Callee {
+    WTF_MAKE_TZONE_ALLOCATED(JSEntrypointCallee);
+>>>>>>> d5ba7ea242f0 ([JSC] Remove one level indirection for JS -> Wasm calls)
 public:
     friend class Callee;
 

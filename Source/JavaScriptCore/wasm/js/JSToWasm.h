@@ -45,10 +45,15 @@ struct CallInformation;
 class JSEntrypointCallee;
 class Module;
 
+<<<<<<< HEAD
 void marshallJSResult(CCallHelpers& jit, const TypeDefinition&, const CallInformation& wasmFrameConvention, const RegisterAtOffsetList& savedResultRegisters, CCallHelpers::JumpList& exceptionChecks);
 std::shared_ptr<InternalFunction> createJSToWasmJITInterpreterCrashForSIMDParameters();
 std::shared_ptr<InternalFunction> createJSToWasmJITInterpreter();
 std::unique_ptr<InternalFunction> createJSToWasmWrapper(CCallHelpers&, JSEntrypointCallee&, Callee*, const TypeDefinition&, Vector<UnlinkedWasmToWasmCall>*, const ModuleInformation&, MemoryMode, uint32_t functionIndex);
+=======
+MacroAssemblerCodeRef<JITThunkPtrTag> createJSToWasmJITShared();
+MacroAssemblerCodeRef<JITThunkPtrTag> wasmFunctionThunkGenerator(VM&);
+>>>>>>> d5ba7ea242f0 ([JSC] Remove one level indirection for JS -> Wasm calls)
 
 } } // namespace JSC::Wasm
 

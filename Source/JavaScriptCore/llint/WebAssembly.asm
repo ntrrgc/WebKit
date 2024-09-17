@@ -561,6 +561,7 @@ macro boxInt32(r, rTag)
     end
 end
 
+<<<<<<< HEAD
 // This is the interpreted analogue to createJSToWasmJITInterpreterCrashForSIMDParameters
 op(js_to_wasm_wrapper_entry_crash_for_simd_parameters, macro()
     if not WEBASSEMBLY or C_LOOP
@@ -579,6 +580,9 @@ end)
 
 // This is the interpreted analogue to createJSToWasmWrapper
 // If you change this, make sure to modify JSToWasm.cpp:createJSToWasmJITInterpreter
+=======
+// If you change this, make sure to modify JSToWasm.cpp:createJSToWasmJITShared
+>>>>>>> d5ba7ea242f0 ([JSC] Remove one level indirection for JS -> Wasm calls)
 op(js_to_wasm_wrapper_entry, macro ()
     if not WEBASSEMBLY or C_LOOP
         error
@@ -599,19 +603,8 @@ op(js_to_wasm_wrapper_entry, macro ()
         end
     end
 
-    macro clobberArgumentOnlyRegisters()
-        if ARM64 or ARM64E
-            emit "movz x2, #0xBAD"
-            emit "movz x3, #0xBAD"
-            emit "movz x4, #0xBAD"
-            emit "movz x5, #0xBAD"
-            emit "movz x6, #0xBAD"
-            emit "movz x7, #0xBAD"
-        end
-    end
-
-    macro repeat(f)
-        move 0xBEEF, ws0
+    macro repeat(scratch, f)
+        move 0xBEEF, scratch
         f(0)
         f(1)
         f(2)
@@ -697,6 +690,7 @@ end
     # Load data from the entry callee
     # This was written by doVMEntry
     loadp Callee[cfr], ws0 # WebAssemblyFunction*
+<<<<<<< HEAD
     loadp WebAssemblyFunction::m_jsToWasmCallee[ws0], ws0 # JITLessJSEntrypointCallee*
 
 if ASSERT_ENABLED
@@ -704,10 +698,20 @@ if ASSERT_ENABLED
     loadi Wasm::JITLessJSEntrypointCallee::ident[ws0], ws1
     move 0xBF, wa0
     bpeq wa0, ws1, .ident_ok
+=======
+    loadp WebAssemblyFunction::m_jsToWasmCallee[ws0], ws1 # JSEntrypointCallee*
+
+if ASSERT_ENABLED
+    # Check to confirm we have the right kind of callee
+    loadi Wasm::JSEntrypointCallee::ident[ws1], wa0
+    move 0xBF, wa1
+    bpeq wa0, wa1, .ident_ok
+>>>>>>> d5ba7ea242f0 ([JSC] Remove one level indirection for JS -> Wasm calls)
     break
 .ident_ok:
 end
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     # Allocate stack space (no stack check)
     loadi Wasm::JITLessJSEntrypointCallee::frameSize[ws0], ws1
@@ -724,15 +728,19 @@ if not JSVALUE64
     move constexpr JSValue::NativeCalleeTag, wa0
     storep wa0, TagOffset + Callee[cfr]
 >>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
+=======
+    leap WTFConfig + constexpr WTF::offsetOfWTFConfigLowestAccessibleAddress, wa0
+    loadp [wa0], wa0
+    subp ws1, wa0, wa0
+if JSVALUE64
+    orp (constexpr JSValue::NativeCalleeTag), wa0
+>>>>>>> d5ba7ea242f0 ([JSC] Remove one level indirection for JS -> Wasm calls)
 end
-
-    # Prepare frame
-    move sp, a0
-    move cfr, a1
-    cCall2(_operationJSToWasmEntryWrapperBuildFrame)
+    storep wa0, Callee[cfr] # CalleeBits(JSEntrypointCallee*)
 
     # Instance
-    loadp constexpr CallFrameSlot::codeBlock * 8[cfr], wasmInstance
+    loadp WebAssemblyFunction::m_instance[ws0], wasmInstance
+    storep wasmInstance, CodeBlock[cfr]
 
     # Memory
     if ARM64 or ARM64E
@@ -742,8 +750,37 @@ end
         loadp JSWebAssemblyInstance::m_cachedBoundsCheckingSize[wasmInstance], boundsCheckingSize
     end
     if not ARMv7
-        cagedPrimitiveMayBeNull(memoryBase, ws0)
+        cagedPrimitiveMayBeNull(memoryBase, wa0)
     end
+
+    # Allocate stack space
+    loadi Wasm::JSEntrypointCallee::frameSize[ws1], wa0
+    subp sp, wa0, wa0
+
+    bpa wa0, cfr, .stackOverflow
+    bpbeq JSWebAssemblyInstance::m_softStackLimit[wasmInstance], wa0, .stackHeightOK
+
+.stackHeightOK:
+    move wa0, sp
+
+if ASSERT_ENABLED
+    repeat(wa0, macro (i)
+        storep wa0, -i * SlotSize + constexpr Wasm::JSEntrypointCallee::RegisterStackSpaceAligned[sp]
+    end)
+end
+
+    # Prepare frame
+    move ws0, a2
+    move cfr, a1
+    move sp, a0
+    cCall3(_operationJSToWasmEntryWrapperBuildFrame)
+
+if ARMv7
+    branchIfException(_wasm_throw_from_slow_path_trampoline)
+else
+    btpnz r1, _wasm_throw_from_slow_path_trampoline
+end
+    move r0, ws0
 
     # Arguments
 
@@ -775,11 +812,12 @@ end
     addp constexpr Wasm::JITLessJSEntrypointCallee::RegisterStackSpaceAligned, sp
 
 if ASSERT_ENABLED
-    repeat(macro (i)
-        storep ws0, -i * SlotSize[sp]
+    repeat(ws1, macro (i)
+        storep ws1, -i * SlotSize[sp]
     end)
 end
 
+<<<<<<< HEAD
     loadp Callee[cfr], ws0 # CalleeBits(JITLessJSEntrypointCallee*)
 if JSVALUE64
     andp ~(constexpr JSValue::NativeCalleeTag), ws0
@@ -788,6 +826,8 @@ end
     loadp [ws1], ws1
     addp ws1, ws0
 
+=======
+>>>>>>> d5ba7ea242f0 ([JSC] Remove one level indirection for JS -> Wasm calls)
     # Store Callee's wasm callee
 if JSVALUE64
     loadp Wasm::JITLessJSEntrypointCallee::wasmCallee[ws0], ws1
@@ -799,10 +839,16 @@ else
     storep ws1, constexpr (CallFrameSlot::callee - CallerFrameAndPC::sizeInRegisters) * 8 + TagOffset[sp]
 end
 
+<<<<<<< HEAD
     loadp Wasm::JITLessJSEntrypointCallee::wasmFunctionPrologue[ws0], ws0
     call ws0, WasmEntryPtrTag
+=======
+    call Wasm::JSEntrypointCallee::wasmFunctionPrologue[ws0], WasmEntryPtrTag
+>>>>>>> d5ba7ea242f0 ([JSC] Remove one level indirection for JS -> Wasm calls)
 
+if ASSERT_ENABLED
     clobberVolatileRegisters()
+end
 
     # Restore SP
     loadp Callee[cfr], ws0 # CalleeBits(JITLessJSEntrypointCallee*)
@@ -818,8 +864,13 @@ end
     subp constexpr Wasm::JITLessJSEntrypointCallee::SpillStackSpaceAligned, sp
 
 if ASSERT_ENABLED
+<<<<<<< HEAD
     repeat(macro (i)
         storep ws0, -i * SlotSize + constexpr Wasm::JITLessJSEntrypointCallee::RegisterStackSpaceAligned[sp]
+=======
+    repeat(ws0, macro (i)
+        storep ws0, -i * SlotSize + constexpr Wasm::JSEntrypointCallee::RegisterStackSpaceAligned[sp]
+>>>>>>> d5ba7ea242f0 ([JSC] Remove one level indirection for JS -> Wasm calls)
     end)
 end
 
@@ -892,17 +943,29 @@ end
     move cfr, a1
     cCall2(_operationJSToWasmEntryWrapperBuildReturnFrame)
 
+<<<<<<< HEAD
     btpnz r1, .handleException
 
     # Clean up and return
     restoreJSEntrypointInterpreterRegisters()
+=======
+if ARMv7
+    branchIfException(_wasm_throw_from_slow_path_trampoline)
+else
+    btpnz r1, _wasm_throw_from_slow_path_trampoline
+end
+
+    # Clean up and return
+    restoreJSEntrypointRegisters()
+if ASSERT_ENABLED
+>>>>>>> d5ba7ea242f0 ([JSC] Remove one level indirection for JS -> Wasm calls)
     clobberVolatileRegisters()
+end
     restoreCallerPCAndCFR()
     ret
 
-.handleException:
-    throwException(OutOfMemory)
-    break
+.stackOverflow:
+    throwException(StackOverflow)
 end)
 
 # This is the interpreted analogue to WasmBinding.cpp:wasmToWasm

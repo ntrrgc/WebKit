@@ -435,23 +435,23 @@ JITLessJSEntrypointCallee::JITLessJSEntrypointCallee(unsigned frameSize, TypeInd
 {
 #if ENABLE(JIT)
     if (Options::useJIT()) {
-#else
-    if (false) {
-#endif
         if (usesSIMD)
             wasmFunctionPrologue = LLInt::wasmFunctionEntryThunkSIMD().code().retagged<WasmEntryPtrTag>();
         else
             wasmFunctionPrologue = LLInt::wasmFunctionEntryThunk().code().retagged<WasmEntryPtrTag>();
-    } else {
-        if (usesSIMD)
-            wasmFunctionPrologue = CodePtr<CFunctionPtrTag>(LLInt::getCodeFunctionPtr<CFunctionPtrTag>(wasm_function_prologue_simd_trampoline)).retagged<WasmEntryPtrTag>();
-        else
-            wasmFunctionPrologue = CodePtr<CFunctionPtrTag>(LLInt::getCodeFunctionPtr<CFunctionPtrTag>(wasm_function_prologue_trampoline)).retagged<WasmEntryPtrTag>();
+        return;
     }
+#endif
+
+    if (usesSIMD)
+        wasmFunctionPrologue = CodePtr<CFunctionPtrTag>(LLInt::getCodeFunctionPtr<CFunctionPtrTag>(wasm_function_prologue_simd_trampoline)).retagged<WasmEntryPtrTag>();
+    else
+        wasmFunctionPrologue = CodePtr<CFunctionPtrTag>(LLInt::getCodeFunctionPtr<CFunctionPtrTag>(wasm_function_prologue_trampoline)).retagged<WasmEntryPtrTag>();
 }
 
 CodePtr<WasmEntryPtrTag> JITLessJSEntrypointCallee::entrypointImpl() const
 {
+<<<<<<< HEAD
     const TypeDefinition& typeDefinition = TypeInformation::get(typeIndex).expand();
     if (m_replacementCallee)
         return m_replacementCallee->entrypoint();
@@ -466,6 +466,11 @@ CodePtr<WasmEntryPtrTag> JITLessJSEntrypointCallee::entrypointImpl() const
 #if ENABLE(JIT)
     if (Options::useJIT())
         return createJSToWasmJITInterpreter()->entrypoint.compilation->code().retagged<WasmEntryPtrTag>();
+=======
+#if ENABLE(JIT)
+    if (Options::useJIT())
+        return createJSToWasmJITShared().retaggedCode<WasmEntryPtrTag>();
+>>>>>>> d5ba7ea242f0 ([JSC] Remove one level indirection for JS -> Wasm calls)
 #endif
     return LLInt::getCodeFunctionPtr<CFunctionPtrTag>(js_to_wasm_wrapper_entry);
 }
