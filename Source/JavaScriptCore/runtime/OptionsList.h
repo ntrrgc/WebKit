@@ -593,6 +593,11 @@ bool hasCapacityToUseLargeGigacage();
     /* Feature Flags */\
     \
     v(Bool, useFloat16Array, true, Normal, "Expose Float16Array."_s) \
+<<<<<<< HEAD
+=======
+    v(Bool, useIteratorHelpers, false, Normal, "Expose the Iterator Helpers."_s) \
+    v(Bool, useMathSumPreciseMethod, false, Normal, "Expose the Math.sumPrecise() method."_s) \
+>>>>>>> f49d6a41fb8d ([JSC] Implement Math.sumPrecise())
     v(Bool, usePromiseTryMethod, true, Normal, "Expose the Promise.try() method."_s) \
     v(Bool, useRegExpEscape, true, Normal, "Expose RegExp.escape feature."_s) \
     v(Bool, useSharedArrayBuffer, true, Normal, nullptr) \
