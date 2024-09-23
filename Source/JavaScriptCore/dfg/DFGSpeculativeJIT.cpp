@@ -13364,9 +13364,9 @@ void SpeculativeJIT::compileNormalizeMapKey(Node* node)
     doneCases.append(jump());
 
     notNaN.link(this);
-    truncateDoubleToInt32(doubleValueFPR, scratchGPR);
-    convertInt32ToDouble(scratchGPR, tempFPR);
-    passThroughCases.append(branchDouble(DoubleNotEqualAndOrdered, doubleValueFPR, tempFPR));
+    JumpList failureCases;
+    branchConvertDoubleToInt32(doubleValueFPR, scratchGPR, failureCases, tempFPR, /* shouldCheckNegativeZero */ false);
+    passThroughCases.append(failureCases);
 
     boxInt32(scratchGPR, resultRegs);
     doneCases.append(jump());
