@@ -5469,9 +5469,35 @@ auto OMGIRGenerator::createTailCallPatchpoint(BasicBlock* block, CallInformation
 bool OMGIRGenerator::canInline() const
 {
     ASSERT(!m_inlinedBytes || !m_inlineParent);
+<<<<<<< HEAD
     return m_inlineDepth < Options::maximumWasmDepthForInlining()
         && m_inlineRoot->m_inlinedBytes.value() < Options::maximumWasmCallerSizeForInlining()
         && (m_inlineDepth <= 1 || StackCheck().isSafeToRecurse());
+=======
+    if (!Options::useOMGInlining())
+        return false;
+
+    // Avoid inlining itself.
+    if ((functionIndexSpace - m_numImportFunctions) == m_functionIndex)
+        return false;
+
+    if (m_info.functionWasmSizeImportSpace(functionIndexSpace) >= Options::maximumWasmCalleeSizeForInlining())
+        return false;
+
+    if (m_inlineDepth >= Options::maximumWasmDepthForInlining())
+        return false;
+
+    if (m_inlineRoot->m_inlinedBytes.value() >= Options::maximumWasmCallerSizeForInlining())
+        return false;
+
+    if (m_inlineDepth > 1 && !StackCheck(Thread::current().stack(), StackBounds::DefaultReservedZone * 2).isSafeToRecurse())
+        return false;
+
+    if (m_info.callCanClobberInstance(functionIndexSpace))
+        return false;
+
+    return true;
+>>>>>>> 08514fe89587 ([JSC] Wasm compiler thread should be aligned with other JIT compiler thread)
 }
 
 auto OMGIRGenerator::emitInlineDirectCall(uint32_t calleeFunctionIndex, const TypeDefinition& calleeSignature, Vector<ExpressionType>& args, ResultList& resultList) -> PartialResult
