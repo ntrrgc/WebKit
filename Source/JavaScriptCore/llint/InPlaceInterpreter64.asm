@@ -5236,7 +5236,11 @@ mintAlign(_call)
     pop t3, t2
 
     # Make the call
+<<<<<<< HEAD
     call ipintCallSavedEntrypoint, JSEntrySlowPathPtrTag
+=======
+    call targetEntrypoint, WasmEntryPtrTag
+>>>>>>> f0388f70f563 (Wasm calls should consistently use WasmEntryPtrTag)
 
     loadq ThisArgumentOffset - 16[sp], PB
     # Restore the stack pointer

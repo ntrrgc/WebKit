@@ -1325,8 +1325,8 @@ wasmOp(extern_convert_any, WasmExternConvertAny, macro(ctx)
 end)
 
 if ARM64E
-    global _wasmTailCallJSEntrySlowPathTrampoline
-    _wasmTailCallJSEntrySlowPathTrampoline:
+    global _wasmTailCallTrampoline
+    _wasmTailCallTrampoline:
         untagReturnAddress ws2
-        jmp ws0, JSEntryPtrTag
+        jmp ws0, WasmEntryPtrTag
 end
