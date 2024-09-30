@@ -293,6 +293,9 @@ class MediaController
     deinitialize()
     {
         this.shadowRoot.removeChild(this.container);
+        window.removeEventListener("keydown", this);
+        if (this.controls)
+            this.controls.disable();
         return true;
     }
 
@@ -303,6 +306,9 @@ class MediaController
         this.mediaWeakRef = new WeakRef(media);
         this.host = host;
         shadowRoot.appendChild(this.container);
+        window.addEventListener("keydown", this);
+        if (this.controls)
+            this.controls.reenable();
         return true;
     }
 
