@@ -380,6 +380,8 @@ bool Options::isAvailable(Options::ID id, Options::Availability availability)
         return !!LLINT_TRACING;
     if (id == traceLLIntSlowPathID)
         return !!LLINT_TRACING;
+    if (id == traceWasmLLIntExecutionID)
+        return !!LLINT_TRACING;
     return false;
 }
 

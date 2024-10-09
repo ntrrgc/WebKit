@@ -73,6 +73,8 @@ public:
 
     static void destroy(Callee*);
 
+    void reportToVMsForDestruction();
+
 protected:
     JS_EXPORT_PRIVATE Callee(Wasm::CompilationMode);
     JS_EXPORT_PRIVATE Callee(Wasm::CompilationMode, size_t, std::pair<const Name*, RefPtr<NameSection>>&&);
@@ -390,10 +392,12 @@ public:
     {
         return adoptRef(*new BBQCallee(index, WTFMove(name), WTFMove(tierUpCount), savedFPWidth));
     }
+    ~BBQCallee();
 
     OSREntryCallee* osrEntryCallee() { return m_osrEntryCallee.get(); }
     void setOSREntryCallee(Ref<OSREntryCallee>&& osrEntryCallee, MemoryMode)
     {
+        ASSERT(!m_osrEntryCallee);
         m_osrEntryCallee = WTFMove(osrEntryCallee);
     }
 

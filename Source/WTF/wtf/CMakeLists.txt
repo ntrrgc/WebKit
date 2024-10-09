@@ -256,6 +256,7 @@ set(WTF_PUBLIC_HEADERS
     SchedulePair.h
     Scope.h
     ScopedLambda.h
+    ScopedPrintStream.h
     Seconds.h
     SegmentedVector.h
     SentinelLinkedList.h
@@ -303,6 +304,7 @@ set(WTF_PUBLIC_HEADERS
     TZoneMalloc.h
     TZoneMallocInlines.h
     TaggedArrayStoragePtr.h
+    TaggedPtr.h
     ThreadAssertions.h
     ThreadGroup.h
     ThreadMessage.h

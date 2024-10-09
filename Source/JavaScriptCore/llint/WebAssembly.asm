@@ -677,6 +677,19 @@ end
         addp constexpr Wasm::JITLessJSEntrypointCallee::SpillStackSpaceAligned, sp
     end
 
+    macro boxNativeCallee(callee, dest)
+        if JSVALUE64 and (ARM64 or ARM64E)
+            # NativeCallees are sometimes stored in ThreadSafeWeakOrStrongPtr, which relies on top byte ignore, so we need to strip the top byte on ARM64.
+            andp (constexpr CalleeBits::nativeCalleeTopByteMask), callee
+        end
+        leap WTFConfig + constexpr WTF::offsetOfWTFConfigLowestAccessibleAddress, dest
+        loadp [dest], dest
+        subp callee, dest, dest
+        if JSVALUE64
+            orp (constexpr JSValue::NativeCalleeTag), dest
+        end
+    end
+
     tagReturnAddress sp
     preserveCallerPCAndCFR()
     saveJSEntrypointInterpreterRegisters()
@@ -695,6 +708,7 @@ if ASSERT_ENABLED
 .ident_ok:
 end
 
+<<<<<<< HEAD
     # Allocate stack space (no stack check)
     loadi Wasm::JITLessJSEntrypointCallee::frameSize[ws0], ws1
     subp ws1, sp
@@ -703,6 +717,13 @@ if ASSERT_ENABLED
     repeat(macro (i)
         storep ws0, -i * SlotSize + constexpr Wasm::JITLessJSEntrypointCallee::RegisterStackSpaceAligned[sp]
     end)
+=======
+    boxNativeCallee(ws1, wa0)
+    storep wa0, Callee[cfr] # CalleeBits(JSEntrypointCallee*)
+if not JSVALUE64
+    move constexpr JSValue::NativeCalleeTag, wa0
+    storep wa0, TagOffset + Callee[cfr]
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
 end
 
     # Prepare frame

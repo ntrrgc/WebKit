@@ -33,8 +33,13 @@ namespace JSC {
 
 class LLIntOffsetsExtractor;
 
+<<<<<<< HEAD
 class NativeCallee : public ThreadSafeRefCounted<NativeCallee> {
     WTF_MAKE_TZONE_ALLOCATED(NativeCallee);
+=======
+class NativeCallee : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<NativeCallee> {
+    WTF_MAKE_COMPACT_TZONE_ALLOCATED(NativeCallee);
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
 public:
     enum class Category : uint8_t {
         InlineCache,

@@ -182,6 +182,11 @@ void BBQPlan::work(CompilationEffort effort)
         Locker locker { m_calleeGroup->m_lock };
 
         m_calleeGroup->setBBQCallee(locker, m_functionIndex, callee.copyRef());
+<<<<<<< HEAD
+=======
+        ASSERT(m_calleeGroup->replacement(locker, callee->index()) == callee.ptr());
+        m_calleeGroup->reportCallees(locker, callee.ptr(), function->outgoingJITDirectCallees);
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
 
         for (auto& call : callee->wasmToWasmCallsites()) {
             CodePtr<WasmEntryPtrTag> entrypoint;
@@ -197,8 +202,12 @@ void BBQPlan::work(CompilationEffort effort)
             MacroAssembler::repatchPointer(call.calleeLocation, CalleeBits::boxNativeCalleeIfExists(calleeCallee));
         }
 
+<<<<<<< HEAD
         m_calleeGroup->callsiteCollection().addCallsites(locker, *m_calleeGroup, callee->wasmToWasmCallsites());
         m_calleeGroup->callsiteCollection().updateCallsitesToCallUs(locker, *m_calleeGroup, CodeLocationLabel<WasmEntryPtrTag>(entrypoint), m_functionIndex, functionIndexSpace);
+=======
+        m_calleeGroup->updateCallsitesToCallUs(locker, CodeLocationLabel<WasmEntryPtrTag>(entrypoint), m_functionIndex);
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
 
         {
             if (Options::useWasmIPInt()) {
@@ -309,9 +318,15 @@ std::unique_ptr<InternalFunction> BBQPlan::compileFunction(uint32_t functionInde
     ASSERT_UNUSED(functionIndexSpace, m_moduleInformation->typeIndexFromFunctionIndexSpace(functionIndexSpace) == typeIndex);
     Expected<std::unique_ptr<InternalFunction>, String> parseAndCompileResult;
 
+<<<<<<< HEAD
 #if ENABLE(WEBASSEMBLY_BBQJIT)
     parseAndCompileResult = parseAndCompileBBQ(context, callee, function, signature, unlinkedWasmToWasmCalls, m_moduleInformation.get(), m_mode, functionIndex, m_hasExceptionHandlers, UINT32_MAX, tierUp);
 #endif
+=======
+    beginCompilerSignpost(callee);
+    parseAndCompileResult = parseAndCompileBBQ(context, callee, function, signature, unlinkedWasmToWasmCalls, m_moduleInformation.get(), m_mode, functionIndex, m_hasExceptionHandlers, UINT32_MAX);
+    endCompilerSignpost(callee);
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
 
     if (UNLIKELY(!parseAndCompileResult)) {
         Locker locker { m_lock };

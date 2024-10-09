@@ -1859,9 +1859,8 @@ public:
     void finalize();
 
     Vector<UnlinkedHandlerInfo>&& takeExceptionHandlers();
-
+    FixedBitVector&& takeDirectCallees();
     Vector<CCallHelpers::Label>&& takeCatchEntrypoints();
-
     Box<PCToCodeOriginMapBuilder> takePCToCodeOriginMapBuilder();
 
     std::unique_ptr<BBQDisassembler> takeDisassembler();
@@ -2228,6 +2227,7 @@ private:
     const ModuleInformation& m_info;
     MemoryMode m_mode;
     Vector<UnlinkedWasmToWasmCall>& m_unlinkedWasmToWasmCalls;
+    FixedBitVector m_directCallees;
     std::optional<bool> m_hasExceptionHandlers;
     TierUpCount* m_tierUp;
     FunctionParser<BBQJIT>* m_parser;

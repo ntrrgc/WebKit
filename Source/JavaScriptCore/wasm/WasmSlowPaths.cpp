@@ -35,6 +35,7 @@
 #include "JSWebAssemblyArray.h"
 #include "JSWebAssemblyException.h"
 #include "JSWebAssemblyInstance.h"
+#include "LLIntCommon.h"
 #include "LLIntData.h"
 #include "WasmBBQPlan.h"
 #include "WasmCallee.h"
@@ -118,7 +119,12 @@ static inline bool shouldJIT(Wasm::LLIntCallee* callee, RequiredWasmJIT required
     return true;
 }
 
+<<<<<<< HEAD
 static inline bool jitCompileAndSetHeuristics(Wasm::LLIntCallee* callee, JSWebAssemblyInstance* instance)
+=======
+enum class OSRFor { Call, Loop };
+static inline Wasm::JITCallee* jitCompileAndSetHeuristics(Wasm::LLIntCallee* callee, JSWebAssemblyInstance* instance, OSRFor osrFor)
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
 {
     ASSERT(!instance->module().moduleInformation().usesSIMD(callee->functionIndex()));
 
@@ -129,11 +135,28 @@ static inline bool jitCompileAndSetHeuristics(Wasm::LLIntCallee* callee, JSWebAs
     }
 
     MemoryMode memoryMode = instance->memory()->mode();
+<<<<<<< HEAD
     if (callee->replacement(memoryMode))  {
         dataLogLnIf(Options::verboseOSR(), "    Code was already compiled.");
         tierUpCounter.optimizeSoon();
         return true;
+=======
+    Wasm::CalleeGroup& calleeGroup = *instance->calleeGroup();
+    auto getReplacement = [&] () -> Wasm::JITCallee* {
+        Locker locker { calleeGroup.m_lock };
+        if (osrFor == OSRFor::Call)
+            return calleeGroup.replacement(locker, callee->index());
+        return calleeGroup.tryGetBBQCalleeForLoopOSR(locker, instance->vm(), callee->functionIndex());
+    };
+
+    if (auto* replacement = getReplacement()) {
+        dataLogLnIf(Options::verboseOSR(), "    Code was already compiled.");
+        // FIXME: This should probably be some optimizeNow() for calls or checkIfOptimizationThresholdReached() should have a different threshold for calls.
+        tierUpCounter.optimizeSoon();
+        return replacement;
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
     }
+
 
     bool compile = false;
     {
@@ -170,7 +193,11 @@ static inline bool jitCompileAndSetHeuristics(Wasm::LLIntCallee* callee, JSWebAs
         }
     }
 
+<<<<<<< HEAD
     return !!callee->replacement(memoryMode);
+=======
+    return getReplacement();
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
 }
 
 static inline std::optional<Wasm::Plan::Error> jitCompileSIMDFunction(Wasm::LLIntCallee* callee, JSWebAssemblyInstance* instance)
@@ -194,9 +221,23 @@ static inline std::optional<Wasm::Plan::Error> jitCompileSIMDFunction(Wasm::LLIn
         case Wasm::LLIntTierUpCounter::CompilationStatus::Compiling:
             Thread::yield();
             continue;
+<<<<<<< HEAD
         case Wasm::LLIntTierUpCounter::CompilationStatus::Compiled:
             RELEASE_ASSERT(!!callee->replacement(memoryMode));
             return std::nullopt;
+=======
+        case Wasm::LLIntTierUpCounter::CompilationStatus::Compiled: {
+            // We can't hold a tierUpCounter lock while holding the calleeGroup lock since calleeGroup could reset our counter while releasing BBQ code.
+            // Besides we're outside the critical section.
+            locker.unlockEarly();
+            {
+                Locker locker { calleeGroup.m_lock };
+                auto* replacement = calleeGroup.replacement(locker, callee->index());
+                RELEASE_ASSERT(replacement);
+                return replacement;
+            }
+        }
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
         }
     }
 
@@ -238,8 +279,13 @@ WASM_SLOW_PATH_DECL(prologue_osr)
 
     dataLogLnIf(Options::verboseOSR(), *callee, ": Entered prologue_osr with tierUpCounter = ", callee->tierUpCounter());
 
+<<<<<<< HEAD
     if (!jitCompileAndSetHeuristics(callee, instance))
         WASM_RETURN_TWO(nullptr, nullptr);
+=======
+    if (auto* replacement = jitCompileAndSetHeuristics(callee, instance, OSRFor::Call))
+        WASM_RETURN_TWO(replacement->entrypoint().taggedPtr(), nullptr);
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
 
     WASM_RETURN_TWO(callee->replacement(instance->memory()->mode())->entrypoint().taggedPtr(), nullptr);
 }
@@ -268,6 +314,7 @@ WASM_SLOW_PATH_DECL(loop_osr)
         if (!jitCompileAndSetHeuristics(callee, instance))
             WASM_RETURN_TWO(nullptr, nullptr);
 
+<<<<<<< HEAD
         Wasm::BBQCallee* bbqCallee;
         {
             Locker locker { instance->calleeGroup()->m_lock };
@@ -277,6 +324,15 @@ WASM_SLOW_PATH_DECL(loop_osr)
 
         size_t osrEntryScratchBufferSize = bbqCallee->osrEntryScratchBufferSize();
         RELEASE_ASSERT(osrEntryScratchBufferSize >= osrEntryData.values.size());
+=======
+    auto* bbqCallee = static_cast<Wasm::BBQCallee*>(jitCompileAndSetHeuristics(callee, instance, OSRFor::Loop));
+    if (!bbqCallee) {
+        dataLogLnIf(Options::verboseOSR(), "No BBQCallee bailing from loop OSR");
+        WASM_RETURN_TWO(nullptr, nullptr);
+    }
+
+    ASSERT(bbqCallee->compilationMode() == Wasm::CompilationMode::BBQMode);
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
 
         uintptr_t stackPointer = reinterpret_cast<uintptr_t>(currentStackPointer());
         ASSERT(bbqCallee->stackCheckSize());
@@ -366,6 +422,26 @@ WASM_SLOW_PATH_DECL(loop_osr)
 
         WASM_RETURN_TWO(nullptr, nullptr);
     }
+<<<<<<< HEAD
+=======
+
+    uint64_t* buffer = instance->vm().wasmContext.scratchBufferForSize(osrEntryScratchBufferSize);
+    if (!buffer) {
+        dataLogLnIf(Options::verboseOSR(), "Skipping BBQ loop tier up due to lack of scratch buffer");
+        WASM_RETURN_TWO(nullptr, nullptr);
+    }
+
+    uint32_t index = 0;
+    buffer[index ++] = osrEntryData.loopIndex; // First entry is the loop index.
+    for (VirtualRegister reg : osrEntryData.values)
+        buffer[index++] = READ(reg).encodedJSValue();
+
+    auto sharedLoopEntrypoint = bbqCallee->sharedLoopEntrypoint();
+    RELEASE_ASSERT(sharedLoopEntrypoint);
+
+    dataLogLnIf(Options::verboseOSR(), "Entering BBQ in loop tier up now.");
+    WASM_RETURN_TWO(buffer, sharedLoopEntrypoint->taggedPtr());
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
 }
 
 WASM_SLOW_PATH_DECL(epilogue_osr)
@@ -381,7 +457,7 @@ WASM_SLOW_PATH_DECL(epilogue_osr)
 
     dataLogLnIf(Options::verboseOSR(), *callee, ": Entered epilogue_osr with tierUpCounter = ", callee->tierUpCounter());
 
-    jitCompileAndSetHeuristics(callee, instance);
+    jitCompileAndSetHeuristics(callee, instance, OSRFor::Call);
     WASM_END_IMPL();
 }
 
@@ -409,11 +485,26 @@ WASM_SLOW_PATH_DECL(simd_go_straight_to_bbq_osr)
 }
 #endif
 
+#if LLINT_TRACING
+extern "C" void SYSV_ABI logWasmPrologue(uint64_t i, uint64_t* fp, uint64_t* sp)
+{
+    if (!Options::traceWasmLLIntExecution())
+        return;
+    CallFrame* callFrame = reinterpret_cast<CallFrame*>(fp);
+    dataLogLn("logWasmPrologue ", i, " ", RawPointer(fp), " ", RawPointer(sp));
+    dataLogLn("FP[+Callee] ", RawHex(fp[static_cast<int>(CallFrameSlot::callee)]));
+    dataLogLn("FP[+CodeBlock] ", RawHex(fp[static_cast<int>(CallFrameSlot::codeBlock)]));
+    dataLogLn("FP[+returnpc] ", RawHex(fp[static_cast<int>(OBJECT_OFFSETOF(CallerFrameAndPC, returnPC) / 8)]));
+    dataLogLn("FP[+callerFrame] ", RawHex(fp[static_cast<int>(OBJECT_OFFSETOF(CallerFrameAndPC, callerFrame) / 8)]));
+    dataLogLn("WasmCallee ", *static_cast<Wasm::Callee*>(callFrame->callee().asNativeCallee()));
+}
+#endif
+
 WASM_SLOW_PATH_DECL(trace)
 {
     UNUSED_PARAM(instance);
 
-    if (!Options::traceLLIntExecution())
+    if (!Options::traceWasmLLIntExecution())
         WASM_END_IMPL();
 
     WasmOpcodeID opcodeID = pc->opcodeID();

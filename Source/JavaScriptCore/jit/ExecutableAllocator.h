@@ -131,7 +131,13 @@ static ALWAYS_INLINE void* performJITMemcpy(void *dst, const void *src, size_t n
         RELEASE_ASSERT(reinterpret_cast<uint8_t*>(dst) + n <= endOfFixedExecutableMemoryPool());
 
 #if ENABLE(JIT_SCAN_ASSEMBLER_BUFFER_FOR_ZEROES)
+<<<<<<< HEAD
         auto checkForZeroes = [n] (const void* buffer_v) {
+=======
+        auto checkForZeroes = [dst, src, n] () {
+            if (UNLIKELY(Options::zeroExecutableMemoryOnFree()))
+                return;
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
             // On x86-64, the maximum immediate size is 8B, no opcodes/prefixes have 0x00
             // On other architectures this could be smaller
             constexpr size_t maxZeroByteRunLength = 16;

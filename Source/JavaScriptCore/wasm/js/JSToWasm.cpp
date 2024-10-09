@@ -508,9 +508,74 @@ std::shared_ptr<InternalFunction> createJSToWasmJITInterpreter()
 
 std::unique_ptr<InternalFunction> createJSToWasmWrapper(CCallHelpers& jit, JSEntrypointCallee& entryCallee, Callee* wasmCallee, const TypeDefinition& typeDefinition, Vector<UnlinkedWasmToWasmCall>* unlinkedWasmToWasmCalls, const ModuleInformation& info, MemoryMode mode, unsigned functionIndex)
 {
+<<<<<<< HEAD
     JIT_COMMENT(jit, "jsToWasm wrapper for wasm-function[", functionIndex, "] : ", typeDefinition);
     auto result = makeUnique<InternalFunction>();
     jit.emitFunctionPrologue();
+=======
+    return createJSToWasmJITShared();
+}
+
+static size_t trampolineReservedStackSize()
+{
+    // If we are jumping to the function which can have stack-overflow check,
+    // then, trampoline does not need to do the check again if it is smaller than a threshold.
+    // 1. Caller of this trampoline ensures that at least our stack is lower than softStackLimit.
+    // 2. Callee may omit stack check if the frame size is less than reservedZoneSize and it does not have a call.
+    // Based on that, trampoline between 1 and 2 can use (softReservedZoneSize - reservedZoneSize) / 2 size safely at least.
+    // Note that minimumReservedZoneSize is 16KB, and we ensure that softReservedZoneSize - reservedZoneSize is at least 16KB.
+    return (Options::softReservedZoneSize() - Options::reservedZoneSize()) / 2;
+}
+
+static RegisterAtOffsetList usedCalleeSaveRegisters(const Wasm::FunctionSignature& signature)
+{
+    // Pessimistically save callee saves in BoundsChecking mode since the LLInt always bounds checks
+    RegisterSetBuilder calleeSaves = RegisterSetBuilder::wasmPinnedRegisters();
+    // FIXME: Is it really worth considering functions that have void() signature? Are those actually common?
+    if (signature.argumentCount() || !signature.returnsVoid()) {
+        RegisterSetBuilder tagCalleeSaves = RegisterSetBuilder::vmCalleeSaveRegisters();
+        tagCalleeSaves.filter(RegisterSetBuilder::runtimeTagRegisters());
+        calleeSaves.merge(tagCalleeSaves);
+    }
+    return RegisterAtOffsetList { calleeSaves.buildAndValidate(), RegisterAtOffsetList::OffsetBaseType::FramePointerBased };
+}
+
+CodePtr<JSEntryPtrTag> FunctionSignature::jsToWasmICEntrypoint() const
+{
+    if (LIKELY(m_jsToWasmICCallee)) {
+        ASSERT(m_jsToWasmICCallee->jsEntrypoint());
+        return m_jsToWasmICCallee->jsEntrypoint();
+    }
+
+    if (Options::forceICFailure() || !Options::useJIT())
+        return nullptr;
+
+    Locker locker(m_jitCodeLock);
+    // Someone else could have been creating the code when we checked before and blocked us before getting here.
+    if (m_jsToWasmICCallee)
+        return m_jsToWasmICCallee->jsEntrypoint();
+
+    CCallHelpers jit;
+
+    JIT_COMMENT(jit, "jsCallICEntrypoint");
+
+    ASSERT(!m_jsToWasmICCallee);
+    Ref<JSToWasmICCallee> jsToWasmICCallee = JSToWasmICCallee::create(usedCalleeSaveRegisters(*this));
+    const RegisterAtOffsetList& registersToSpill = *jsToWasmICCallee->calleeSaveRegistersImpl();
+
+    const Wasm::WasmCallingConvention& wasmCC = Wasm::wasmCallingConvention();
+    Wasm::CallInformation wasmCallInfo = wasmCC.callInformationFor(*this);
+    if (wasmCallInfo.argumentsOrResultsIncludeV128)
+        return nullptr;
+    Wasm::CallInformation jsCallInfo = Wasm::jsCallingConvention().callInformationFor(*this, Wasm::CallRole::Callee);
+    RegisterAtOffsetList savedResultRegisters = wasmCallInfo.computeResultsOffsetList();
+
+    unsigned totalFrameSize = registersToSpill.sizeOfAreaInBytes();
+    totalFrameSize += sizeof(CPURegister); // Slot for the VM's previous wasm instance.
+    totalFrameSize += wasmCallInfo.headerAndArgumentStackSizeInBytes;
+    totalFrameSize += savedResultRegisters.sizeOfAreaInBytes();
+    totalFrameSize = WTF::roundUpToMultipleOf<stackAlignmentBytes()>(totalFrameSize);
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
 
     // |codeBlock| and |this| slots are already initialized by the caller of this function because it is JS->Wasm transition.
     jit.move(CCallHelpers::TrustedImmPtr(CalleeBits::boxNativeCallee(&entryCallee)), GPRInfo::nonPreservedNonReturnGPR);

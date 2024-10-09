@@ -34,6 +34,10 @@
 #include "WasmHandlerInfo.h"
 #include "WasmLLIntTierUpCounter.h"
 #include "WasmOps.h"
+<<<<<<< HEAD
+=======
+#include <wtf/FixedBitVector.h>
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
 #include <wtf/HashMap.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>
@@ -85,6 +89,7 @@ public:
     const Vector<uint64_t>& constantRegisters() const { return m_constants; }
     const WasmInstructionStream& instructions() const { return *m_instructions; }
     const BitVector& tailCallSuccessors() const { return m_tailCallSuccessors; }
+    FixedBitVector&& takeCallees() { return WTFMove(m_callees); }
     bool tailCallClobbersInstance() const { return m_tailCallClobbersInstance ; }
     void setTailCall(uint32_t, bool);
     void setTailCallClobbersInstance(bool value) { m_tailCallClobbersInstance  = value; }
@@ -151,6 +156,7 @@ private:
     HashMap<WasmInstructionStream::Offset, LLIntTierUpCounter::OSREntryData> m_tierUpCounter;
     Vector<JumpTable> m_jumpTables;
     Vector<UnlinkedHandlerInfo> m_exceptionHandlers;
+    FixedBitVector m_callees;
     BitVector m_tailCallSuccessors;
 };
 

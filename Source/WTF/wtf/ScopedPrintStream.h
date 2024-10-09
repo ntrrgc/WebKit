@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2024 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -20,36 +20,41 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
 #pragma once
 
-#if ENABLE(WEBASSEMBLY) && ENABLE(JIT)
+#include <wtf/StringPrintStream.h>
 
-#include "InternalFunction.h"
-#include "WasmFormat.h"
-#include "WasmMemory.h"
-#include "WasmModuleInformation.h"
-#include "WasmOMGIRGenerator.h"
-#include "WasmTypeDefinition.h"
-#include <wtf/Forward.h>
+namespace WTF {
 
-namespace JSC {
+// This class is intended for when you want to easily buffer and print a bunch of information
+// at the end of some scope/function.
+class ScopedPrintStream final : public PrintStream {
+public:
+    ScopedPrintStream(PrintStream& out = WTF::dataFile())
+        : m_out(out)
+    { }
 
-class CCallHelpers;
+    ~ScopedPrintStream() final
+    {
+        m_out.print(m_buffer.toCString());
+        m_out.flush();
+    }
 
-namespace Wasm {
+    void vprintf(const char* format, va_list argList) final WTF_ATTRIBUTE_PRINTF(2, 0)
+    {
+        m_buffer.vprintf(format, argList);
+    }
 
-struct CallInformation;
-class JSEntrypointCallee;
-class Module;
+    void reset() { m_buffer.reset(); }
 
-void marshallJSResult(CCallHelpers& jit, const TypeDefinition&, const CallInformation& wasmFrameConvention, const RegisterAtOffsetList& savedResultRegisters, CCallHelpers::JumpList& exceptionChecks);
-std::shared_ptr<InternalFunction> createJSToWasmJITInterpreterCrashForSIMDParameters();
-std::shared_ptr<InternalFunction> createJSToWasmJITInterpreter();
-std::unique_ptr<InternalFunction> createJSToWasmWrapper(CCallHelpers&, JSEntrypointCallee&, Callee*, const TypeDefinition&, Vector<UnlinkedWasmToWasmCall>*, const ModuleInformation&, MemoryMode, uint32_t functionIndex);
+private:
+    StringPrintStream m_buffer;
+    PrintStream& m_out;
+};
 
-} } // namespace JSC::Wasm
+} // namespace WTF
 
-#endif // ENABLE(WEBASSEMBLY) && ENABLE(JIT)
+using WTF::ScopedPrintStream;

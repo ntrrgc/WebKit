@@ -1257,7 +1257,11 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     wasm/WasmBranchHints.h
     wasm/WasmCallee.h
     wasm/WasmCalleeGroup.h
+<<<<<<< HEAD
     wasm/WasmCallsiteCollection.h
+=======
+    wasm/WasmCallingConvention.h
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
     wasm/WasmCapabilities.h
     wasm/WasmCompilationContext.h
     wasm/WasmCompilationMode.h

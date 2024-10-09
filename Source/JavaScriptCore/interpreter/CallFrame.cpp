@@ -285,7 +285,11 @@ void CallFrame::dump(PrintStream& out) const
         case NativeCallee::Category::Wasm: {
 #if ENABLE(WEBASSEMBLY)
             auto* wasmCallee = static_cast<Wasm::Callee*>(nativeCallee);
+<<<<<<< HEAD
             out.print(Wasm::makeString(wasmCallee->indexOrName()), " [", Wasm::makeString(wasmCallee->compilationMode()), "]");
+=======
+            out.print(Wasm::makeString(wasmCallee->indexOrName()), " [", wasmCallee->compilationMode(), " ", RawPointer(callee().rawPtr()), "]");
+>>>>>>> e9ced931afc7 (GC Wasm BBQ/OMG-OSR code)
             out.print("(JSWebAssemblyInstance: ", RawPointer(wasmInstance()), ")");
 #else
             out.print(RawPointer(returnPCForInspection()));
