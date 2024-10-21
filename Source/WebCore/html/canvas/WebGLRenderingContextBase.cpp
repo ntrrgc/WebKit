@@ -700,6 +700,8 @@ void WebGLRenderingContextBase::destroyGraphicsContextGL()
     removeActivityStateChangeObserver();
 
     if (m_context) {
+        // first release the big textures allocated for the FBOs
+        m_context->reshape(0,0);
         m_context->setClient(nullptr);
         m_context = nullptr;
         removeActiveContext(*this);
