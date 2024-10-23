@@ -56,7 +56,6 @@ public:
 
     void destroyJSWindowProxy(DOMWrapperWorld&);
 
-    ProxyMap::ValuesConstIteratorRange jsWindowProxies() const;
     Vector<JSC::Strong<JSWindowProxy>> jsWindowProxiesAsVector() const;
 
     WEBCORE_EXPORT ProxyMap releaseJSWindowProxies();
