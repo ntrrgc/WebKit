@@ -25,6 +25,8 @@
 
 #import "config.h"
 #import "Cookie.h"
+#import <pal/spi/cf/CFNetworkSPI.h>
+#import <wtf/cocoa/TypeCastsCocoa.h>
 
 // FIXME: Remove NS_ASSUME_NONNULL_BEGIN/END and all _Nullable annotations once we remove the NSHTTPCookie forward declaration below.
 NS_ASSUME_NONNULL_BEGIN
@@ -112,6 +114,7 @@ Cookie::Cookie(NSHTTPCookie *cookie)
     , value { cookie.value }
     , domain { cookie.domain }
     , path { cookie.path }
+    , partitionKey { cookie._storagePartition }
     , created { cookieCreated(cookie) }
     , expires { cookieExpiry(cookie) }
     , httpOnly { static_cast<bool>(cookie.HTTPOnly) }
@@ -146,6 +149,9 @@ Cookie::operator NSHTTPCookie * _Nullable () const
     if (!path.isNull())
         [properties setObject:(NSString *)path forKey:NSHTTPCookiePath];
 
+    if (!partitionKey.isNull())
+        [properties setObject:(NSString *)partitionKey forKey:@"StoragePartition"];
+
     if (!value.isNull())
         [properties setObject:(NSString *)value forKey:NSHTTPCookieValue];
 
@@ -165,7 +171,7 @@ Cookie::operator NSHTTPCookie * _Nullable () const
 
     if (session)
         [properties setObject:@YES forKey:NSHTTPCookieDiscard];
-    
+
     if (httpOnly)
         [properties setObject:@YES forKey:@"HttpOnly"];
 
@@ -176,7 +182,7 @@ Cookie::operator NSHTTPCookie * _Nullable () const
 
     return [NSHTTPCookie cookieWithProperties:properties];
 }
-    
+
 bool Cookie::operator==(const Cookie& other) const
 {
     ASSERT(!name.isHashTableDeletedValue());
@@ -186,7 +192,7 @@ bool Cookie::operator==(const Cookie& other) const
         return thisNull == otherNull;
     return [static_cast<NSHTTPCookie *>(*this) isEqual:other];
 }
-    
+
 unsigned Cookie::hash() const
 {
     ASSERT(!name.isHashTableDeletedValue());
