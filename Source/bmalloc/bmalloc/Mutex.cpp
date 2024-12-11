@@ -32,6 +32,7 @@
 #include <mach/thread_switch.h>
 #endif
 #include <thread>
+#include <unistd.h>
 
 namespace bmalloc {
 
@@ -41,7 +42,23 @@ static inline void yield()
     constexpr mach_msg_timeout_t timeoutInMS = 1;
     thread_switch(MACH_PORT_NULL, SWITCH_OPTION_DEPRESS, timeoutInMS);
 #else
-    sched_yield();
+    static size_t bmallocMicrosecondsSleep;
+    static std::once_flag onceFlag;
+    std::call_once(onceFlag, [] {
+        const char* env = getenv("WEBKIT_WPE_BMALLOC_MICROSECONDS_SLEEP");
+        if (env) {
+            int value;
+            if (sscanf(env, "%d", &value) == 1 && value > 0)
+                bmallocMicrosecondsSleep = value;
+        }
+    });
+    if (bmallocMicrosecondsSleep) {
+        // The use of sched_yield() can lead to a system hang when real time
+        // thread priorities are used, so use sleep in the absence of a better
+        // alternative.
+        usleep(bmallocMicrosecondsSleep);
+    } else
+        sched_yield();
 #endif
 }
 
