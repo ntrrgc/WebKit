@@ -123,7 +123,6 @@ private:
 
     bool requestClassicScript(const String& sourceURL);
     bool requestModuleScript(const TextPosition& scriptStartPosition);
-    bool requestImportMap(LocalFrame&, const String& sourceURL);
 
     virtual String sourceAttributeValue() const = 0;
     virtual String charsetAttributeValue() const = 0;

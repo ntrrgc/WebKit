@@ -42,7 +42,6 @@
 #include "IgnoreDestructiveWriteCountIncrementer.h"
 #include "InlineClassicScript.h"
 #include "LoadableClassicScript.h"
-#include "LoadableImportMap.h"
 #include "LoadableModuleScript.h"
 #include "LocalFrame.h"
 #include "MIMETypeRegistry.h"
@@ -262,11 +261,11 @@ bool ScriptElement::prepareScript(const TextPosition& scriptStartPosition)
         // If the element’s node document's acquiring import maps is false, then queue a task to fire an event named error at the element, and return.
         RefPtr frame { element->document().frame() };
         if (hasSourceAttribute()) {
-            if (!requestImportMap(*frame, sourceAttributeValue()))
-                return false;
-            potentiallyBlockRendering();
-        } else
-            frame->script().setPendingImportMaps();
+            element->document().eventLoop().queueTask(TaskSource::DOMManipulation, [this, element] {
+                dispatchErrorEvent();
+            });
+            return false;
+        }
         break;
     }
     }
@@ -395,39 +394,6 @@ bool ScriptElement::requestModuleScript(const TextPosition& scriptStartPosition)
     if (RefPtr frame = document->frame())
         frame->checkedScript()->loadModuleScript(script, sourceCode);
     return true;
-}
-
-bool ScriptElement::requestImportMap(LocalFrame& frame, const String& sourceURL)
-{
-    Ref element = this->element();
-    Ref document = element->document();
-
-    ASSERT(element->isConnected());
-    ASSERT(!m_loadableScript);
-    if (!StringView(sourceURL).containsOnly<isASCIIWhitespace<UChar>>()) {
-        Ref script = LoadableImportMap::create(element->nonce(), element->attributeWithoutSynchronization(HTMLNames::integrityAttr), referrerPolicy(),
-            element->attributeWithoutSynchronization(HTMLNames::crossoriginAttr), element->localName(), element->isInUserAgentShadowTree(), hasAsyncAttribute());
-
-        auto scriptURL = document->completeURL(sourceURL);
-        document->willLoadScriptElement(scriptURL);
-
-        if (!document->checkedContentSecurityPolicy()->allowNonParserInsertedScripts(scriptURL, URL(), m_startLineNumber, element->nonce(), String(), m_parserInserted))
-            return false;
-
-        frame.checkedScript()->setPendingImportMaps();
-        if (script->load(document, scriptURL)) {
-            m_loadableScript = WTFMove(script);
-            m_isExternalScript = true;
-        }
-    }
-
-    if (m_loadableScript)
-        return true;
-
-    document->checkedEventLoop()->queueTask(TaskSource::DOMManipulation, [this, element] {
-        dispatchErrorEvent();
-    });
-    return false;
 }
 
 void ScriptElement::executeClassicScript(const ScriptSourceCode& sourceCode)
@@ -582,10 +548,6 @@ void ScriptElement::executePendingScript(PendingScript& pendingScript)
     RefPtr<Document> document { &element().document() };
     if (document->identifier() != m_preparationTimeDocumentIdentifier) {
         document->addConsoleMessage(MessageSource::Security, MessageLevel::Error, "Not executing script because it moved between documents during fetching"_s);
-        if (loadableScript) {
-            if (auto* loadableImportMap = dynamicDowncast<LoadableImportMap>(loadableScript))
-                document = loadableImportMap->document();
-        }
     } else {
         if (loadableScript)
             executeScriptAndDispatchEvent(*loadableScript);
