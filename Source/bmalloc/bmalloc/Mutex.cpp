@@ -31,6 +31,7 @@
 #include <mach/mach_traps.h>
 #include <mach/thread_switch.h>
 #endif
+#include <cstring>
 #include <thread>
 #include <unistd.h>
 
@@ -46,7 +47,7 @@ static inline void yield()
     static std::once_flag onceFlag;
     std::call_once(onceFlag, [] {
         const char* env = getenv("WEBKIT_WPE_BMALLOC_MICROSECONDS_SLEEP");
-        if (env) {
+        if (env && env[strnlen(env, 5)] == '\0') {
             int value;
             if (sscanf(env, "%d", &value) == 1 && value > 0)
                 bmallocMicrosecondsSleep = value;
