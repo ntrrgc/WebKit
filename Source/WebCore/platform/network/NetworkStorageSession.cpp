@@ -33,7 +33,8 @@
 #include "NotImplemented.h"
 #include "PublicSuffixStore.h"
 #include "ResourceRequest.h"
-#include "RuntimeApplicationChecks.h"
+#include "ShouldPartitionCookie.h"
+#include "Site.h"
 #include <wtf/NeverDestroyed.h>
 #include <wtf/ProcessPrivilege.h>
 #include <wtf/RunLoop.h>
@@ -115,6 +116,19 @@ bool NetworkStorageSession::shouldBlockThirdPartyCookiesButKeepFirstPartyCookies
     return m_registrableDomainsToBlockButKeepCookiesFor.contains(registrableDomain);
 }
 
+#if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
+void NetworkStorageSession::setCookie(const URL& firstParty, const Cookie& cookie, ShouldPartitionCookie shouldPartitionCookie)
+{
+    if (!isOptInCookiePartitioningEnabled() || shouldPartitionCookie != ShouldPartitionCookie::Yes || !cookie.partitionKey.isEmpty()) {
+        setCookie(cookie);
+        return;
+    }
+    auto partitionedCookie = cookie;
+    partitionedCookie.partitionKey = cookiePartitionIdentifier(firstParty);
+    setCookie(partitionedCookie);
+}
+#endif
+
 #if !PLATFORM(COCOA)
 void NetworkStorageSession::setAllCookiesToSameSiteStrict(const RegistrableDomain&, CompletionHandler<void()>&& completionHandler)
 {
@@ -135,7 +149,7 @@ bool NetworkStorageSession::shouldBlockCookies(const ResourceRequest& request, s
 {
     return shouldBlockCookies(request.firstPartyForCookies(), request.url(), frameID, pageID, shouldRelaxThirdPartyCookieBlocking);
 }
-    
+
 bool NetworkStorageSession::shouldBlockCookies(const URL& firstPartyForCookies, const URL& resource, std::optional<FrameIdentifier> frameID, std::optional<PageIdentifier> pageID, ShouldRelaxThirdPartyCookieBlocking shouldRelaxThirdPartyCookieBlocking) const
 {
     if (shouldRelaxThirdPartyCookieBlocking == ShouldRelaxThirdPartyCookieBlocking::Yes)
@@ -284,7 +298,7 @@ Vector<String> NetworkStorageSession::getAllStorageAccessEntries() const
     }
     return entries;
 }
-    
+
 void NetworkStorageSession::grantStorageAccess(const RegistrableDomain& resourceDomain, const RegistrableDomain& firstPartyDomain, std::optional<FrameIdentifier> frameID, PageIdentifier pageID)
 {
     if (NetworkStorageSession::loginDomainMatchesRequestingDomain(firstPartyDomain, resourceDomain)) {
@@ -352,7 +366,7 @@ void NetworkStorageSession::setCacheMaxAgeCapForPrevalentResources(Seconds secon
 {
     m_cacheMaxAgeCapForPrevalentResources = seconds;
 }
-    
+
 void NetworkStorageSession::resetCacheMaxAgeCapForPrevalentResources()
 {
     m_cacheMaxAgeCapForPrevalentResources = std::nullopt;

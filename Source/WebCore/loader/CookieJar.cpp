@@ -193,7 +193,7 @@ bool CookieJar::getRawCookies(const Document& document, const URL& url, Vector<C
     return false;
 }
 
-void CookieJar::setRawCookie(const Document&, const Cookie& cookie)
+void CookieJar::setRawCookie(const Document&, const Cookie& cookie, ShouldPartitionCookie)
 {
     if (CheckedPtr session = protectedStorageSessionProvider()->storageSession())
         session->setCookie(cookie);

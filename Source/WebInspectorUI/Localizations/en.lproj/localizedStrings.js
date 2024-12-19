@@ -1262,6 +1262,7 @@ localizedStrings["Paints"] = "Paints";
 localizedStrings["Paints @ Column title"] = "Paints";
 localizedStrings["Parent"] = "Parent";
 localizedStrings["Partial Garbage Collection"] = "Partial Garbage Collection";
+localizedStrings["Partition Key"] = "Partition Key";
 /* Title of icon indicating that the selected audit passed with no issues. */
 localizedStrings["Pass @ Audit Tab - Test Case"] = "Pass";
 localizedStrings["Passive"] = "Passive";

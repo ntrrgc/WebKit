@@ -46,11 +46,12 @@ struct CookieStoreGetOptions;
 class NetworkStorageSession;
 class StorageSessionProvider;
 struct SameSiteInfo;
+enum class ShouldPartitionCookie : bool;
 
 class WEBCORE_EXPORT CookieJar : public RefCounted<CookieJar>, public CanMakeWeakPtr<CookieJar> {
 public:
     static Ref<CookieJar> create(Ref<StorageSessionProvider>&&);
-    
+
     static CookieRequestHeaderFieldProxy cookieRequestHeaderFieldProxy(const Document&, const URL&);
 
     String cookieRequestHeaderFieldValue(Document&, const URL&) const;
@@ -62,8 +63,8 @@ public:
     virtual bool cookiesEnabled(Document&);
     virtual void remoteCookiesEnabled(const Document&, CompletionHandler<void(bool)>&&) const;
     virtual std::pair<String, SecureCookiesAccessed> cookieRequestHeaderFieldValue(const URL& firstParty, const SameSiteInfo&, const URL&, std::optional<FrameIdentifier>, std::optional<PageIdentifier>, IncludeSecureCookies) const;
-    virtual bool getRawCookies(const Document&, const URL&, Vector<Cookie>&) const;
-    virtual void setRawCookie(const Document&, const Cookie&);
+    virtual bool getRawCookies(Document&, const URL&, Vector<Cookie>&) const;
+    virtual void setRawCookie(const Document&, const Cookie&, ShouldPartitionCookie);
     virtual void deleteCookie(const Document&, const URL&, const String& cookieName, CompletionHandler<void()>&&);
 
     virtual void getCookiesAsync(Document&, const URL&, const CookieStoreGetOptions&, CompletionHandler<void(std::optional<Vector<Cookie>>&&)>&&) const;
