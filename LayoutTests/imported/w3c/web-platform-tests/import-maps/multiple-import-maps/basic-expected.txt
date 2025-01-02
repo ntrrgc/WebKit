@@ -1,3 +1,7 @@
 
+<<<<<<< HEAD
 PASS Second import map should be rejected
+=======
+PASS Second import map should be used for resolution
+>>>>>>> c363df60bf58 (Implement multiple import maps)
 

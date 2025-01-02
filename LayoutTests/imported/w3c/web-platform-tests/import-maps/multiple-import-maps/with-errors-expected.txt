@@ -1,4 +1,7 @@
-CONSOLE MESSAGE: ImportMap has invalid JSON
 
+<<<<<<< HEAD
 PASS Second import map should be rejected after an import map with errors
+=======
+PASS Second import map should be used for resolution even after an import map with errors
+>>>>>>> c363df60bf58 (Implement multiple import maps)
 
