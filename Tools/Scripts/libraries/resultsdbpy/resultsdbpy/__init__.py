@@ -82,7 +82,8 @@ if sys.version_info < (3, 8):
     AutoInstall.register(Package('selenium', Version(3, 141, 0)))
 else:
     if sys.platform == 'linux':
-        AutoInstall.register(Package('selenium', Version(4, 19, 0), wheel=True))
+        AutoInstall.register(Package('selenium', Version(4, 24, 0), wheel=True, implicit_deps=[
+            Package('websocket', Version(1, 8, 0), pypi_name='websocket-client')]))
     else:
         AutoInstall.register(Package('selenium', Version(4, 12, 0), wheel=True))
 AutoInstall.register(Package('service_identity', Version(21, 1, 0), pypi_name='service-identity'))
