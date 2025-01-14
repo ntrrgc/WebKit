@@ -30,5 +30,3 @@
 #undef delete
 #include <wtf/FastMalloc.h>
 #endif
-
-#include <wtf/DisallowCType.h>
