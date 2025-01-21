@@ -37,7 +37,7 @@ using BitSetWordType = std::conditional_t<(size <= 32 && sizeof(UCPURegister) > 
 template<size_t bitSetSize, typename PassedWordType = BitSetWordType<bitSetSize>>
 class BitSet final {
     WTF_MAKE_FAST_ALLOCATED;
-    
+
 public:
     using WordType = PassedWordType;
 
@@ -65,15 +65,15 @@ public:
     constexpr size_t count(size_t start = 0) const;
     constexpr bool isEmpty() const;
     constexpr bool isFull() const;
-    
+
     constexpr void merge(const BitSet&);
     constexpr void filter(const BitSet&);
     constexpr void exclude(const BitSet&);
 
     constexpr void concurrentFilter(const BitSet&);
-    
+
     constexpr bool subsumes(const BitSet&) const;
-    
+
     // If the lambda returns an IterationStatus, we use it. The lambda can also return
     // void, in which case, we'll iterate every set bit.
     template<typename Func>
@@ -98,29 +98,29 @@ public:
             , m_index(index)
         {
         }
-        
+
         constexpr size_t operator*() const { return m_index; }
-        
+
         iterator& operator++()
         {
             m_index = m_bitSet->findBit(m_index + 1, true);
             return *this;
         }
-        
+
         constexpr bool operator==(const iterator& other) const
         {
             return m_index == other.m_index;
         }
-        
+
     private:
         const BitSet* m_bitSet;
         size_t m_index;
     };
-    
+
     // Use this to iterate over set bits.
     constexpr iterator begin() const { return iterator(*this, findBit(0, true)); }
     constexpr iterator end() const { return iterator(*this, bitSetSize); }
-    
+
     constexpr void mergeAndClear(BitSet&);
     constexpr void setAndClear(BitSet&);
 
@@ -136,10 +136,13 @@ public:
 
     void dump(PrintStream& out) const;
 
-    WordType* storage() { return bits.data(); }
-    const WordType* storage() const { return bits.data(); }
+    std::span<WordType> storage() { return bits; }
+    std::span<const WordType> storage() const { return bits; }
 
     constexpr size_t storageLengthInBytes() { return sizeof(bits); }
+
+    std::span<uint8_t> storageBytes() { return unsafeMakeSpan(reinterpret_cast<uint8_t*>(bits.data()), storageLengthInBytes()); }
+    std::span<const uint8_t> storageBytes() const { return unsafeMakeSpan(reinterpret_cast<const uint8_t*>(bits.data()), storageLengthInBytes()); }
 
 private:
     void cleanseLastWord();
@@ -211,7 +214,7 @@ ALWAYS_INLINE constexpr bool BitSet<bitSetSize, WordType>::concurrentTestAndSet(
         [&] (WordType& value) -> bool {
             if (value & mask)
                 return false;
-            
+
             value |= mask;
             return true;
         });
@@ -230,7 +233,7 @@ ALWAYS_INLINE constexpr bool BitSet<bitSetSize, WordType>::concurrentTestAndClea
         [&] (WordType& value) -> bool {
             if (!(value & mask))
                 return false;
-            
+
             value &= ~mask;
             return true;
         });
@@ -284,22 +287,22 @@ inline constexpr size_t BitSet<bitSetSize, WordType>::nextPossiblyUnset(size_t s
 template<size_t bitSetSize, typename WordType>
 inline constexpr int64_t BitSet<bitSetSize, WordType>::findRunOfZeros(size_t runLength) const
 {
-    if (!runLength) 
-        runLength = 1; 
-     
+    if (!runLength)
+        runLength = 1;
+
     if (runLength > bitSetSize)
         return -1;
 
     for (size_t i = 0; i <= (bitSetSize - runLength) ; i++) {
-        bool found = true; 
-        for (size_t j = i; j <= (i + runLength - 1) ; j++) { 
+        bool found = true;
+        for (size_t j = i; j <= (i + runLength - 1) ; j++) {
             if (get(j)) {
-                found = false; 
+                found = false;
                 break;
             }
         }
-        if (found)  
-            return i; 
+        if (found)
+            return i;
     }
     return -1;
 }
@@ -495,7 +498,7 @@ inline constexpr size_t BitSet<bitSetSize, WordType>::findBit(size_t startIndex,
     WordType skipValue = -(static_cast<WordType>(value) ^ 1);
     size_t wordIndex = startIndex / wordSize;
     size_t startIndexInWord = startIndex - wordIndex * wordSize;
-    
+
     while (wordIndex < words) {
         WordType word = bits[wordIndex];
         if (word != skipValue) {
@@ -503,11 +506,11 @@ inline constexpr size_t BitSet<bitSetSize, WordType>::findBit(size_t startIndex,
             if (findBitInWord(word, index, wordSize, value))
                 return wordIndex * wordSize + index;
         }
-        
+
         wordIndex++;
         startIndexInWord = 0;
     }
-    
+
     return bitSetSize;
 }
 
