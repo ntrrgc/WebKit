@@ -21,7 +21,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #pragma once
@@ -145,6 +145,20 @@ inline bool is8ByteAligned(void* p)
 }
 
 template<typename ToType, typename FromType>
+constexpr inline ToType bitwise_cast(FromType from)
+{
+    static_assert(sizeof(FromType) == sizeof(ToType), "bitwise_cast size of FromType and ToType must be equal!");
+#if COMPILER_SUPPORTS(BUILTIN_IS_TRIVIALLY_COPYABLE)
+    // Not all recent STL implementations support the std::is_trivially_copyable type trait. Work around this by only checking on toolchains which have the equivalent compiler intrinsic.
+    static_assert(__is_trivially_copyable(ToType), "bitwise_cast of non-trivially-copyable type!");
+    static_assert(__is_trivially_copyable(FromType), "bitwise_cast of non-trivially-copyable type!");
+#endif
+    typename std::remove_const<ToType>::type to { };
+    std::memcpy(static_cast<void*>(&to), static_cast<void*>(&from), sizeof(to));
+    return to;
+}
+
+template<typename ToType, typename FromType>
 inline ToType safeCast(FromType value)
 {
     RELEASE_ASSERT(isInBounds<ToType>(value));
@@ -264,7 +278,7 @@ inline ArrayElementType* binarySearchImpl(ArrayType& array, size_t size, KeyType
     while (size > 1) {
         size_t pos = (size - 1) >> 1;
         auto val = extractKey(&array[offset + pos]);
-        
+
         if (val == key)
             return &array[offset + pos];
         // The item we are looking for is smaller than the item being check; reduce the value of 'size',
@@ -279,10 +293,10 @@ inline ArrayElementType* binarySearchImpl(ArrayType& array, size_t size, KeyType
 
         ASSERT(mode != KeyMustBePresentInArray || size);
     }
-    
+
     if (mode == KeyMightNotBePresentInArray && !size)
         return 0;
-    
+
     ArrayElementType* result = &array[offset];
 
     if (mode == KeyMightNotBePresentInArray && key != extractKey(result))
@@ -423,7 +437,7 @@ struct Visitor : Visitor<A>, Visitor<B...> {
     using Visitor<A>::operator ();
     using Visitor<B...>::operator ();
 };
-  
+
 template <class A>
 struct Visitor<A> : A {
     Visitor(A a)
@@ -433,7 +447,7 @@ struct Visitor<A> : A {
 
     using A::operator();
 };
- 
+
 template <class... F>
 Visitor<F...> makeVisitor(F... f)
 {
@@ -516,7 +530,7 @@ IteratorTypeDst mergeDeduplicatedSorted(IteratorTypeLeft leftBegin, IteratorType
     IteratorTypeLeft leftIter = leftBegin;
     IteratorTypeRight rightIter = rightBegin;
     IteratorTypeDst dstIter = dstBegin;
-    
+
     if (leftIter < leftEnd && rightIter < rightEnd) {
         for (;;) {
             auto left = *leftIter;
@@ -540,12 +554,12 @@ IteratorTypeDst mergeDeduplicatedSorted(IteratorTypeLeft leftBegin, IteratorType
             }
         }
     }
-    
+
     while (leftIter < leftEnd)
         *dstIter++ = *leftIter++;
     while (rightIter < rightEnd)
         *dstIter++ = *rightIter++;
-    
+
     return dstIter;
 }
 
@@ -659,7 +673,7 @@ template<typename Iterator, typename Predicate> constexpr bool allOfConstExpr(It
     return true;
 }
 
-template<typename OptionalType, class Callback> typename OptionalType::value_type valueOrCompute(OptionalType optional, Callback callback) 
+template<typename OptionalType, class Callback> typename OptionalType::value_type valueOrCompute(OptionalType optional, Callback callback)
 {
     return optional ? *optional : callback();
 }
@@ -832,6 +846,7 @@ using WTF::approximateBinarySearch;
 using WTF::asBytes;
 using WTF::asWritableBytes;
 using WTF::binarySearch;
+using WTF::bitwise_cast;
 using WTF::byteCast;
 using WTF::callStatelessLambda;
 using WTF::checkAndSet;

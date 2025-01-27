@@ -118,6 +118,7 @@ macro(_WEBKIT_TARGET _target)
     target_sources(${_target} PRIVATE
         ${${_target}_HEADERS}
         ${${_target}_SOURCES}
+        ${${_target}_C_SOURCES}
     )
 
     if (PLAYSTATION AND CMAKE_GENERATOR MATCHES "Visual Studio")

@@ -352,7 +352,7 @@ template<bool characterPredicate(UChar)> void reverseSkipWhile(const UChar*& pos
 template<typename CharacterType> bool skipExactlyIgnoringASCIICase(const CharacterType*& position, const CharacterType* end, ASCIILiteral literal)
 {
     auto literalLength = literal.length();
-    
+
     if (position + literalLength > end)
         return false;
     if (!equalLettersIgnoringASCIICaseWithLength(std::span { position, literalLength }, literal.span8(), literalLength))

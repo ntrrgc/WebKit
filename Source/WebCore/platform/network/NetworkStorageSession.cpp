@@ -34,7 +34,6 @@
 #include "PublicSuffixStore.h"
 #include "ResourceRequest.h"
 #include "ShouldPartitionCookie.h"
-#include "Site.h"
 #include <wtf/NeverDestroyed.h>
 #include <wtf/ProcessPrivilege.h>
 #include <wtf/RunLoop.h>

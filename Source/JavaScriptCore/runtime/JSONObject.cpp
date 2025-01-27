@@ -1300,13 +1300,14 @@ void FastStringifier<CharType, bufferMode>::append(JSValue value)
             return;
         }
         auto output = bufferSpan().subspan(m_length + 1);
+        auto outputData = output.data();
         if constexpr (sizeof(CharType) == 2) {
             if (string.data.is8Bit())
-                WTF::appendEscapedJSONStringContent(output, string.data.span8());
+                WTF::appendEscapedJSONStringContent(outputData, string.data.span8());
             else
-                WTF::appendEscapedJSONStringContent(output, string.data.span16());
+                WTF::appendEscapedJSONStringContent(outputData, string.data.span16());
         } else
-            WTF::appendEscapedJSONStringContent(output, string.data.span8());
+            WTF::appendEscapedJSONStringContent(outputData, string.data.span8());
         consume(output) = '"';
         m_length = output.data() - buffer();
         return;

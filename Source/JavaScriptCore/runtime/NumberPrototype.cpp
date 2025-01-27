@@ -409,7 +409,7 @@ JSC_DEFINE_HOST_FUNCTION(numberProtoFuncToExponential, (JSGlobalObject* globalOb
 
     // Round if the argument is not undefined, always format as exponential.
     NumberToStringBuffer buffer;
-    DoubleConversionStringBuilder builder { std::span<char> { buffer } };
+    DoubleConversionStringBuilder builder { &buffer[0], sizeof(buffer) };
     builder.Reset();
     if (arg.isUndefined())
         WTF::dragonbox::ToExponential(x, &builder);
@@ -417,7 +417,7 @@ JSC_DEFINE_HOST_FUNCTION(numberProtoFuncToExponential, (JSGlobalObject* globalOb
         const DoubleToStringConverter& converter = DoubleToStringConverter::EcmaScriptConverter();
         converter.ToExponential(x, decimalPlaces, &builder);
     }
-    return JSValue::encode(jsString(vm, String { builder.Finalize() }));
+    return JSValue::encode(jsString(vm, String::fromLatin1(builder.Finalize())));
 }
 
 // toFixed converts a number to a string, always formatting as an a decimal fraction.
