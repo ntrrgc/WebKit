@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 1999-2000 Harri Porten (porten@kde.org)
  *  Copyright (C) 2001 Peter Kelly (pmk@post.com)
- *  Copyright (C) 2003-2021 Apple Inc. All rights reserved.
+ *  Copyright (C) 2003-2024 Apple Inc. All rights reserved.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -124,7 +124,7 @@ public:
     
     void prepareForConservativeScan();
 
-    typedef HashSet<MarkedBlock*>::iterator BlockIterator;
+    typedef UncheckedKeyHashSet<MarkedBlock*>::iterator BlockIterator;
 
     template<typename Functor> void forEachLiveCell(HeapIterationScope&, const Functor&);
     template<typename Functor> void forEachDeadCell(HeapIterationScope&, const Functor&);
@@ -138,6 +138,9 @@ public:
     void didAddBlock(MarkedBlock::Handle*);
     void didConsumeFreeList(MarkedBlock::Handle*);
     void didAllocateInBlock(MarkedBlock::Handle*);
+
+    // FIXME: rdar://139998916
+    MarkedBlock::Handle* findMarkedBlockHandleDebug(MarkedBlock*);
 
     void beginMarking();
     void endMarking();
@@ -159,7 +162,7 @@ public:
     const Vector<PreciseAllocation*>& preciseAllocations() const { return m_preciseAllocations; }
     unsigned preciseAllocationsNurseryOffset() const { return m_preciseAllocationsNurseryOffset; }
     unsigned preciseAllocationsOffsetForThisCollection() const { return m_preciseAllocationsOffsetForThisCollection; }
-    HashSet<HeapCell*>* preciseAllocationSet() const { return m_preciseAllocationSet.get(); }
+    UncheckedKeyHashSet<HeapCell*>* preciseAllocationSet() const { return m_preciseAllocationSet.get(); }
 
     void enablePreciseAllocationTracking();
     
@@ -203,7 +206,7 @@ private:
 
     Vector<Subspace*> m_subspaces;
 
-    std::unique_ptr<HashSet<HeapCell*>> m_preciseAllocationSet;
+    std::unique_ptr<UncheckedKeyHashSet<HeapCell*>> m_preciseAllocationSet;
     Vector<PreciseAllocation*> m_preciseAllocations;
     unsigned m_preciseAllocationsNurseryOffset { 0 };
     unsigned m_preciseAllocationsOffsetForThisCollection { 0 };

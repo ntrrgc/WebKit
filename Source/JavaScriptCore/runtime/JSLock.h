@@ -55,23 +55,9 @@ class VM;
 class JSGlobalObject;
 class JSLock;
 
-<<<<<<< HEAD
-// This class is used to protect the initialization of the legacy single 
-// shared VM.
-class GlobalJSLock {
-    WTF_MAKE_NONCOPYABLE(GlobalJSLock);
-public:
-    JS_EXPORT_PRIVATE GlobalJSLock();
-    JS_EXPORT_PRIVATE ~GlobalJSLock();
-private:
-    static Lock s_sharedInstanceMutex;
-};
-
-=======
 // FIXME: We should either have a specialization of WTF::Locker for JSLock or only allow using JSLockHolder.
 // It's weird that WTF::Locker<JSLock> doesn't ref() the VM for the lifetime of the lock and it's unclear
 // there's any noticable performance difference.
->>>>>>> 596c3527f5dd (Make [JSManagedValue initWithValue:] more robust against clients using it from non-main threads)
 class JSLockHolder {
 public:
     JS_EXPORT_PRIVATE JSLockHolder(VM*);

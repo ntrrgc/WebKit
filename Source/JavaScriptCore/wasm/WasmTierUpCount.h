@@ -76,7 +76,7 @@ public:
 
     void optimizeAfterWarmUp(FunctionCodeIndex functionIndex)
     {
-        dataLogLnIf(Options::verboseOSR(), functionIndex, ": OMG-optimizing after warm-up.");
+        dataLogLnIf(Options::verboseOSR(), "\t[", functionIndex, "] OMG-optimizing after warm-up.");
         setNewThreshold(Options::thresholdForOMGOptimizeAfterWarmUp());
     }
 
@@ -145,4 +145,4 @@ public:
     
 } } // namespace JSC::Wasm
 
-#endif // ENABLE(WEBASSEMBLY_OMGJIT)
+#endif // ENABLE(WEBASSEMBLY_OMGJIT) || ENABLE(WEBASSEMBLY_BBQJIT)

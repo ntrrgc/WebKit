@@ -34,6 +34,8 @@
 #include <wtf/text/StringBuilder.h>
 #include <wtf/text/WTFString.h>
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+
 namespace JSC { namespace Yarr {
 
 enum class CreateDisjunctionPurpose : uint8_t { NotForNextAlternative, ForNextAlternative };
@@ -67,7 +69,7 @@ private:
     };
 
     class NamedCaptureGroups {
-        typedef HashSet<String> GroupNameHashSet;
+        typedef UncheckedKeyHashSet<String> GroupNameHashSet;
 
     public:
         NamedCaptureGroups()
@@ -2098,7 +2100,7 @@ private:
     bool m_kIdentityEscapeSeen { false };
     Vector<ParenthesesType, 16> m_parenthesesStack;
     NamedCaptureGroups m_namedCaptureGroups;
-    HashSet<String> m_forwardReferenceNames;
+    UncheckedKeyHashSet<String> m_forwardReferenceNames;
 
     // Derived by empirical testing of compile time in PCRE and WREC.
     static constexpr unsigned MAX_PATTERN_SIZE = 1024 * 1024;
@@ -2191,3 +2193,5 @@ ErrorCode parse(Delegate& delegate, const StringView pattern, CompileMode compil
 }
 
 } } // namespace JSC::Yarr
+
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 1999-2002 Harri Porten (porten@kde.org)
  *  Copyright (C) 2001 Peter Kelly (pmk@post.com)
- *  Copyright (C) 2003-2023 Apple Inc. All rights reserved.
+ *  Copyright (C) 2003-2024 Apple Inc. All rights reserved.
  *  Copyright (C) 2007 Cameron Zwarich (cwzwarich@uwaterloo.ca)
  *  Copyright (C) 2007 Maks Orlovich
  *
@@ -46,7 +46,10 @@
 #include <wtf/Assertions.h>
 #include <wtf/HexNumber.h>
 #include <wtf/dtoa.h>
+#include <wtf/text/ParsingUtilities.h>
 #include <wtf/text/StringBuilder.h>
+
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace JSC {
 
@@ -76,7 +79,7 @@ static JSValue encode(JSGlobalObject* globalObject, const WTF::BitSet<256>& doNo
         return JSC::throwException(globalObject, scope, createURIError(globalObject, "String contained an illegal UTF-16 sequence."_s));
     };
 
-    StringBuilder builder(StringBuilder::OverflowHandler::RecordOverflow);
+    StringBuilder builder(OverflowPolicy::RecordOverflow);
     builder.reserveCapacity(characters.size());
 
     // 4. Repeat
@@ -161,7 +164,7 @@ static JSValue decode(JSGlobalObject* globalObject, std::span<const CharType> ch
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    StringBuilder builder(StringBuilder::OverflowHandler::RecordOverflow);
+    StringBuilder builder(OverflowPolicy::RecordOverflow);
     size_t k = 0;
     UChar u = 0;
     while (k < characters.size()) {
@@ -259,12 +262,11 @@ template <typename CharType>
 static double jsBinaryIntegerLiteral(std::span<const CharType>& data)
 {
     // Binary number.
-    data = data.subspan(2);
+    skip(data, 2);
     auto firstDigitPosition = data;
     double number = 0;
     while (true) {
-        number = number * 2 + (data.front() - '0');
-        data = data.subspan(1);
+        number = number * 2 + (consume(data) - '0');
         if (data.empty())
             break;
         if (!isASCIIBinaryDigit(data.front()))
@@ -281,12 +283,11 @@ template <typename CharType>
 static double jsOctalIntegerLiteral(std::span<const CharType>& data)
 {
     // Octal number.
-    data = data.subspan(2);
+    skip(data, 2);
     auto firstDigitPosition = data;
     double number = 0;
     while (true) {
-        number = number * 8 + (data.front() - '0');
-        data = data.subspan(1);
+        number = number * 8 + (consume(data) - '0');
         if (data.empty())
             break;
         if (!isASCIIOctalDigit(data.front()))
@@ -303,12 +304,11 @@ template <typename CharType>
 static double jsHexIntegerLiteral(std::span<const CharType>& data)
 {
     // Hex number.
-    data = data.subspan(2);
+    skip(data, 2);
     auto firstDigitPosition = data;
     double number = 0;
     while (true) {
-        number = number * 16 + toASCIIHexValue(data.front());
-        data = data.subspan(1);
+        number = number * 16 + toASCIIHexValue(consume(data));
         if (data.empty())
             break;
         if (!isASCIIHexDigit(data.front()))
@@ -329,7 +329,7 @@ static double jsStrDecimalLiteral(std::span<const CharType>& data)
     size_t parsedLength;
     double number = parseDouble(data, parsedLength);
     if (parsedLength) {
-        data = data.subspan(parsedLength);
+        skip(data, parsedLength);
         return number;
     }
 
@@ -337,21 +337,21 @@ static double jsStrDecimalLiteral(std::span<const CharType>& data)
     switch (data.front()) {
     case 'I':
         if (isInfinity(data)) {
-            data = data.subspan(SizeOfInfinity);
+            skip(data, SizeOfInfinity);
             return std::numeric_limits<double>::infinity();
         }
         break;
 
     case '+':
         if (isInfinity(data.subspan(1))) {
-            data = data.subspan(SizeOfInfinity + 1);
+            skip(data, SizeOfInfinity + 1);
             return std::numeric_limits<double>::infinity();
         }
         break;
 
     case '-':
         if (isInfinity(data.subspan(1))) {
-            data = data.subspan(SizeOfInfinity + 1);
+            skip(data, SizeOfInfinity + 1);
             return -std::numeric_limits<double>::infinity();
         }
         break;
@@ -365,10 +365,7 @@ template <typename CharacterType>
 static double toDouble(std::span<const CharacterType> characters)
 {
     // Skip leading white space.
-    for (; !characters.empty(); characters = characters.subspan(1)) {
-        if (!isStrWhiteSpace(characters.front()))
-            break;
-    }
+    skipWhile<isStrWhiteSpace>(characters);
 
     // Empty string.
     if (characters.empty())
@@ -388,10 +385,8 @@ static double toDouble(std::span<const CharacterType> characters)
         number = jsStrDecimalLiteral(characters);
 
     // Allow trailing white space.
-    for (; !characters.empty(); characters = characters.subspan(1)) {
-        if (!isStrWhiteSpace(characters.front()))
-            break;
-    }
+    skipWhile<isStrWhiteSpace>(characters);
+
     if (!characters.empty())
         return PNaN;
 
@@ -443,10 +438,7 @@ static double parseFloat(StringView s)
         auto data = s.span8();
 
         // Skip leading white space.
-        for (; !data.empty(); data = data.subspan(1)) {
-            if (!isStrWhiteSpace(data.front()))
-                break;
-        }
+        skipWhile<isStrWhiteSpace>(data);
 
         // Empty string.
         if (data.empty())
@@ -458,10 +450,7 @@ static double parseFloat(StringView s)
     auto data = s.span16();
 
     // Skip leading white space.
-    for (; !data.empty(); data = data.subspan(1)) {
-        if (!isStrWhiteSpace(data.front()))
-            break;
-    }
+    skipWhile<isStrWhiteSpace>(data);
 
     // Empty string.
     if (data.empty())
@@ -517,10 +506,10 @@ JSC_DEFINE_HOST_FUNCTION(globalFuncEval, (JSGlobalObject* globalObject, CallFram
 
     JSValue parsedObject;
     if (programSource.is8Bit()) {
-        LiteralParser preparser(globalObject, programSource.span8(), SloppyJSON, nullptr);
+        LiteralParser<LChar, JSONReviverMode::Disabled> preparser(globalObject, programSource.span8(), SloppyJSON, nullptr);
         parsedObject = preparser.tryLiteralParse();
     } else {
-        LiteralParser preparser(globalObject, programSource.span16(), SloppyJSON, nullptr);
+        LiteralParser<UChar, JSONReviverMode::Disabled> preparser(globalObject, programSource.span16(), SloppyJSON, nullptr);
         parsedObject = preparser.tryLiteralParse();
     }
     RETURN_IF_EXCEPTION(scope, encodedJSValue());
@@ -629,7 +618,7 @@ JSC_DEFINE_HOST_FUNCTION(globalFuncEscape, (JSGlobalObject* globalObject, CallFr
         VM& vm = globalObject->vm();
         auto scope = DECLARE_THROW_SCOPE(vm);
 
-        StringBuilder builder(StringBuilder::OverflowHandler::RecordOverflow);
+        StringBuilder builder(OverflowPolicy::RecordOverflow);
         if (view.is8Bit()) {
             for (auto character : view.span8()) {
                 if (doNotEscape.get(character))
@@ -667,7 +656,7 @@ JSC_DEFINE_HOST_FUNCTION(globalFuncUnescape, (JSGlobalObject* globalObject, Call
         VM& vm = globalObject->vm();
         auto scope = DECLARE_THROW_SCOPE(vm);
 
-        StringBuilder builder(StringBuilder::OverflowHandler::RecordOverflow);
+        StringBuilder builder(OverflowPolicy::RecordOverflow);
         builder.reserveCapacity(length);
 
         if (view.is8Bit()) {
@@ -1177,3 +1166,5 @@ JSC_DEFINE_HOST_FUNCTION(globalFuncSpeciesGetter, (JSGlobalObject* globalObject,
 }
 
 } // namespace JSC
+
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

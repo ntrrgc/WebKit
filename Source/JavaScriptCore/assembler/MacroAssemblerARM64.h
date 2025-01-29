@@ -34,13 +34,15 @@
 #include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMalloc.h>
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+
 namespace JSC {
 
 using Assembler = TARGET_ASSEMBLER;
 class Reg;
 
 class MacroAssemblerARM64 : public AbstractMacroAssembler<Assembler> {
-    WTF_MAKE_TZONE_ALLOCATED(MacroAssemblerARM64);
+    WTF_MAKE_TZONE_NON_HEAP_ALLOCATABLE(MacroAssemblerARM64);
 public:
     static constexpr unsigned numGPRs = 32;
     static constexpr unsigned numFPRs = 32;
@@ -472,7 +474,7 @@ public:
 
     void and64(TrustedImm64 imm, RegisterID dest)
     {
-        LogicalImmediate logicalImm = LogicalImmediate::create64(bitwise_cast<uint64_t>(imm.m_value));
+        LogicalImmediate logicalImm = LogicalImmediate::create64(std::bit_cast<uint64_t>(imm.m_value));
 
         if (logicalImm.isValid()) {
             m_assembler.and_<64>(dest, dest, logicalImm);
@@ -913,6 +915,12 @@ public:
         m_assembler.lsl<32>(dest, src, imm.m_value & 0x1f);
     }
 
+    void lshift32(TrustedImm32 imm, RegisterID shiftAmount, RegisterID dest)
+    {
+        move(imm, getCachedDataTempRegisterIDAndInvalidate());
+        m_assembler.lsl<32>(dest, dataTempRegister, shiftAmount);
+    }
+
     void lshift32(RegisterID shiftAmount, RegisterID dest)
     {
         lshift32(dest, shiftAmount, dest);
@@ -939,6 +947,12 @@ public:
         if (UNLIKELY(!imm.m_value))
             return move(src, dest);
         m_assembler.lsl<64>(dest, src, imm.m_value & 0x3f);
+    }
+
+    void lshift64(TrustedImm32 imm, RegisterID shiftAmount, RegisterID dest)
+    {
+        move(imm, getCachedDataTempRegisterIDAndInvalidate());
+        m_assembler.lsl<64>(dest, dataTempRegister, shiftAmount);
     }
 
     void lshift64(RegisterID shiftAmount, RegisterID dest)
@@ -1148,6 +1162,13 @@ public:
         load32(address.m_ptr, getCachedDataTempRegisterIDAndInvalidate());
         m_assembler.orr<32>(dataTempRegister, dataTempRegister, src);
         store32(dataTempRegister, address.m_ptr);
+    }
+
+    void or32(RegisterID src, Address dest)
+    {
+        load32(dest, getCachedDataTempRegisterIDAndInvalidate());
+        m_assembler.orr<32>(dataTempRegister, dataTempRegister, src);
+        store32(dataTempRegister, dest);
     }
 
     void or32(TrustedImm32 imm, AbsoluteAddress address)
@@ -2872,7 +2893,7 @@ public:
         }
 
         signExtend32ToPtr(TrustedImm32(address.offset), getCachedMemoryTempRegisterIDAndInvalidate());
-        m_assembler.add<128>(memoryTempRegister, memoryTempRegister, address.index, indexExtendType(address), address.scale);
+        m_assembler.add<64>(memoryTempRegister, memoryTempRegister, address.index, indexExtendType(address), address.scale);
         m_assembler.ldr<128>(dest, address.base, memoryTempRegister);
     }
     
@@ -3032,6 +3053,22 @@ public:
 
     void move64ToDouble(TrustedImm64 imm, FPRegisterID dest)
     {
+        if (!imm.m_value) {
+            moveZeroToDouble(dest);
+            return;
+        }
+
+        if (ARM64Assembler::canEncodeFPImm<64>(imm.m_value)) {
+            m_assembler.fmov<64>(dest, imm.m_value);
+            return;
+        }
+
+        auto fpImm = ARM64FPImmediate::create64(static_cast<uint64_t>(imm.m_value));
+        if (fpImm.isValid()) {
+            m_assembler.movi<64>(dest, fpImm.value());
+            return;
+        }
+
         move(imm, getCachedDataTempRegisterIDAndInvalidate());
         m_assembler.fmov<64>(dest, dataTempRegister);
     }
@@ -3043,6 +3080,16 @@ public:
 
     void move32ToFloat(TrustedImm32 imm, FPRegisterID dest)
     {
+        if (!imm.m_value) {
+            moveZeroToFloat(dest);
+            return;
+        }
+
+        if (ARM64Assembler::canEncodeFPImm<32>(imm.m_value)) {
+            m_assembler.fmov<32>(dest, imm.m_value);
+            return;
+        }
+
         move(imm, getCachedDataTempRegisterIDAndInvalidate());
         m_assembler.fmov<32>(dest, dataTempRegister);
     }
@@ -5677,6 +5724,16 @@ public:
         }
     }
 
+    void add64(FPRegisterID left, FPRegisterID right, FPRegisterID dest)
+    {
+        m_assembler.add(dest, left, right);
+    }
+
+    void sub64(FPRegisterID left, FPRegisterID right, FPRegisterID dest)
+    {
+        m_assembler.sub(dest, left, right);
+    }
+
     void vectorAdd(SIMDInfo simdInfo, FPRegisterID left, FPRegisterID right, FPRegisterID dest)
     {
         if (scalarTypeIsFloatingPoint(simdInfo.lane))
@@ -6380,7 +6437,7 @@ protected:
     {
         const int dataSize = sizeof(rawType) * 8;
         const int numberHalfWords = dataSize / 16;
-        rawType value = bitwise_cast<rawType>(imm.m_value);
+        rawType value = std::bit_cast<rawType>(imm.m_value);
         uint16_t halfword[numberHalfWords];
 
         // Handle 0 and ~0 here to simplify code below
@@ -7092,5 +7149,7 @@ inline MacroAssemblerARM64::Jump MacroAssemblerARM64::branch<64>(RelationalCondi
 }
 
 } // namespace JSC
+
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 #endif // ENABLE(ASSEMBLER) && CPU(ARM64)

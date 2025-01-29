@@ -33,6 +33,8 @@
 
 #if ENABLE(ASSEMBLER)
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+
 namespace JSC {
 
 namespace Probe {
@@ -212,7 +214,7 @@ private:
     Page* m_lastAccessedPage { nullptr };
 
     StackBounds m_stackBounds;
-    HashMap<void*, std::unique_ptr<Page>> m_pages;
+    UncheckedKeyHashMap<void*, std::unique_ptr<Page>> m_pages;
 
 #if ASSERT_ENABLED
     bool m_isValid { true };
@@ -221,5 +223,7 @@ private:
 
 } // namespace Probe
 } // namespace JSC
+
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 #endif // ENABLE(ASSEMBLER)

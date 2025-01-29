@@ -53,7 +53,7 @@ public:
         uint32_t tryDepth;
     };
 
-    IPIntTierUpCounter(HashMap<IPIntPC, OSREntryData>&& osrEntryData)
+    IPIntTierUpCounter(UncheckedKeyHashMap<IPIntPC, OSREntryData>&& osrEntryData)
         : m_osrEntryData(WTFMove(osrEntryData))
     {
         optimizeAfterWarmUp();
@@ -63,10 +63,8 @@ public:
 
     void optimizeAfterWarmUp()
     {
-        if (Options::wasmLLIntTiersUpToBBQ())
-            setNewThreshold(Options::thresholdForBBQOptimizeAfterWarmUp());
-        else
-            setNewThreshold(Options::thresholdForOMGOptimizeAfterWarmUp());
+        setNewThreshold(Options::thresholdForBBQOptimizeAfterWarmUp());
+        ASSERT(Options::useWasmIPInt() || checkIfOptimizationThresholdReached());
     }
 
     bool checkIfOptimizationThresholdReached()
@@ -76,10 +74,7 @@ public:
 
     void optimizeSoon()
     {
-        if (Options::wasmLLIntTiersUpToBBQ())
-            setNewThreshold(Options::thresholdForBBQOptimizeSoon());
-        else
-            setNewThreshold(Options::thresholdForOMGOptimizeSoon());
+        setNewThreshold(Options::thresholdForBBQOptimizeSoon());
     }
 
     const OSREntryData& osrEntryDataForLoop(IPIntPC offset) const
@@ -109,7 +104,7 @@ public:
 private:
     std::array<CompilationStatus, numberOfMemoryModes> m_compilationStatus WTF_GUARDED_BY_LOCK(m_lock);
     std::array<CompilationStatus, numberOfMemoryModes> m_loopCompilationStatus WTF_GUARDED_BY_LOCK(m_lock);
-    const HashMap<IPIntPC, OSREntryData> m_osrEntryData;
+    const UncheckedKeyHashMap<IPIntPC, OSREntryData> m_osrEntryData;
 };
 
 } } // namespace JSC::Wasm

@@ -1,5 +1,3 @@
-//@ runWebAssemblySuite("--useWasmGC=true")
-
 import * as assert from "../assert.js";
 import { compile, instantiate } from "./wast-wrapper.js";
 
@@ -564,7 +562,7 @@ function testTable() {
     assert.throws(
       () => m1.exports.t.set(0, 5),
       TypeError,
-      "WebAssembly.Table.prototype.set expects the second argument to be null or an instance of WebAssembly.Function"
+      "Argument value did not match the reference type"
     )
   }
 

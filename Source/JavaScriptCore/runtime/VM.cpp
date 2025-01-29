@@ -71,6 +71,7 @@
 #include "JSBigInt.h"
 #include "JSGlobalObject.h"
 #include "JSImmutableButterflyInlines.h"
+#include "JSIterator.h"
 #include "JSLock.h"
 #include "JSMap.h"
 #include "JSMicrotask.h"
@@ -174,8 +175,10 @@ static bool enableAssembler()
         return false;
 
     char* canUseJITString = getenv("JavaScriptCoreUseJIT");
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     if (canUseJITString && !atoi(canUseJITString))
         return false;
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     ExecutableAllocator::initializeUnderlyingAllocator();
     if (!ExecutableAllocator::singleton().isValid()) {
@@ -227,7 +230,7 @@ VM::VM(VMType vmType, HeapType heapType, WTF::RunLoop* runLoop, bool* success)
     , clientHeap(heap)
     , vmType(vmType)
     , deferredWorkTimer(DeferredWorkTimer::create(*this))
-    , m_atomStringTable(vmType == Default ? Thread::current().atomStringTable() : new AtomStringTable)
+    , m_atomStringTable(vmType == VMType::Default ? Thread::current().atomStringTable() : new AtomStringTable)
     , emptyList(new ArgList)
     , machineCodeBytesPerBytecodeWordForBaselineJIT(makeUnique<SimpleStats>())
     , symbolImplToSymbolMap(*this)
@@ -304,10 +307,12 @@ VM::VM(VMType vmType, HeapType heapType, WTF::RunLoop* runLoop, bool* success)
     symbolStructure.setWithoutWriteBarrier(Symbol::createStructure(*this, nullptr, jsNull()));
     symbolTableStructure.setWithoutWriteBarrier(SymbolTable::createStructure(*this, nullptr, jsNull()));
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     immutableButterflyStructures[arrayIndexFromIndexingType(CopyOnWriteArrayWithInt32) - NumberOfIndexingShapes].setWithoutWriteBarrier(JSImmutableButterfly::createStructure(*this, nullptr, jsNull(), CopyOnWriteArrayWithInt32));
     Structure* copyOnWriteArrayWithContiguousStructure = JSImmutableButterfly::createStructure(*this, nullptr, jsNull(), CopyOnWriteArrayWithContiguous);
     immutableButterflyStructures[arrayIndexFromIndexingType(CopyOnWriteArrayWithDouble) - NumberOfIndexingShapes].setWithoutWriteBarrier(Options::allowDoubleShape() ? JSImmutableButterfly::createStructure(*this, nullptr, jsNull(), CopyOnWriteArrayWithDouble) : copyOnWriteArrayWithContiguousStructure);
     immutableButterflyStructures[arrayIndexFromIndexingType(CopyOnWriteArrayWithContiguous) - NumberOfIndexingShapes].setWithoutWriteBarrier(copyOnWriteArrayWithContiguousStructure);
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     sourceCodeStructure.setWithoutWriteBarrier(JSSourceCode::createStructure(*this, nullptr, jsNull()));
     scriptFetcherStructure.setWithoutWriteBarrier(JSScriptFetcher::createStructure(*this, nullptr, jsNull()));
@@ -452,7 +457,7 @@ VM::~VM()
 {
     Locker destructionLocker { s_destructionLock.read() };
 
-    if (vmType == Default)
+    if (vmType == VMType::Default)
         WaiterListManager::singleton().unregister(this);
 
     Gigacage::removePrimitiveDisableCallback(primitiveGigacageDisabledCallback, this);
@@ -502,7 +507,7 @@ VM::~VM()
     delete emptyList;
 
     delete propertyNames;
-    if (vmType != Default)
+    if (vmType != VMType::Default)
         delete m_atomStringTable;
 
     delete clientData;
@@ -544,18 +549,18 @@ void VM::setLastStackTop(const Thread& thread)
 
 Ref<VM> VM::createContextGroup(HeapType heapType)
 {
-    return adoptRef(*new VM(APIContextGroup, heapType));
+    return adoptRef(*new VM(VMType::APIContextGroup, heapType));
 }
 
 Ref<VM> VM::create(HeapType heapType, WTF::RunLoop* runLoop)
 {
-    return adoptRef(*new VM(Default, heapType, runLoop));
+    return adoptRef(*new VM(VMType::Default, heapType, runLoop));
 }
 
 RefPtr<VM> VM::tryCreate(HeapType heapType, WTF::RunLoop* runLoop)
 {
     bool success = true;
-    RefPtr<VM> vm = adoptRef(new VM(Default, heapType, runLoop, &success));
+    RefPtr<VM> vm = adoptRef(new VM(VMType::Default, heapType, runLoop, &success));
     if (!success) {
         // Here, we're destructing a partially constructed VM and we know that
         // no one else can be using it at the same time. So, acquiring the lock
@@ -572,26 +577,6 @@ RefPtr<VM> VM::tryCreate(HeapType heapType, WTF::RunLoop* runLoop)
         vm = nullptr;
     }
     return vm;
-}
-
-bool VM::sharedInstanceExists()
-{
-    return sharedInstanceInternal();
-}
-
-VM& VM::sharedInstance()
-{
-    GlobalJSLock globalLock;
-    VM*& instance = sharedInstanceInternal();
-    if (!instance)
-        instance = adoptRef(new VM(APIShared, HeapType::Small)).leakRef();
-    return *instance;
-}
-
-VM*& VM::sharedInstanceInternal()
-{
-    static VM* sharedInstance;
-    return sharedInstance;
 }
 
 #if ENABLE(SAMPLING_PROFILER)
@@ -1093,6 +1078,8 @@ void VM::updateStackLimits()
 }
 
 #if ENABLE(DFG_JIT)
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+
 void VM::gatherScratchBufferRoots(ConservativeRoots& conservativeRoots)
 {
     Locker locker { m_scratchBufferLock };
@@ -1112,7 +1099,9 @@ void VM::scanSideState(ConservativeRoots& roots) const
         roots.add(sideState->tmps, sideState->tmps + maxNumCheckpointTmps);
     }
 }
-#endif
+
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+#endif // ENABLE(DFG_JIT)
 
 void VM::pushCheckpointOSRSideState(std::unique_ptr<CheckpointOSRExitSideState>&& payload)
 {
@@ -1399,8 +1388,8 @@ size_t VM::committedStackByteCount()
 #if !ENABLE(C_LOOP)
     // When using the C stack, we don't know how many stack pages are actually
     // committed. So, we use the current stack usage as an estimate.
-    uint8_t* current = bitwise_cast<uint8_t*>(currentStackPointer());
-    uint8_t* high = bitwise_cast<uint8_t*>(Thread::current().stack().origin());
+    uint8_t* current = std::bit_cast<uint8_t*>(currentStackPointer());
+    uint8_t* high = std::bit_cast<uint8_t*>(Thread::current().stack().origin());
     return high - current;
 #else
     return CLoopStack::committedByteCount();
@@ -1501,7 +1490,6 @@ bool VM::isScratchBuffer(void* ptr)
 
 Ref<Waiter> VM::syncWaiter()
 {
-    m_syncWaiter->setVM(this);
     return m_syncWaiter;
 }
 
@@ -1770,7 +1758,9 @@ void QueuedTask::run()
         return;
     JSObject* job = jsCast<JSObject*>(m_job);
     JSGlobalObject* globalObject = job->globalObject();
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     runJSMicrotask(globalObject, m_identifier, job, m_arguments[0], m_arguments[1], m_arguments[2], m_arguments[3]);
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 }
 
 template<typename Visitor>

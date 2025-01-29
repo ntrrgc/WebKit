@@ -1,5 +1,5 @@
 //@ skip unless $isSIMDPlatform
-//@ runWebAssemblySuite("--useWasmGC=true")
+//@ requireOptions("--useWasmSIMD=1")
 
 import * as assert from "../assert.js";
 

@@ -28,7 +28,6 @@
 
 #include "ConsoleClient.h"
 #include "JSCInlines.h"
-#include "Options.h"
 #include "ScriptArguments.h"
 #include "ScriptCallStackFactory.h"
 
@@ -132,9 +131,6 @@ static EncodedJSValue consoleLogWithLevel(JSGlobalObject* globalObject, CallFram
 {
     auto client = globalObject->consoleClient();
     if (!client)
-        return JSValue::encode(jsUndefined());
-
-    if (Options::disableConsoleLog())
         return JSValue::encode(jsUndefined());
 
     client->logWithLevel(globalObject, Inspector::createScriptArguments(globalObject, callFrame, 0), level);

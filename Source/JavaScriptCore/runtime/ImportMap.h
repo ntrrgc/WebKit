@@ -27,6 +27,7 @@
 
 #include <wtf/Expected.h>
 #include <wtf/HashMap.h>
+#include <wtf/HashSet.h>
 #include <wtf/URL.h>
 #include <wtf/URLHash.h>
 #include <wtf/Vector.h>
@@ -38,20 +39,10 @@ class SourceCode;
 
 class ImportMap final : public RefCounted<ImportMap> {
 public:
-<<<<<<< HEAD
-    using SpecifierMap = HashMap<String, URL>;
-    struct ScopeEntry {
-        URL m_scope;
-        SpecifierMap m_map;
-    };
-    using Scopes = Vector<ScopeEntry>;
-    using IntegrityMap = HashMap<URL, String>;
-=======
     using SpecifierMap = UncheckedKeyHashMap<AtomString, URL>;
     using ScopesMap = UncheckedKeyHashMap<URL, SpecifierMap>;
     using ScopesVector = Vector<URL>;
     using IntegrityMap = UncheckedKeyHashMap<URL, String>;
->>>>>>> c363df60bf58 (Implement multiple import maps)
 
     class Reporter {
     public:
@@ -93,8 +84,8 @@ private:
     // of prefixes resolved in them. That permits us to reduce the cost of merging
     // a new map, by performing more work at addModuleToResolvedModuleSet time,
     // and by keeping more prefixes in memory.
-    HashSet<AtomString> m_toplevelResolvedModuleSet;
-    UncheckedKeyHashMap<AtomString, HashSet<AtomString>> m_scopedResolvedModuleMap;
+    UncheckedKeyHashSet<AtomString> m_toplevelResolvedModuleSet;
+    UncheckedKeyHashMap<AtomString, UncheckedKeyHashSet<AtomString>> m_scopedResolvedModuleMap;
 };
 
 } // namespace JSC

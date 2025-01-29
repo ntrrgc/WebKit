@@ -39,6 +39,8 @@
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/WTFString.h>
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+
 namespace JSC { namespace Yarr {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(BytecodePattern);
@@ -183,7 +185,7 @@ public:
 
         DisjunctionContext* getDisjunctionContext()
         {
-            return bitwise_cast<DisjunctionContext*>(bitwise_cast<uintptr_t>(this) + allocationSize(m_numBackupIds));
+            return std::bit_cast<DisjunctionContext*>(std::bit_cast<uintptr_t>(this) + allocationSize(m_numBackupIds));
         }
 
         unsigned backupOffsetForDuplicateNamedGroup(unsigned duplicateNamedGroup)
@@ -2663,7 +2665,10 @@ public:
                 unsigned minAlreadyChecked = std::min(disjunction->m_minimumSize, parenthesesInputCountAlreadyChecked);
                 if (minimumSize > minAlreadyChecked) {
                     countToCheck = minimumSize - minAlreadyChecked;
-                    haveCheckedInput(countToCheck + currentCountAlreadyChecked);
+                    auto checkedInput = countToCheck + currentCountAlreadyChecked;
+                    if (checkedInput.hasOverflowed())
+                        return ErrorCode::OffsetTooLarge;
+                    haveCheckedInput(checkedInput);
 
                     if (minimumSize > disjunction->m_minimumSize)
                         backwardUncheckAmount = countToCheck;
@@ -2686,34 +2691,54 @@ public:
                 unsigned termIndex = matchDirection == Forward ? i : termCount - 1 - i;
                 auto& term = alternative->m_terms[termIndex];
 
-                auto currentInputPosition = [&]() {
-                    return currentCountAlreadyChecked - term.inputPosition;
-                };
-
                 switch (term.type) {
-                case PatternTerm::Type::AssertionBOL:
-                    assertionBOL(currentInputPosition());
+                case PatternTerm::Type::AssertionBOL: {
+                    auto currentInputPosition = currentCountAlreadyChecked - term.inputPosition;
+                    if (currentInputPosition.hasOverflowed())
+                        return ErrorCode::OffsetTooLarge;
+                    assertionBOL(currentInputPosition);
                     break;
+                }
 
-                case PatternTerm::Type::AssertionEOL:
-                    assertionEOL(currentInputPosition());
+                case PatternTerm::Type::AssertionEOL: {
+                    auto currentInputPosition = currentCountAlreadyChecked - term.inputPosition;
+                    if (currentInputPosition.hasOverflowed())
+                        return ErrorCode::OffsetTooLarge;
+                    assertionEOL(currentInputPosition);
                     break;
+                }
 
-                case PatternTerm::Type::AssertionWordBoundary:
-                    assertionWordBoundary(term.invert(), matchDirection, currentInputPosition());
+                case PatternTerm::Type::AssertionWordBoundary: {
+                    auto currentInputPosition = currentCountAlreadyChecked - term.inputPosition;
+                    if (currentInputPosition.hasOverflowed())
+                        return ErrorCode::OffsetTooLarge;
+                    assertionWordBoundary(term.invert(), matchDirection, currentInputPosition);
                     break;
+                }
 
-                case PatternTerm::Type::PatternCharacter:
-                    atomPatternCharacter(term.patternCharacter, matchDirection, currentInputPosition(), term.frameLocation, term.quantityMaxCount, term.quantityType);
+                case PatternTerm::Type::PatternCharacter: {
+                    auto currentInputPosition = currentCountAlreadyChecked - term.inputPosition;
+                    if (currentInputPosition.hasOverflowed())
+                        return ErrorCode::OffsetTooLarge;
+                    atomPatternCharacter(term.patternCharacter, matchDirection, currentInputPosition, term.frameLocation, term.quantityMaxCount, term.quantityType);
                     break;
+                }
 
-                case PatternTerm::Type::CharacterClass:
-                    atomCharacterClass(term.characterClass, term.invert(), matchDirection, currentInputPosition(), term.frameLocation, term.quantityMaxCount, term.quantityType);
+                case PatternTerm::Type::CharacterClass: {
+                    auto currentInputPosition = currentCountAlreadyChecked - term.inputPosition;
+                    if (currentInputPosition.hasOverflowed())
+                        return ErrorCode::OffsetTooLarge;
+                    atomCharacterClass(term.characterClass, term.invert(), matchDirection, currentInputPosition, term.frameLocation, term.quantityMaxCount, term.quantityType);
                     break;
+                }
 
-                case PatternTerm::Type::BackReference:
-                    atomBackReference(term.backReferenceSubpatternId, matchDirection, currentInputPosition(), term.frameLocation, term.quantityMaxCount, term.quantityType);
+                case PatternTerm::Type::BackReference: {
+                    auto currentInputPosition = currentCountAlreadyChecked - term.inputPosition;
+                    if (currentInputPosition.hasOverflowed())
+                        return ErrorCode::OffsetTooLarge;
+                    atomBackReference(term.backReferenceSubpatternId, matchDirection, currentInputPosition, term.frameLocation, term.quantityMaxCount, term.quantityType);
                     break;
+                }
 
                 case PatternTerm::Type::ForwardReference:
                     break;
@@ -2727,19 +2752,25 @@ public:
                             disjunctionAlreadyCheckedCount = term.parentheses.disjunction->m_minimumSize;
                         else
                             alternativeFrameLocation += YarrStackSpaceForBackTrackInfoParenthesesOnce;
-                        unsigned delegateEndInputOffset = currentInputPosition();
+                        auto delegateEndInputOffset = currentCountAlreadyChecked - term.inputPosition;
+                        if (delegateEndInputOffset.hasOverflowed())
+                            return ErrorCode::OffsetTooLarge;
                         atomParenthesesOnceBegin(term.parentheses.subpatternId, matchDirection, term.capture(), disjunctionAlreadyCheckedCount + delegateEndInputOffset, term.frameLocation, alternativeFrameLocation);
                         if (auto error = emitDisjunction(term.parentheses.disjunction, currentCountAlreadyChecked, disjunctionAlreadyCheckedCount, matchDirection))
                             return error;
                         atomParenthesesOnceEnd(delegateEndInputOffset, term.frameLocation, term.quantityMinCount, term.quantityMaxCount, term.quantityType);
                     } else if (term.parentheses.isTerminal) {
-                        unsigned delegateEndInputOffset = currentInputPosition();
+                        auto delegateEndInputOffset = currentCountAlreadyChecked - term.inputPosition;
+                        if (delegateEndInputOffset.hasOverflowed())
+                            return ErrorCode::OffsetTooLarge;
                         atomParenthesesTerminalBegin(term.parentheses.subpatternId, matchDirection, term.capture(), disjunctionAlreadyCheckedCount + delegateEndInputOffset, term.frameLocation, term.frameLocation + YarrStackSpaceForBackTrackInfoParenthesesTerminal);
                         if (auto error = emitDisjunction(term.parentheses.disjunction, currentCountAlreadyChecked, disjunctionAlreadyCheckedCount, matchDirection))
                             return error;
                         atomParenthesesTerminalEnd(delegateEndInputOffset, term.frameLocation, term.quantityMinCount, term.quantityMaxCount, term.quantityType);
                     } else {
-                        unsigned delegateEndInputOffset = currentInputPosition();
+                        auto delegateEndInputOffset = currentCountAlreadyChecked - term.inputPosition;
+                        if (delegateEndInputOffset.hasOverflowed())
+                            return ErrorCode::OffsetTooLarge;
                         atomParenthesesSubpatternBegin(term.parentheses.subpatternId, matchDirection, term.capture(), disjunctionAlreadyCheckedCount + delegateEndInputOffset, term.frameLocation, 0);
                         unsigned inputOffset = 0;
                         if (auto error = emitDisjunction(term.parentheses.disjunction, currentCountAlreadyChecked, inputOffset, matchDirection))
@@ -2751,7 +2782,9 @@ public:
 
                 case PatternTerm::Type::ParentheticalAssertion: {
                     unsigned alternativeFrameLocation = term.frameLocation + YarrStackSpaceForBackTrackInfoParentheticalAssertion;
-                    unsigned positiveInputOffset = currentInputPosition();
+                    auto positiveInputOffset = currentCountAlreadyChecked - term.inputPosition;
+                    if (positiveInputOffset.hasOverflowed())
+                        return ErrorCode::OffsetTooLarge;
                     if (term.matchDirection() == Forward) {
                         unsigned uncheckAmount = 0;
                         if (positiveInputOffset > term.parentheses.disjunction->m_minimumSize) {
@@ -2776,13 +2809,14 @@ public:
                         CheckedUint32 checkedCountForLookbehind = currentCountAlreadyChecked;
                         ASSERT(checkedCountForLookbehind >= term.inputPosition);
                         checkedCountForLookbehind -= term.inputPosition;
+                        if (checkedCountForLookbehind.hasOverflowed())
+                            return ErrorCode::OffsetTooLarge;
                         auto minimumSize = term.parentheses.disjunction->m_minimumSize;
                         if (minimumSize) {
                             checkedCountForLookbehind += minimumSize;
                             if (checkedCountForLookbehind.hasOverflowed())
                                 return ErrorCode::OffsetTooLarge;
-                            if (checkedCountForLookbehind > currentCountAlreadyChecked
-                                && !term.invert()) {
+                            if (checkedCountForLookbehind > currentCountAlreadyChecked && !term.invert()) {
                                 // Do a quick check for what is required for the lookbehind.
                                 // An inverted lookbehind can "match" without processing any input.
                                 haveCheckedInput(checkedCountForLookbehind);
@@ -3167,3 +3201,5 @@ static_assert(sizeof(Interpreter<UChar>::BackTrackInfoParentheses) <= (YarrStack
 
 
 } }
+
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

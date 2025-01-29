@@ -33,6 +33,8 @@
 #include "OpaqueJSString.h"
 #include <wtf/StdLibExtras.h>
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+
 JSStringRef JSStringCreateWithCFString(CFStringRef string)
 {
     JSC::initialize();
@@ -41,7 +43,7 @@ JSStringRef JSStringCreateWithCFString(CFStringRef string)
     // it can hold.  (<rdar://problem/6806478>)
     size_t length = CFStringGetLength(string);
     if (!length)
-        return &OpaqueJSString::create(""_span).leakRef();
+        return &OpaqueJSString::create(""_span8).leakRef();
 
     Vector<LChar, 1024> lcharBuffer(length);
     CFIndex usedBufferLength;
@@ -67,3 +69,5 @@ CFStringRef JSStringCopyCFString(CFAllocatorRef allocator, JSStringRef string)
     auto characters = string->span16();
     return CFStringCreateWithCharacters(allocator, reinterpret_cast<const UniChar*>(characters.data()), characters.size());
 }
+
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
