@@ -424,7 +424,7 @@ static ALWAYS_INLINE JITReservation initializeJITPageReservation()
 
     if (Options::verboseExecutablePoolAllocation())
         dataLog(getpid(), ": Got executable pool reservation at ", RawPointer(reservation.pageReservation.base()), "...", RawPointer(reservation.pageReservation.end()), ", while I'm at ", RawPointer(reinterpret_cast<void*>(initializeJITPageReservation)), "\n");
-    
+
     if (reservation.pageReservation) {
         ASSERT(reservation.pageReservation.size() == reservation.size);
         reservation.base = reservation.pageReservation.base();
@@ -515,7 +515,7 @@ public:
             //
             // Note: the illustration above shows a jump chain in the forward direction. The jump island
             // scheme also allows for a jump chain in the backward direction e.g. from C3 to C1.
-            
+
             const size_t islandRegionSize = roundUpToMultipleOf(executablePageSize(), static_cast<size_t>(MacroAssembler::nearJumpRange * islandRegionSizeFraction));
             m_regionSize = MacroAssembler::nearJumpRange - islandRegionSize;
             RELEASE_ASSERT(isPageAligned(executablePageSize(), islandRegionSize));
@@ -763,7 +763,7 @@ public:
 #if ENABLE(JUMP_ISLANDS)
         if (m_islandsForJumpSourceLocation.isEmpty())
             return;
-        
+
         Locker locker { getLock() };
         handleWillBeReleased(locker, handle);
 #else // ENABLE(JUMP_ISLANDS) -> so !ENABLE(JUMP_ISLANDS)
@@ -1021,7 +1021,7 @@ private:
                 if (resultBit == islandBits.size())
                     return nullptr;
                 islandBits[resultBit] = true;
-                uintptr_t result = end - ((resultBit + 1) * islandSizeInBytes); 
+                uintptr_t result = end - ((resultBit + 1) * islandSizeInBytes);
                 return std::bit_cast<void*>(result);
             };
 
@@ -1141,7 +1141,7 @@ private:
 };
 
 #if ENABLE(JUMP_ISLANDS)
-WTF_MAKE_TZONE_ALLOCATED_IMPL(FixedVMPoolExecutableAllocator::Islands);
+WTF_MAKE_TZONE_ALLOCATED_IMPL_NESTED(FixedVMPoolExecutableAllocator, Islands);
 #endif // ENABLE(JUMP_ISLANDS)
 
 // Keep this pointer in a mutable global variable to help Leaks find it.

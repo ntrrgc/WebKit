@@ -41,9 +41,6 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 namespace JSC {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(VerifierSlotVisitor);
-WTF_MAKE_TZONE_ALLOCATED_IMPL(VerifierSlotVisitor::MarkedBlockData);
-WTF_MAKE_TZONE_ALLOCATED_IMPL(VerifierSlotVisitor::OpaqueRootData);
-WTF_MAKE_TZONE_ALLOCATED_IMPL(VerifierSlotVisitor::PreciseAllocationData);
 
 using MarkerData = VerifierSlotVisitor::MarkerData;
 

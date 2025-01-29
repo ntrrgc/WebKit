@@ -31,8 +31,6 @@
 
 namespace JSC {
 
-WTF_MAKE_STRUCT_TZONE_ALLOCATED_IMPL(CompressedLazyValueProfileHolder::LazyValueProfileHolder);
-
 void CompressedLazyValueProfileHolder::computeUpdatedPredictions(const ConcurrentJSLocker& locker, CodeBlock* codeBlock)
 {
     if (!m_data)
@@ -134,4 +132,3 @@ SpeculatedType LazyOperandValueProfileParser::prediction(const ConcurrentJSLocke
 }
 
 } // namespace JSC
-

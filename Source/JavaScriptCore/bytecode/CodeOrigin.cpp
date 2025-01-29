@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "config.h"
@@ -32,7 +32,7 @@
 
 namespace JSC {
 
-WTF_MAKE_TZONE_ALLOCATED_IMPL(CodeOrigin::OutOfLineCodeOrigin);
+WTF_MAKE_TZONE_ALLOCATED_IMPL_NESTED(CodeOrigin, OutOfLineCodeOrigin);
 
 unsigned CodeOrigin::inlineDepth() const
 {
@@ -51,16 +51,16 @@ bool CodeOrigin::isApproximatelyEqualTo(const CodeOrigin& other, InlineCallFrame
         return !b.isSet();
     if (!b.isSet())
         return false;
-    
+
     if (a.isHashTableDeletedValue())
         return b.isHashTableDeletedValue();
     if (b.isHashTableDeletedValue())
         return false;
-    
+
     for (;;) {
         ASSERT(a.isSet());
         ASSERT(b.isSet());
-        
+
         if (a.bytecodeIndex() != b.bytecodeIndex())
             return false;
 
@@ -70,13 +70,13 @@ bool CodeOrigin::isApproximatelyEqualTo(const CodeOrigin& other, InlineCallFrame
         bool bHasInlineCallFrame = !!bInlineCallFrame;
         if (aHasInlineCallFrame != bHasInlineCallFrame)
             return false;
-        
+
         if (!aHasInlineCallFrame)
             return true;
-        
+
         if (aInlineCallFrame->baselineCodeBlock.get() != bInlineCallFrame->baselineCodeBlock.get())
             return false;
-        
+
         a = aInlineCallFrame->directCaller;
         b = bInlineCallFrame->directCaller;
     }
@@ -88,7 +88,7 @@ unsigned CodeOrigin::approximateHash(InlineCallFrame* terminal) const
         return 0;
     if (isHashTableDeletedValue())
         return 1;
-    
+
     unsigned result = 2;
     CodeOrigin codeOrigin = *this;
     for (;;) {
@@ -98,12 +98,12 @@ unsigned CodeOrigin::approximateHash(InlineCallFrame* terminal) const
 
         if (!inlineCallFrame)
             return result;
-        
+
         if (inlineCallFrame == terminal)
             return result;
-        
+
         result += WTF::PtrHash<JSCell*>::hash(inlineCallFrame->baselineCodeBlock.get());
-        
+
         codeOrigin = inlineCallFrame->directCaller;
     }
 }
@@ -141,18 +141,18 @@ void CodeOrigin::dump(PrintStream& out) const
         out.print("<none>");
         return;
     }
-    
+
     Vector<CodeOrigin> stack = inlineStack();
     for (unsigned i = 0; i < stack.size(); ++i) {
         if (i)
             out.print(" --> ");
-        
+
         if (InlineCallFrame* frame = stack[i].inlineCallFrame()) {
             out.print(frame->briefFunctionInformation(), ":<", RawPointer(frame->baselineCodeBlock.get()), "> ");
             if (frame->isClosureCall)
                 out.print("(closure) ");
         }
-        
+
         out.print(stack[i].bytecodeIndex());
     }
 }

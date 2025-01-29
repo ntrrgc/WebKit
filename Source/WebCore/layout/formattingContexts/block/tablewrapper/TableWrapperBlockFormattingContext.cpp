@@ -38,6 +38,7 @@
 #include "TableFormattingContext.h"
 #include "TableFormattingState.h"
 #include "TableWrapperBlockFormattingQuirks.h"
+#include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
 namespace Layout {
@@ -244,4 +245,3 @@ void TableWrapperBlockFormattingContext::computeHeightAndMarginForTableBox(const
 
 }
 }
-
