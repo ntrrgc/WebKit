@@ -35,7 +35,7 @@ class StackShot {
     WTF_MAKE_FAST_ALLOCATED;
 public:
     StackShot() { }
-    
+
     ALWAYS_INLINE StackShot(size_t size)
         : m_size(size)
     {
@@ -49,13 +49,13 @@ public:
                 m_array = nullptr;
         }
     }
-    
+
     StackShot(WTF::HashTableDeletedValueType)
         : m_array(deletedValueArray())
         , m_size(0)
     {
     }
-    
+
     StackShot& operator=(const StackShot& other)
     {
         auto newArray = makeUniqueArray<void*>(other.m_size);
@@ -65,50 +65,50 @@ public:
         m_array = WTFMove(newArray);
         return *this;
     }
-    
+
     StackShot(const StackShot& other)
     {
         *this = other;
     }
-    
+
     void** array() const { return m_array.get(); }
     size_t size() const { return m_size; }
-    
+
     explicit operator bool() const { return !!m_array; }
-    
+
     bool operator==(const StackShot& other) const
     {
         if (m_size != other.m_size)
             return false;
-        
+
         for (size_t i = m_size; i--;) {
             if (m_array[i] != other.m_array[i])
                 return false;
         }
-        
+
         return true;
     }
-    
+
     unsigned hash() const
     {
         unsigned result = m_size;
-        
+
         for (size_t i = m_size; i--;)
             result ^= PtrHash<void*>::hash(m_array[i]);
-        
+
         return result;
     }
-    
+
     bool isHashTableDeletedValue() const
     {
         return !m_size && m_array.get() == deletedValueArray();
     }
-    
+
     // Make Spectrum<> happy.
     bool operator>(const StackShot&) const { return false; }
-    
+
 private:
-    static void** deletedValueArray() { return bitwise_cast<void**>(static_cast<uintptr_t>(1)); }
+    static void** deletedValueArray() { return std::bit_cast<void**>(static_cast<uintptr_t>(1)); }
 
     UniqueArray<void*> m_array;
     size_t m_size { 0 };
@@ -126,4 +126,3 @@ template<> struct DefaultHash<StackShot> : StackShotHash { };
 template<> struct HashTraits<StackShot> : SimpleClassHashTraits<StackShot> { };
 
 } // namespace WTF
-

@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "config.h"
@@ -54,19 +54,19 @@ static void dataLogForCurrentThread(const Types&... values)
 struct ThreadData : public ThreadSafeRefCounted<ThreadData> {
     WTF_MAKE_FAST_ALLOCATED;
 public:
-    
+
     ThreadData();
     ~ThreadData();
 
     Ref<Thread> thread;
-    
+
     Mutex parkingLock;
     ThreadCondition parkingCondition;
 
     const void* address { nullptr };
-    
+
     ThreadData* nextInQueue { nullptr };
-    
+
     intptr_t token { 0 };
 };
 
@@ -80,17 +80,17 @@ struct Bucket {
     WTF_MAKE_FAST_ALLOCATED;
 public:
     Bucket()
-        : random(static_cast<unsigned>(bitwise_cast<intptr_t>(this))) // Cannot use default seed since that recurses into Lock.
+        : random(static_cast<unsigned>(std::bit_cast<intptr_t>(this))) // Cannot use default seed since that recurses into Lock.
     {
     }
-    
+
     void enqueue(ThreadData* data)
     {
         if (verbose)
             dataLogForCurrentThread(": enqueueing ", RawPointer(data), " with address = ", RawPointer(data->address), " onto ", RawPointer(this), "\n");
         ASSERT(data->address);
         ASSERT(!data->nextInQueue);
-        
+
         if (queueTail) {
             queueTail->nextInQueue = data;
             queueTail = data;
@@ -106,7 +106,7 @@ public:
     {
         if (verbose)
             dataLogForCurrentThread(": dequeueing from bucket at ", RawPointer(this), "\n");
-        
+
         if (!queueHead) {
             if (verbose)
                 dataLogForCurrentThread(": empty.\n");
@@ -143,9 +143,9 @@ public:
         bool timeToBeFair = false;
         if (time > nextFairTime)
             timeToBeFair = true;
-        
+
         bool didDequeue = false;
-        
+
         while (shouldContinue) {
             ThreadData* current = *currentPtr;
             if (verbose)
@@ -174,13 +174,13 @@ public:
                 break;
             }
         }
-        
+
         if (timeToBeFair && didDequeue)
             nextFairTime = time + Seconds::fromMilliseconds(random.get());
 
         ASSERT(!!queueHead == !!queueTail);
     }
-    
+
     ThreadData* dequeue()
     {
         ThreadData* result = nullptr;
@@ -198,9 +198,9 @@ public:
     // This lock protects the entire bucket. Thou shall not make changes to Bucket without holding
     // this lock.
     WordLock lock;
-    
+
     MonotonicTime nextFairTime;
-    
+
     WeakRandom random;
 
     // Put some distane between buckets in memory. This is one of several mitigations against false
@@ -221,7 +221,7 @@ struct Hashtable {
     static Hashtable* create(unsigned size)
     {
         ASSERT(size >= 1);
-        
+
         Hashtable* result = static_cast<Hashtable*>(
             fastZeroedMalloc(sizeof(Hashtable) + sizeof(Atomic<Bucket*>) * (size - 1)));
         result->size = size;
@@ -235,7 +235,7 @@ struct Hashtable {
                 hashtables = new Vector<Hashtable*>();
             hashtables->append(result);
         }
-        
+
         return result;
     }
 
@@ -246,7 +246,7 @@ struct Hashtable {
             Locker locker(hashtablesLock);
             hashtables->removeFirst(hashtable);
         }
-        
+
         fastFree(hashtable);
     }
 };
@@ -382,7 +382,7 @@ void ensureHashtableSize(unsigned numThreads)
 
     unsigned newSize = numThreads * growthFactor * maxLoadFactor;
     RELEASE_ASSERT(newSize > oldHashtable->size);
-    
+
     Hashtable* newHashtable = Hashtable::create(newSize);
     if (verbose)
         dataLogForCurrentThread(": created new hashtable: ", RawPointer(newHashtable), "\n");
@@ -401,10 +401,10 @@ void ensureHashtableSize(unsigned numThreads)
                 bucket = reusableBuckets.takeLast();
             newHashtable->data[index].store(bucket);
         }
-        
+
         bucket->enqueue(threadData);
     }
-    
+
     // At this point there may be some buckets left unreused. This could easily happen if the
     // number of enqueued threads right now is low but the high watermark of the number of threads
     // enqueued was high. We place these buckets into the hashtable basically at random, just to
@@ -415,14 +415,14 @@ void ensureHashtableSize(unsigned numThreads)
             continue;
         bucketPtr.store(reusableBuckets.takeLast());
     }
-    
+
     // Since we increased the size of the hashtable, we should have exhausted our preallocated
     // buckets by now.
     ASSERT(reusableBuckets.isEmpty());
-    
+
     // OK, right now the old hashtable is locked up and the new hashtable is ready to rock and
     // roll. After we install the new hashtable, we can release all bucket locks.
-    
+
     bool result = hashtable.compareExchangeStrong(oldHashtable, newHashtable) == oldHashtable;
     RELEASE_ASSERT(result);
 
@@ -461,12 +461,12 @@ ThreadData* myThreadData()
         [] {
             threadData = new ThreadSpecific<RefPtr<ThreadData>, CanBeGCThread::True>();
         });
-    
+
     RefPtr<ThreadData>& result = **threadData;
-    
+
     if (!result)
         result = adoptRef(new ThreadData());
-    
+
     return result.get();
 }
 
@@ -575,7 +575,7 @@ NEVER_INLINE ParkingLot::ParkResult ParkingLot::parkConditionallyImpl(
 {
     if (verbose)
         dataLogForCurrentThread(": parking.\n");
-    
+
     ThreadData* me = myThreadData();
     me->token = 0;
 
@@ -596,7 +596,7 @@ NEVER_INLINE ParkingLot::ParkResult ParkingLot::parkConditionallyImpl(
         return ParkResult();
 
     beforeSleep();
-    
+
     bool didGetDequeued;
     {
         MutexLocker locker(me->parkingLock);
@@ -613,7 +613,7 @@ NEVER_INLINE ParkingLot::ParkResult ParkingLot::parkConditionallyImpl(
         ASSERT(!me->address || me->address == address);
         didGetDequeued = !me->address;
     }
-    
+
     if (didGetDequeued) {
         // Great! We actually got dequeued rather than the timeout expiring.
         ParkResult result;
@@ -635,10 +635,10 @@ NEVER_INLINE ParkingLot::ParkResult ParkingLot::parkConditionallyImpl(
             return DequeueResult::Ignore;
         },
         [] (bool) { });
-    
+
     // If didDequeue is true, then we dequeued ourselves. This means that we were not unparked.
     // If didDequeue is false, then someone unparked us.
-    
+
     RELEASE_ASSERT(!me->nextInQueue);
 
     // Make sure that no matter what, me->address is null after this point.
@@ -668,7 +668,7 @@ NEVER_INLINE ParkingLot::UnparkResult ParkingLot::unparkOne(const void* address)
 {
     if (verbose)
         dataLogForCurrentThread(": unparking one.\n");
-    
+
     UnparkResult result;
 
     RefPtr<ThreadData> threadData;
@@ -694,9 +694,9 @@ NEVER_INLINE ParkingLot::UnparkResult ParkingLot::unparkOne(const void* address)
         result.mayHaveMoreThreads = false;
         return result;
     }
-    
+
     ASSERT(threadData->address);
-    
+
     {
         MutexLocker locker(threadData->parkingLock);
         threadData->address = nullptr;
@@ -713,7 +713,7 @@ NEVER_INLINE void ParkingLot::unparkOneImpl(
 {
     if (verbose)
         dataLogForCurrentThread(": unparking one the hard way.\n");
-    
+
     RefPtr<ThreadData> threadData;
     bool timeToBeFair = false;
     dequeue(
@@ -742,7 +742,7 @@ NEVER_INLINE void ParkingLot::unparkOneImpl(
         return;
 
     ASSERT(threadData->address);
-    
+
     {
         MutexLocker locker(threadData->parkingLock);
         threadData->address = nullptr;
@@ -755,10 +755,10 @@ NEVER_INLINE unsigned ParkingLot::unparkCount(const void* address, unsigned coun
 {
     if (!count)
         return 0;
-    
+
     if (verbose)
         dataLogForCurrentThread(": unparking count = ", count, " from ", RawPointer(address), ".\n");
-    
+
     Vector<RefPtr<ThreadData>, 8> threadDatas;
     dequeue(
         address,
@@ -790,7 +790,7 @@ NEVER_INLINE unsigned ParkingLot::unparkCount(const void* address, unsigned coun
 
     if (verbose)
         dataLogForCurrentThread(": done unparking.\n");
-    
+
     return threadDatas.size();
 }
 
@@ -811,9 +811,8 @@ NEVER_INLINE void ParkingLot::forEachImpl(const ScopedLambda<void(Thread&, const
         for (ThreadData* currentThreadData = bucket->queueHead; currentThreadData; currentThreadData = currentThreadData->nextInQueue)
             callback(currentThreadData->thread.get(), currentThreadData->address);
     }
-    
+
     unlockHashtable(bucketsToUnlock);
 }
 
 } // namespace WTF
-

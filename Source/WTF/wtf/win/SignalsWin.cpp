@@ -66,7 +66,7 @@ inline void SignalHandlers::forEachHandler(Signal signal, const Func& func) cons
     size_t handlerIndex = numberOfHandlers[signalIndex];
     while (handlerIndex--) {
         auto* memory = const_cast<SignalHandlerMemory*>(&handlers[signalIndex][handlerIndex]);
-        const SignalHandler& handler = *bitwise_cast<SignalHandler*>(memory);
+        const SignalHandler& handler = *std::bit_cast<SignalHandler*>(memory);
         func(handler);
     }
 }

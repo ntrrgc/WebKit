@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "config.h"
@@ -45,7 +45,7 @@ void BitVector::setSlow(const BitVector& other)
     else {
         OutOfLineBits* newOutOfLineBits = OutOfLineBits::create(other.size());
         memcpy(newOutOfLineBits->bits(), other.bits(), byteCount(other.size()));
-        newBitsOrPointer = bitwise_cast<uintptr_t>(newOutOfLineBits) >> 1;
+        newBitsOrPointer = std::bit_cast<uintptr_t>(newOutOfLineBits) >> 1;
     }
     if (!isInline() && !isEmptyOrDeletedValue())
         OutOfLineBits::destroy(outOfLineBits());
@@ -57,13 +57,13 @@ void BitVector::resize(size_t numBits)
     if (numBits <= maxInlineBits()) {
         if (isInline())
             return;
-    
+
         OutOfLineBits* myOutOfLineBits = outOfLineBits();
         m_bitsOrPointer = makeInlineBits(*myOutOfLineBits->bits());
         OutOfLineBits::destroy(myOutOfLineBits);
         return;
     }
-    
+
     resizeOutOfLine(numBits);
 }
 
@@ -119,7 +119,7 @@ void BitVector::resizeOutOfLine(size_t numBits, size_t shiftInWords)
             memcpy(newOutOfLineBits->bits(), outOfLineBits()->bits(), newOutOfLineBits->numWords() * sizeof(void*));
         OutOfLineBits::destroy(outOfLineBits());
     }
-    m_bitsOrPointer = bitwise_cast<uintptr_t>(newOutOfLineBits) >> 1;
+    m_bitsOrPointer = std::bit_cast<uintptr_t>(newOutOfLineBits) >> 1;
 }
 
 void BitVector::mergeSlow(const BitVector& other)
@@ -129,11 +129,11 @@ void BitVector::mergeSlow(const BitVector& other)
         *bits() |= cleanseInlineBits(other.m_bitsOrPointer);
         return;
     }
-    
+
     ensureSize(other.size());
     ASSERT(!isInline());
     ASSERT(!other.isInline());
-    
+
     OutOfLineBits* a = outOfLineBits();
     const OutOfLineBits* b = other.outOfLineBits();
     for (unsigned i = a->numWords(); i--;)
@@ -147,7 +147,7 @@ void BitVector::filterSlow(const BitVector& other)
         *bits() &= cleanseInlineBits(other.m_bitsOrPointer);
         return;
     }
-    
+
     if (isInline()) {
         ASSERT(!other.isInline());
         m_bitsOrPointer &= *other.outOfLineBits()->bits();
@@ -155,12 +155,12 @@ void BitVector::filterSlow(const BitVector& other)
         ASSERT(isInline());
         return;
     }
-    
+
     OutOfLineBits* a = outOfLineBits();
     const OutOfLineBits* b = other.outOfLineBits();
     for (unsigned i = std::min(a->numWords(), b->numWords()); i--;)
         a->bits()[i] &= b->bits()[i];
-    
+
     for (unsigned i = b->numWords(); i < a->numWords(); ++i)
         a->bits()[i] = 0;
 }
@@ -172,7 +172,7 @@ void BitVector::excludeSlow(const BitVector& other)
         *bits() &= ~cleanseInlineBits(other.m_bitsOrPointer);
         return;
     }
-    
+
     if (isInline()) {
         ASSERT(!other.isInline());
         m_bitsOrPointer &= ~*other.outOfLineBits()->bits();
@@ -180,7 +180,7 @@ void BitVector::excludeSlow(const BitVector& other)
         ASSERT(isInline());
         return;
     }
-    
+
     OutOfLineBits* a = outOfLineBits();
     const OutOfLineBits* b = other.outOfLineBits();
     for (unsigned i = std::min(a->numWords(), b->numWords()); i--;)
@@ -219,15 +219,15 @@ bool BitVector::equalsSlowCaseFast(const BitVector& other) const
 {
     if (isInline() != other.isInline())
         return equalsSlowCaseSimple(other);
-    
+
     const OutOfLineBits* myBits = outOfLineBits();
     const OutOfLineBits* otherBits = other.outOfLineBits();
-    
+
     size_t myNumWords = myBits->numWords();
     size_t otherNumWords = otherBits->numWords();
     size_t minNumWords;
     size_t maxNumWords;
-    
+
     const OutOfLineBits* longerBits;
     if (myNumWords < otherNumWords) {
         minNumWords = myNumWords;
@@ -238,12 +238,12 @@ bool BitVector::equalsSlowCaseFast(const BitVector& other) const
         maxNumWords = myNumWords;
         longerBits = myBits;
     }
-    
+
     for (size_t i = minNumWords; i < maxNumWords; ++i) {
         if (longerBits->bits()[i])
             return false;
     }
-    
+
     for (size_t i = minNumWords; i--;) {
         if (myBits->bits()[i] != otherBits->bits()[i])
             return false;

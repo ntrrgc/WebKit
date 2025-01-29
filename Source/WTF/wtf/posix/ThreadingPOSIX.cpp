@@ -9,13 +9,13 @@
  * are met:
  *
  * 1.  Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer. 
+ *     notice, this list of conditions and the following disclaimer.
  * 2.  Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution. 
+ *     documentation and/or other materials provided with the distribution.
  * 3.  Neither the name of Apple Inc. ("Apple") nor the names of
  *     its contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission. 
+ *     from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS "AS IS" AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -206,7 +206,7 @@ void Thread::initializePlatformThreading()
         if (sigaction(signal, nullptr, &oldAction))
             return false;
         // It has signal already.
-        if (oldAction.sa_handler != SIG_DFL || bitwise_cast<void*>(oldAction.sa_sigaction) != bitwise_cast<void*>(SIG_DFL))
+        if (oldAction.sa_handler != SIG_DFL || std::bit_cast<void*>(oldAction.sa_sigaction) != std::bit_cast<void*>(SIG_DFL))
             WTFLogAlways("Overriding existing handler for signal %d. Set JSC_SIGNAL_FOR_GC if you want WebKit to use a different signal", signal);
         return !sigaction(signal, &action, 0);
     };
@@ -640,7 +640,7 @@ ThreadCondition::~ThreadCondition()
 {
     pthread_cond_destroy(&m_condition);
 }
-    
+
 void ThreadCondition::wait(Mutex& mutex)
 {
     int result = pthread_cond_wait(&m_condition, &mutex.impl());

@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #pragma once
@@ -381,7 +381,7 @@ inline void decomposeDouble(double number, bool& sign, int32_t& exponent, uint64
 
     sign = std::signbit(number);
 
-    uint64_t bits = WTF::bitwise_cast<uint64_t>(number);
+    uint64_t bits = WTF::std::bit_cast<uint64_t>(number);
     exponent = (static_cast<int32_t>(bits >> 52) & 0x7ff) - 0x3ff;
     mantissa = bits & 0xFFFFFFFFFFFFFull;
 
@@ -569,7 +569,7 @@ inline bool rangesOverlap(T leftMin, T leftMax, T rightMin, T rightMax)
 {
     ASSERT(leftMin <= leftMax);
     ASSERT(rightMin <= rightMax);
-    
+
     // Empty ranges interfere with nothing.
     if (leftMin == leftMax)
         return false;
@@ -741,8 +741,8 @@ constexpr T negate(T v)
 template<typename BitsType, typename InputType>
 inline bool isIdentical(InputType left, InputType right)
 {
-    BitsType leftBits = bitwise_cast<BitsType>(left);
-    BitsType rightBits = bitwise_cast<BitsType>(right);
+    BitsType leftBits = std::bit_cast<BitsType>(left);
+    BitsType rightBits = std::bit_cast<BitsType>(right);
     return leftBits == rightBits;
 }
 

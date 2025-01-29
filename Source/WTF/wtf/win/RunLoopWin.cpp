@@ -56,7 +56,7 @@ LRESULT RunLoop::wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         performWork();
         return 0;
     case WM_TIMER:
-        bitwise_cast<RunLoop::TimerBase*>(wParam)->timerFired();
+        std::bit_cast<RunLoop::TimerBase*>(wParam)->timerFired();
         return 0;
     }
 
@@ -145,7 +145,7 @@ void RunLoop::TimerBase::timerFired()
 
         if (!m_isRepeating) {
             m_isActive = false;
-            ::KillTimer(m_runLoop->m_runLoopMessageWindow, bitwise_cast<uintptr_t>(this));
+            ::KillTimer(m_runLoop->m_runLoopMessageWindow, std::bit_cast<uintptr_t>(this));
         } else
             m_nextFireDate = MonotonicTime::timePointFromNow(m_interval);
     }
@@ -170,7 +170,7 @@ void RunLoop::TimerBase::start(Seconds interval, bool repeat)
     m_isActive = true;
     m_interval = interval;
     m_nextFireDate = MonotonicTime::timePointFromNow(m_interval);
-    ::SetTimer(m_runLoop->m_runLoopMessageWindow, bitwise_cast<uintptr_t>(this), interval.millisecondsAs<UINT>(), nullptr);
+    ::SetTimer(m_runLoop->m_runLoopMessageWindow, std::bit_cast<uintptr_t>(this), interval.millisecondsAs<UINT>(), nullptr);
 }
 
 void RunLoop::TimerBase::stop()
@@ -180,7 +180,7 @@ void RunLoop::TimerBase::stop()
         return;
 
     m_isActive = false;
-    ::KillTimer(m_runLoop->m_runLoopMessageWindow, bitwise_cast<uintptr_t>(this));
+    ::KillTimer(m_runLoop->m_runLoopMessageWindow, std::bit_cast<uintptr_t>(this));
 }
 
 bool RunLoop::TimerBase::isActiveWithLock() const

@@ -85,7 +85,7 @@ public:
     {
         static constexpr uint64_t parentMask = 0xffffffffffff0000ull;
         static constexpr uint64_t maskLowerWord = 0xffffull;
-        return reinterpret_cast<const void*>((bitwise_cast<uintptr_t>(parentIdentifier) & parentMask) | (childIdentifier & maskLowerWord));
+        return reinterpret_cast<const void*>((std::bit_cast<uintptr_t>(parentIdentifier) & parentMask) | (childIdentifier & maskLowerWord));
     }
 
     static const void* uniqueLogIdentifier()

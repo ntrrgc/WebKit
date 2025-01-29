@@ -98,7 +98,7 @@ inline void SignalHandlers::forEachHandler(Signal signal, const Func& func) cons
     size_t handlerIndex = numberOfHandlers[signalIndex];
     while (handlerIndex--) {
         auto* memory = const_cast<SignalHandlerMemory*>(&handlers[signalIndex][handlerIndex]);
-        const SignalHandler& handler = *bitwise_cast<SignalHandler*>(memory);
+        const SignalHandler& handler = *std::bit_cast<SignalHandler*>(memory);
         func(handler);
     }
 }
@@ -238,7 +238,7 @@ inline ptrauth_generic_signature_t hashThreadState(const thread_state_t source)
     }
     const uint32_t* cpsrPtr = reinterpret_cast<const uint32_t*>(&srcPtr[threadStateSizeInPointers - 1]);
     hash = ptrauth_sign_generic_data(static_cast<uint64_t>(*cpsrPtr), hash);
-    
+
     return hash;
 }
 #endif
@@ -273,7 +273,7 @@ static kern_return_t runSignalHandlers(Signal signal, PlatformRegisters& registe
         // not have any reason to handle it. Just let the default handler take care of it.
         static constexpr unsigned validAddressBits = OS_CONSTANT(EFFECTIVE_ADDRESS_WIDTH);
         static constexpr uintptr_t invalidAddressMask = ~((1ull << validAddressBits) - 1);
-        if (bitwise_cast<uintptr_t>(info.faultingAddress) & invalidAddressMask)
+        if (std::bit_cast<uintptr_t>(info.faultingAddress) & invalidAddressMask)
             return KERN_FAILURE;
 #endif
     }

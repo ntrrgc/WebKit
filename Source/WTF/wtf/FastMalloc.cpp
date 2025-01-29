@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "config.h"
@@ -181,7 +181,7 @@ size_t fastMallocGoodSize(size_t bytes)
 
 #if OS(WINDOWS)
 
-void* fastAlignedMalloc(size_t alignment, size_t size) 
+void* fastAlignedMalloc(size_t alignment, size_t size)
 {
     ASSERT_IS_WITHIN_LIMIT(size);
     void* p = _aligned_malloc(size, alignment);
@@ -190,20 +190,20 @@ void* fastAlignedMalloc(size_t alignment, size_t size)
     return p;
 }
 
-void* tryFastAlignedMalloc(size_t alignment, size_t size) 
+void* tryFastAlignedMalloc(size_t alignment, size_t size)
 {
     FAIL_IF_EXCEEDS_LIMIT(size);
     return _aligned_malloc(size, alignment);
 }
 
-void fastAlignedFree(void* p) 
+void fastAlignedFree(void* p)
 {
     _aligned_free(p);
 }
 
 #else
 
-void* fastAlignedMalloc(size_t alignment, size_t size) 
+void* fastAlignedMalloc(size_t alignment, size_t size)
 {
     ASSERT_IS_WITHIN_LIMIT(size);
     void* p = aligned_alloc(alignment, size);
@@ -212,27 +212,27 @@ void* fastAlignedMalloc(size_t alignment, size_t size)
     return p;
 }
 
-void* tryFastAlignedMalloc(size_t alignment, size_t size) 
+void* tryFastAlignedMalloc(size_t alignment, size_t size)
 {
     FAIL_IF_EXCEEDS_LIMIT(size);
     return aligned_alloc(alignment, size);
 }
 
-void fastAlignedFree(void* p) 
+void fastAlignedFree(void* p)
 {
     free(p);
 }
 
 #endif // OS(WINDOWS)
 
-TryMallocReturnValue tryFastMalloc(size_t n) 
+TryMallocReturnValue tryFastMalloc(size_t n)
 {
     FAIL_IF_EXCEEDS_LIMIT(n);
     ASSERT(!forbidMallocUseScopeCount || disableMallocRestrictionScopeCount);
     return malloc(n);
 }
 
-void* fastMalloc(size_t n) 
+void* fastMalloc(size_t n)
 {
     ASSERT_IS_WITHIN_LIMIT(n);
     ASSERT(!forbidMallocUseScopeCount || disableMallocRestrictionScopeCount);
@@ -367,7 +367,7 @@ public:
 
     static uintptr_t avoidRecordingCount()
     {
-        return bitwise_cast<uintptr_t>(threadSpecificGet(avoidRecordingCountKey));
+        return std::bit_cast<uintptr_t>(threadSpecificGet(avoidRecordingCountKey));
     }
 };
 
@@ -378,12 +378,12 @@ AvoidRecordingScope::AvoidRecordingScope()
         // The value stored in TLS is initially 0.
         threadSpecificKeyCreate(&avoidRecordingCountKey, [](void*) { });
     });
-    threadSpecificSet(avoidRecordingCountKey, bitwise_cast<void*>(avoidRecordingCount() + 1));
+    threadSpecificSet(avoidRecordingCountKey, std::bit_cast<void*>(avoidRecordingCount() + 1));
 }
 
 AvoidRecordingScope::~AvoidRecordingScope()
 {
-    threadSpecificSet(avoidRecordingCountKey, bitwise_cast<void*>(avoidRecordingCount() - 1));
+    threadSpecificSet(avoidRecordingCountKey, std::bit_cast<void*>(avoidRecordingCount() - 1));
 }
 
 class MallocCallTracker {

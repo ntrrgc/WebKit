@@ -317,7 +317,7 @@ public:
     bool isSymbol() const { return m_hashAndFlags & s_hashFlagStringKindIsSymbol; }
     bool isAtom() const { return m_hashAndFlags & s_hashFlagStringKindIsAtom; }
     void setIsAtom(bool);
-    
+
     bool isExternal() const { return bufferOwnership() == BufferExternal; }
 
     bool isSubString() const { return bufferOwnership() == BufferSubstring; }
@@ -413,7 +413,7 @@ public:
     {
         static_assert(sizeof(UChar) == sizeof(uint16_t));
         static_assert(sizeof(LChar) == sizeof(uint8_t));
-        return copyElements(bitwise_cast<uint16_t*>(destination), source.data(), source.size());
+        return copyElements(std::bit_cast<uint16_t*>(destination), source.data(), source.size());
     }
 
     ALWAYS_INLINE static void copyCharacters(LChar* destination, std::span<const UChar> source)
@@ -424,7 +424,7 @@ public:
         for (auto character : source)
             ASSERT(isLatin1(character));
 #endif
-        return copyElements(bitwise_cast<uint8_t*>(destination), bitwise_cast<const uint16_t*>(source.data()), source.size());
+        return copyElements(std::bit_cast<uint8_t*>(destination), std::bit_cast<const uint16_t*>(source.data()), source.size());
     }
 
     // Some string features, like reference counting and the atomicity flag, are not
@@ -515,7 +515,7 @@ public:
     BufferOwnership bufferOwnership() const { return static_cast<BufferOwnership>(m_hashAndFlags & s_hashMaskBufferOwnership); }
 
     template<typename T> static constexpr size_t headerSize() { return tailOffset<T>(); }
-    
+
 protected:
     ~StringImpl();
 

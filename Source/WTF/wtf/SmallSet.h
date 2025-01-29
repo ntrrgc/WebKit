@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #pragma once
@@ -104,7 +104,7 @@ public:
                 m_index++;
             return *this;
         }
-        
+
         T& operator*() { ASSERT(m_index < m_capacity); return static_cast<T&>(m_buffer[m_index]); }
         T operator*() const { ASSERT(m_index < m_capacity); return static_cast<T>(m_buffer[m_index]); }
         bool operator==(const iterator& other) const { ASSERT(m_buffer == other.m_buffer); return m_index == other.m_index; }
@@ -216,7 +216,7 @@ private:
     constexpr static T emptyValue()
     {
         if constexpr (std::is_pointer<T>::value)
-            return static_cast<T>(bitwise_cast<void*>(std::numeric_limits<uintptr_t>::max()));
+            return static_cast<T>(std::bit_cast<void*>(std::numeric_limits<uintptr_t>::max()));
         return std::numeric_limits<T>::max();
     }
 
@@ -226,7 +226,7 @@ private:
             return Hash::equal(left, right);
         if (isValidEntry(left) && isValidEntry(right))
             return Hash::equal(left, right);
-        return left == right; 
+        return left == right;
     }
 
     bool isValidEntry(const T value) const
@@ -254,15 +254,15 @@ private:
         // We memset the new buffer with -1, so for consistency emptyValue() must return something which is all 1s.
 #if !defined(NDEBUG)
         if constexpr (std::is_pointer<T>::value)
-            ASSERT(bitwise_cast<intptr_t>(emptyValue()) == -1ll);
+            ASSERT(std::bit_cast<intptr_t>(emptyValue()) == -1ll);
         else if constexpr (sizeof(T) == 8)
-            ASSERT(bitwise_cast<int64_t>(emptyValue()) == -1ll);
+            ASSERT(std::bit_cast<int64_t>(emptyValue()) == -1ll);
         else if constexpr (sizeof(T) == 4)
-            ASSERT(bitwise_cast<int32_t>(emptyValue()) == -1);
+            ASSERT(std::bit_cast<int32_t>(emptyValue()) == -1);
         else if constexpr (sizeof(T) == 2)
-            ASSERT(bitwise_cast<int16_t>(emptyValue()) == -1);
+            ASSERT(std::bit_cast<int16_t>(emptyValue()) == -1);
         else if constexpr (sizeof(T) == 1)
-            ASSERT(bitwise_cast<int8_t>(emptyValue()) == -1);
+            ASSERT(std::bit_cast<int8_t>(emptyValue()) == -1);
         else
             RELEASE_ASSERT_NOT_REACHED();
 #endif

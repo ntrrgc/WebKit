@@ -160,7 +160,7 @@ public:
     template<typename T = void*>
     T taggedPtr() const
     {
-        return bitwise_cast<T>(m_value);
+        return std::bit_cast<T>(m_value);
     }
 
     template<typename T = void*>
@@ -181,7 +181,7 @@ public:
     T dataLocation() const
     {
         ASSERT_VALID_CODE_POINTER(m_value);
-        return bitwise_cast<T>(m_value ? bitwise_cast<char*>(m_value) - 1 : nullptr);
+        return std::bit_cast<T>(m_value ? std::bit_cast<char*>(m_value) - 1 : nullptr);
     }
 #else
     template<typename T = void*>
@@ -197,7 +197,7 @@ public:
         return !m_value;
     }
     explicit operator bool() const { return !(!*this); }
-    
+
     friend bool operator==(CodePtr, CodePtr) = default;
 
     // Disallow any casting operations (except for booleans). Instead, the client
@@ -223,15 +223,15 @@ public:
 
     enum EmptyValueTag { EmptyValue };
     enum DeletedValueTag { DeletedValue };
-    
+
     CodePtr(EmptyValueTag)
         : m_value(emptyValue())
     { }
-    
+
     CodePtr(DeletedValueTag)
         : m_value(deletedValue())
     { }
-    
+
     bool isEmptyValue() const { return m_value == emptyValue(); }
     bool isDeletedValue() const { return m_value == deletedValue(); }
 
@@ -248,8 +248,8 @@ private:
         assertIsTaggedWith<tag>(ptr);
     }
 
-    static void* emptyValue() { return bitwise_cast<void*>(static_cast<intptr_t>(1)); }
-    static void* deletedValue() { return bitwise_cast<void*>(static_cast<intptr_t>(2)); }
+    static void* emptyValue() { return std::bit_cast<void*>(static_cast<intptr_t>(1)); }
+    static void* deletedValue() { return std::bit_cast<void*>(static_cast<intptr_t>(2)); }
 
     template<typename FuncPtr>
     ALWAYS_INLINE static constexpr void* encodeFunc(FuncPtr ptr)

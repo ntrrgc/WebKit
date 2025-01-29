@@ -35,7 +35,7 @@ ALWAYS_INLINE bool hasFence(std::memory_order order)
 {
     return order != std::memory_order_relaxed;
 }
-    
+
 // Atomic wraps around std::atomic with the sole purpose of making the compare_exchange
 // operations not alter the expected value. This is more in line with how we typically
 // use CAS in our code.
@@ -52,9 +52,9 @@ struct Atomic {
     // is usually not high enough to justify the risk.
 
     ALWAYS_INLINE T load(std::memory_order order = std::memory_order_seq_cst) const { return value.load(order); }
-    
+
     ALWAYS_INLINE T loadRelaxed() const { return load(std::memory_order_relaxed); }
-    
+
     // This is a load that simultaneously does a full fence - neither loads nor stores will move
     // above or below it.
     ALWAYS_INLINE T loadFullyFenced() const
@@ -62,9 +62,9 @@ struct Atomic {
         Atomic<T>* ptr = const_cast<Atomic<T>*>(this);
         return ptr->exchangeAdd(T());
     }
-    
+
     ALWAYS_INLINE void store(T desired, std::memory_order order = std::memory_order_seq_cst) { value.store(desired, order); }
-    
+
     ALWAYS_INLINE void storeRelaxed(T desired) { store(desired, std::memory_order_relaxed); }
 
     // This is a store that simultaneously does a full fence - neither loads nor stores will move
@@ -109,19 +109,19 @@ struct Atomic {
 
     template<typename U>
     ALWAYS_INLINE T exchangeAdd(U operand, std::memory_order order = std::memory_order_seq_cst) { return value.fetch_add(operand, order); }
-    
+
     template<typename U>
     ALWAYS_INLINE T exchangeAnd(U operand, std::memory_order order = std::memory_order_seq_cst) { return value.fetch_and(operand, order); }
-    
+
     template<typename U>
     ALWAYS_INLINE T exchangeOr(U operand, std::memory_order order = std::memory_order_seq_cst) { return value.fetch_or(operand, order); }
-    
+
     template<typename U>
     ALWAYS_INLINE T exchangeSub(U operand, std::memory_order order = std::memory_order_seq_cst) { return value.fetch_sub(operand, order); }
-    
+
     template<typename U>
     ALWAYS_INLINE T exchangeXor(U operand, std::memory_order order = std::memory_order_seq_cst) { return value.fetch_xor(operand, order); }
-    
+
     ALWAYS_INLINE T exchange(T newValue, std::memory_order order = std::memory_order_seq_cst) { return value.exchange(newValue, order); }
 
     // func is supposed to return false if the value is already in the desired state.
@@ -159,79 +159,79 @@ struct Atomic {
 template<typename T>
 inline T atomicLoad(T* location, std::memory_order order = std::memory_order_seq_cst)
 {
-    return bitwise_cast<Atomic<T>*>(location)->load(order);
+    return std::bit_cast<Atomic<T>*>(location)->load(order);
 }
 
 template<typename T>
 inline T atomicLoadFullyFenced(T* location)
 {
-    return bitwise_cast<Atomic<T>*>(location)->loadFullyFenced();
+    return std::bit_cast<Atomic<T>*>(location)->loadFullyFenced();
 }
 
 template<typename T>
 inline void atomicStore(T* location, T newValue, std::memory_order order = std::memory_order_seq_cst)
 {
-    bitwise_cast<Atomic<T>*>(location)->store(newValue, order);
+    std::bit_cast<Atomic<T>*>(location)->store(newValue, order);
 }
 
 template<typename T>
 inline void atomicStoreFullyFenced(T* location, T newValue)
 {
-    bitwise_cast<Atomic<T>*>(location)->storeFullyFenced(newValue);
+    std::bit_cast<Atomic<T>*>(location)->storeFullyFenced(newValue);
 }
 
 template<typename T>
 inline bool atomicCompareExchangeWeak(T* location, T expected, T newValue, std::memory_order order = std::memory_order_seq_cst)
 {
-    return bitwise_cast<Atomic<T>*>(location)->compareExchangeWeak(expected, newValue, order);
+    return std::bit_cast<Atomic<T>*>(location)->compareExchangeWeak(expected, newValue, order);
 }
 
 template<typename T>
 inline bool atomicCompareExchangeWeakRelaxed(T* location, T expected, T newValue)
 {
-    return bitwise_cast<Atomic<T>*>(location)->compareExchangeWeakRelaxed(expected, newValue);
+    return std::bit_cast<Atomic<T>*>(location)->compareExchangeWeakRelaxed(expected, newValue);
 }
 
 template<typename T>
 inline T atomicCompareExchangeStrong(T* location, T expected, T newValue, std::memory_order order = std::memory_order_seq_cst)
 {
-    return bitwise_cast<Atomic<T>*>(location)->compareExchangeStrong(expected, newValue, order);
+    return std::bit_cast<Atomic<T>*>(location)->compareExchangeStrong(expected, newValue, order);
 }
 
 template<typename T, typename U>
 inline T atomicExchangeAdd(T* location, U operand, std::memory_order order = std::memory_order_seq_cst)
 {
-    return bitwise_cast<Atomic<T>*>(location)->exchangeAdd(operand, order);
+    return std::bit_cast<Atomic<T>*>(location)->exchangeAdd(operand, order);
 }
 
 template<typename T, typename U>
 inline T atomicExchangeAnd(T* location, U operand, std::memory_order order = std::memory_order_seq_cst)
 {
-    return bitwise_cast<Atomic<T>*>(location)->exchangeAnd(operand, order);
+    return std::bit_cast<Atomic<T>*>(location)->exchangeAnd(operand, order);
 }
 
 template<typename T, typename U>
 inline T atomicExchangeOr(T* location, U operand, std::memory_order order = std::memory_order_seq_cst)
 {
-    return bitwise_cast<Atomic<T>*>(location)->exchangeOr(operand, order);
+    return std::bit_cast<Atomic<T>*>(location)->exchangeOr(operand, order);
 }
 
 template<typename T, typename U>
 inline T atomicExchangeSub(T* location, U operand, std::memory_order order = std::memory_order_seq_cst)
 {
-    return bitwise_cast<Atomic<T>*>(location)->exchangeSub(operand, order);
+    return std::bit_cast<Atomic<T>*>(location)->exchangeSub(operand, order);
 }
 
 template<typename T, typename U>
 inline T atomicExchangeXor(T* location, U operand, std::memory_order order = std::memory_order_seq_cst)
 {
-    return bitwise_cast<Atomic<T>*>(location)->exchangeXor(operand, order);
+    return std::bit_cast<Atomic<T>*>(location)->exchangeXor(operand, order);
 }
 
 template<typename T>
 inline T atomicExchange(T* location, T newValue, std::memory_order order = std::memory_order_seq_cst)
 {
-    return bitwise_cast<Atomic<T>*>(location)->exchange(newValue, order);
+    return std::bit_cast<Atomic<T>*>(location)->exchange(newValue, order);
 }
 
 // Just a compiler fence. Has no effect on the hardware, but tells the compiler
@@ -347,7 +347,7 @@ public:
         : m_value(0)
     {
     }
-    
+
     // On TSO architectures, this is a load-load fence and the value it returns is not meaningful (it's
     // zero). The load-load fence is usually just a compiler fence. On ARM, this is a self-xor that
     // produces zero, but it's concealed from the compiler. The CPU understands this dummy op to be a
@@ -388,7 +388,7 @@ public:
     // This function exists as a helper to aid in not making mistakes when doing a load
     // and fencing on the result of the load. A couple examples of where things can go
     // wrong, and how this function helps:
-    // 
+    //
     // Consider this program:
     // ```
     // a = load(p1)
@@ -433,20 +433,20 @@ public:
         return dependency;
 #endif
     }
-    
+
     // On TSO architectures, this just returns the pointer you pass it. On ARM, this produces a new
     // pointer that is dependent on this dependency and the input pointer.
     template<typename T>
     T* consume(T* pointer)
     {
 #if CPU(ARM64) || CPU(ARM)
-        return bitwise_cast<T*>(bitwise_cast<char*>(pointer) + m_value);
+        return std::bit_cast<T*>(std::bit_cast<char*>(pointer) + m_value);
 #else
         UNUSED_PARAM(m_value);
         return pointer;
 #endif
     }
-    
+
 private:
     InternalDependencyType m_value;
 };
@@ -456,13 +456,13 @@ struct InputAndValue {
     WTF_MAKE_STRUCT_FAST_ALLOCATED;
 
     InputAndValue() { }
-    
+
     InputAndValue(InputType input, ValueType value)
         : input(input)
         , value(value)
     {
     }
-    
+
     InputType input;
     ValueType value;
 };

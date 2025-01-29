@@ -62,7 +62,7 @@ namespace WTF {
     }
 
     // Thomas Wang's 32 Bit Mix Function: http://www.cris.com/~Ttwang/tech/inthash.htm
-    inline unsigned intHash(uint32_t key) 
+    inline unsigned intHash(uint32_t key)
     {
         key += ~(key << 15);
         key ^= (key >> 10);
@@ -72,7 +72,7 @@ namespace WTF {
         key ^= (key >> 16);
         return key;
     }
-    
+
     // Thomas Wang's 64 bit Mix Function: http://www.cris.com/~Ttwang/tech/inthash.htm
     inline unsigned intHash(uint64_t key)
     {
@@ -109,23 +109,23 @@ namespace WTF {
         typedef typename IntTypes<sizeof(T)>::UnsignedType Bits;
         static unsigned hash(T key)
         {
-            return intHash(bitwise_cast<Bits>(key));
+            return intHash(std::bit_cast<Bits>(key));
         }
         static bool equal(T a, T b)
         {
-            return bitwise_cast<Bits>(a) == bitwise_cast<Bits>(b);
+            return std::bit_cast<Bits>(a) == std::bit_cast<Bits>(b);
         }
         static constexpr bool safeToCompareToEmptyOrDeleted = true;
     };
 
     // pointer identity hash function
 
-    template<typename T, bool isSmartPointer> 
+    template<typename T, bool isSmartPointer>
     struct PtrHashBase;
 
     template <typename T>
     struct PtrHashBase<T, false /* isSmartPtr */> {
-        typedef T PtrType; 
+        typedef T PtrType;
 
         static unsigned hash(PtrType key) { return IntHash<uintptr_t>::hash(reinterpret_cast<uintptr_t>(key)); }
         static bool equal(PtrType a, PtrType b) { return a == b; }

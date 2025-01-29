@@ -21,7 +21,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #pragma once
@@ -278,7 +278,7 @@ inline ArrayElementType* binarySearchImpl(ArrayType& array, size_t size, KeyType
     while (size > 1) {
         size_t pos = (size - 1) >> 1;
         auto val = extractKey(&array[offset + pos]);
-        
+
         if (val == key)
             return &array[offset + pos];
         // The item we are looking for is smaller than the item being check; reduce the value of 'size',
@@ -293,10 +293,10 @@ inline ArrayElementType* binarySearchImpl(ArrayType& array, size_t size, KeyType
 
         ASSERT(mode != KeyMustBePresentInArray || size);
     }
-    
+
     if (mode == KeyMightNotBePresentInArray && !size)
         return 0;
-    
+
     ArrayElementType* result = &array[offset];
 
     if (mode == KeyMightNotBePresentInArray && key != extractKey(result))
@@ -372,7 +372,7 @@ ResultType callStatelessLambda(ArgumentTypes&&... arguments)
 {
     uint64_t data[(sizeof(Func) + sizeof(uint64_t) - 1) / sizeof(uint64_t)];
     memset(data, 0, sizeof(data));
-    return (*bitwise_cast<Func*>(data))(std::forward<ArgumentTypes>(arguments)...);
+    return (*std::bit_cast<Func*>(data))(std::forward<ArgumentTypes>(arguments)...);
 }
 
 template<typename T, typename U>
@@ -437,7 +437,7 @@ struct Visitor : Visitor<A>, Visitor<B...> {
     using Visitor<A>::operator ();
     using Visitor<B...>::operator ();
 };
-  
+
 template <class A>
 struct Visitor<A> : A {
     Visitor(A a)
@@ -447,7 +447,7 @@ struct Visitor<A> : A {
 
     using A::operator();
 };
- 
+
 template <class... F>
 Visitor<F...> makeVisitor(F... f)
 {
@@ -530,7 +530,7 @@ IteratorTypeDst mergeDeduplicatedSorted(IteratorTypeLeft leftBegin, IteratorType
     IteratorTypeLeft leftIter = leftBegin;
     IteratorTypeRight rightIter = rightBegin;
     IteratorTypeDst dstIter = dstBegin;
-    
+
     if (leftIter < leftEnd && rightIter < rightEnd) {
         for (;;) {
             auto left = *leftIter;
@@ -554,12 +554,12 @@ IteratorTypeDst mergeDeduplicatedSorted(IteratorTypeLeft leftBegin, IteratorType
             }
         }
     }
-    
+
     while (leftIter < leftEnd)
         *dstIter++ = *leftIter++;
     while (rightIter < rightEnd)
         *dstIter++ = *rightIter++;
-    
+
     return dstIter;
 }
 
@@ -673,7 +673,7 @@ template<typename Iterator, typename Predicate> constexpr bool allOfConstExpr(It
     return true;
 }
 
-template<typename OptionalType, class Callback> typename OptionalType::value_type valueOrCompute(OptionalType optional, Callback callback) 
+template<typename OptionalType, class Callback> typename OptionalType::value_type valueOrCompute(OptionalType optional, Callback callback)
 {
     return optional ? *optional : callback();
 }
@@ -746,11 +746,11 @@ template<ByteType T> struct ByteCastTraits<T> {
 };
 
 template<ByteType T> struct ByteCastTraits<T*> {
-    template<ByteType U> static constexpr auto cast(T* pointer) { return bitwise_cast<U*>(pointer); }
+    template<ByteType U> static constexpr auto cast(T* pointer) { return std::bit_cast<U*>(pointer); }
 };
 
 template<ByteType T> struct ByteCastTraits<const T*> {
-    template<ByteType U> static constexpr auto cast(const T* pointer) { return bitwise_cast<const U*>(pointer); }
+    template<ByteType U> static constexpr auto cast(const T* pointer) { return std::bit_cast<const U*>(pointer); }
 };
 
 template<ByteType T, size_t Extent> struct ByteCastTraits<std::span<T, Extent>> {
