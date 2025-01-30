@@ -7,10 +7,10 @@
 # are met:
 #
 # 1.  Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer. 
+#     notice, this list of conditions and the following disclaimer.
 # 2.  Redistributions in binary form must reproduce the above copyright
 #     notice, this list of conditions and the following disclaimer in the
-#     documentation and/or other materials provided with the distribution. 
+#     documentation and/or other materials provided with the distribution.
 #
 # THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS "AS IS" AND ANY
 # EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -468,7 +468,7 @@ end
 
 # Try to determine architecture. Return nil on failure.
 def machOArchitectureCode
-    begin 
+    begin
         otoolLines = `otool -afh #{Shellwords.shellescape($jscPath.to_s)}`.split("\n")
         otoolLines.each_with_index {
             | value, index |
@@ -611,7 +611,7 @@ $architecture = determineArchitecture unless $architecture
 $isFTLPlatform = !($architecture == "x86" || $architecture == "arm" || $architecture == "mips" || $architecture == "riscv64" || $hostOS == "playstation")
 # Special case armv7 and windows, we want to run the wasm tests temporarily without B3/Air support
 $isWasmPlatform = (not $cloop) && $jitTests && ($isFTLPlatform || $architecture == "arm" || ($hostOS == "windows" && $architecture == "x86_64"))
-$isOMGPlatform = $isFTLPlatform || ($architecture == "arm")
+$isOMGPlatform = $isFTLPlatform
 $isSIMDPlatform = $isWasmPlatform && ($architecture == "arm64" || $architecture == "x86_64")
 
 $skipLockdown = false
@@ -1141,7 +1141,8 @@ BASE_MODES = [
         "NoCJIT",
         "ftl-no-cjit",
         [
-            "--validateBytecode=true", "--validateGraphAtEachPhase=true"
+            "--validateBytecode=true", "--validateGraphAtEachPhase=true", "--libpasForcePGMWithRate=#{10 + rand(10)}",
+
         ] +
         FTL_OPTIONS +
         NO_CJIT_OPTIONS +
@@ -1153,6 +1154,7 @@ BASE_MODES = [
         [
             "--useDataICInFTL=true",
             "--allowNonSPTagging=false",
+            "--libpasForcePGMWithRate=#{10 + rand(10)}",
         ] +
         FTL_OPTIONS +
         NO_CJIT_OPTIONS
@@ -1255,6 +1257,7 @@ BASE_MODES = [
             "--validateGraph=true",
             "--validateBCE=true",
             "--airForceIRCAllocator=true",
+            "--libpasForcePGMWithRate=#{10 + rand(10)}",
         ] +
         FTL_OPTIONS +
         NO_CJIT_OPTIONS +
@@ -1354,6 +1357,7 @@ BASE_MODES = [
             "--useZombieMode=true",
             "--allowDoubleShape=false",
             "--alwaysHaveABadTime=true",
+            "--libpasForcePGMWithRate=#{10 + rand(10)}",
         ]
     ],
     [
@@ -1506,6 +1510,9 @@ BASE_MODES.each { |mode|
     cfgKinds.each { |cfgKind|
         methodName = "#{name}#{cfgKind.extension}".to_sym
         define_method(methodName) { |*args|
+            if not kind.nil? and $skipModes.include?(kind.to_sym)
+                return
+            end
             cfg = nil
             if cfgKind.expectCfg
                 # If we're defining a method that expects a cfg
@@ -1866,7 +1873,7 @@ end
 def runWebAssemblySuite(*optionalTestSpecificOptions)
     return unless $isWasmPlatform
     modules = Dir[WASMTESTS_PATH + "*.js"].map { |f| File.basename(f) }
-    prepareExtraAbsoluteFiles(WASMTESTS_PATH, ["wasm.json"])
+    modules << "wasm.json"
     prepareExtraRelativeFiles(modules.map { |f| "../" + f }, $collection)
     if optionalTestSpecificOptions[0] == :no_module
       optionalTestSpecificOptions.shift
@@ -1917,7 +1924,7 @@ def runV8WebAssemblySuite(*optionalTestSpecificOptions)
         end
         if $isOMGPlatform
             run("wasm-omg", "--useWasmLLInt=true", "--useBBQJIT=true", "--thresholdForBBQOptimizeAfterWarmUp=0", "--thresholdForBBQOptimizeSoon=0", "--thresholdForOMGOptimizeAfterWarmUp=0", "--thresholdForOMGOptimizeSoon=0", *(FTL_OPTIONS + optionalTestSpecificOptions))
-        end        
+        end
         if $isFTLPlatform
             run("wasm-simd", "--useWasmSIMD=1", "--forceAllFunctionsToUseSIMD=1", *(FTL_OPTIONS + optionalTestSpecificOptions)) unless !$isSIMDPlatform
             run("wasm-aggressive-inline", "--maximumWasmCalleeSizeForInlining=2147483647", "--maximumWasmCallerSizeForInlining=2147483647", "--maximumWasmDepthForInlining=5", *(FTL_OPTIONS + EAGER_OPTIONS + optionalTestSpecificOptions)) unless $skipModes.include?(:wasm_aggressive_inline)
@@ -2006,9 +2013,9 @@ def runWebAssemblySpecTestBase(mode, specHarnessPath, postfix, *optionalTestSpec
         return
     end
     return unless $isWasmPlatform
-    prepareExtraAbsoluteFiles(WASMTESTS_PATH, ["wasm.json"])
 
     modules = Dir[WASMTESTS_PATH + "*.js"].map { |f| File.basename(f) }
+    modules << "wasm.json"
     prepareExtraRelativeFiles(modules.map { |f| "../" + f }, $collection)
 
     harness = Dir[WASMTESTS_PATH + (specHarnessPath + "/") + "*.js"].map { |f| File.basename(f) }
@@ -2039,7 +2046,7 @@ def runWebAssemblyFunctionReferenceSpecTest(mode)
 end
 
 def runWebAssemblyGCSpecTest(mode)
-    runWebAssemblySpecTestBase(mode, "gc-spec-harness", nil, "--useWasmGC=true")
+    runWebAssemblySpecTestBase(mode, "gc-spec-harness", nil)
 end
 
 def runWebAssemblyThreadsSpecTest(mode)
@@ -2059,7 +2066,7 @@ end
 def runWebAssemblyLowExecutableMemory(*optionalTestSpecificOptions)
     return unless $isWasmPlatform
     modules = Dir[WASMTESTS_PATH + "*.js"].map { |f| File.basename(f) }
-    prepareExtraAbsoluteFiles(WASMTESTS_PATH, ["wasm.json"])
+    modules << "wasm.json"
     prepareExtraRelativeFiles(modules.map { |f| "../" + f }, $collection)
     # Only let WebAssembly get executable memory.
     run("default-wasm", "--useConcurrentGC=0" , "--useConcurrentJIT=0", "--jitMemoryReservationSize=80000", "--useBaselineJIT=0", "--useDFGJIT=0", "--useFTLJIT=0", "-m")
@@ -2437,7 +2444,7 @@ $collectionNames = {}
 
 def handleCollectionFile(collection)
     collectionName = simplifyCollectionName(collection)
-   
+
     paths = {}
     subCollections = []
     YAML::load(IO::read(collection)).each {
@@ -2446,23 +2453,23 @@ def handleCollectionFile(collection)
             subCollections << entry["collection"]
             next
         end
-        
+
         if Pathname.new(entry["path"]).absolute?
             raise "Absolute path: " + entry["path"] + " in #{collection}"
         end
-        
+
         if paths[entry["path"]]
             raise "Duplicate path: " + entry["path"] + " in #{collection}"
         end
-        
+
         subCollection = collection.dirname + entry["path"]
-        
+
         if subCollection.file?
             subCollectionName = Pathname.new(entry["path"]).dirname
         else
             subCollectionName = entry["path"]
         end
-        
+
         $collection = subCollection
         $collectionName = Pathname.new(collectionName)
         Pathname.new(subCollectionName).each_filename {
@@ -2471,9 +2478,9 @@ def handleCollectionFile(collection)
             $collectionName += filename
         }
         $collectionName = $collectionName.to_s
-        
+
         prepareCollection($collectionName)
-      
+
         Dir.chdir($outputDir) {
             pathsToSearch = [$collection]
             if entry["tests"]
@@ -2490,7 +2497,7 @@ def handleCollectionFile(collection)
                 | pathToSearch |
                 allJSFiles(pathToSearch).each {
                     | path |
-                    
+
                     $benchmark = path.basename
                     $benchmarkDirectory = path.dirname
                     $skipModes = Set.new
@@ -2501,7 +2508,7 @@ def handleCollectionFile(collection)
             }
         }
     }
-    
+
     subCollections.each {
         | subCollection |
         handleCollection(collection.dirname + subCollection)
@@ -2510,16 +2517,16 @@ end
 
 def handleCollectionDirectory(collection)
     collectionName = simplifyCollectionName(collection)
-    
+
     $collection = collection
     $collectionName = collectionName
     prepareCollection(collectionName)
-   
+
     Dir.chdir($outputDir) {
         $benchmarkDirectory = $collection
         allJSFiles($collection).each {
             | path |
-            
+
             $benchmark = path.basename
             $skipModes = Set.new
             $runCommandOptions = {}
@@ -2531,7 +2538,7 @@ end
 
 def handleCollection(collection)
     collection = Pathname.new(collection)
-    
+
     if collection.file?
         handleCollectionFile(collection)
     else
@@ -2553,7 +2560,7 @@ def prepareBundle
         originalJSCPath = $jscPath
         vmDir = $outputDir + ".vm"
         FileUtils.mkdir_p vmDir
-        
+
         frameworkPath = frameworkFromJSCPath($jscPath)
         destinationFrameworkPath = Pathname.new(".vm") + "JavaScriptCore.framework"
         $jscPath = destinationFrameworkPath + "Helpers" + "jsc"
@@ -2624,7 +2631,7 @@ def prepareBundle
             end
         }
     end
-    
+
     Dir.chdir($outputDir) {
         FileUtils.cp_r HELPERS_PATH, ".helpers"
     }
@@ -3113,7 +3120,7 @@ end
 # Some tests fail if the time zone is not set to US/Pacific
 # https://webkit.org/b/136363
 # Set as done in run-javascript-tests
-ENV["TZ"] = "US/Pacific"; 
+ENV["TZ"] = "US/Pacific";
 
 # Have crash reporter show the test command in Application Specific Information.
 ENV["JSCTEST_CrashReportArgV"] = "1"
