@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
 #include "config.h"
@@ -65,10 +65,10 @@ NEVER_INLINE void WordLock::lockSlow()
 
     // This magic number turns out to be optimal based on past JikesRVM experiments.
     const unsigned spinLimit = 40;
-
+    
     for (;;) {
         uintptr_t currentWordValue = m_word.load();
-
+        
         if (!(currentWordValue & isLockedBit)) {
             // It's not possible for someone to hold the queue lock while the lock itself is no longer
             // held, since we will only attempt to acquire the queue lock when the lock is held and
@@ -103,7 +103,7 @@ NEVER_INLINE void WordLock::lockSlow()
             Thread::yield();
             continue;
         }
-
+        
         me.shouldPark = true;
 
         // We own the queue. Nobody can enqueue or dequeue until we're done. Also, it's not possible
@@ -151,7 +151,7 @@ NEVER_INLINE void WordLock::lockSlow()
         ASSERT(!me.shouldPark);
         ASSERT(!me.nextInQueue);
         ASSERT(!me.queueTail);
-
+        
         // Now we can loop around and try to acquire the lock again.
     }
 }
@@ -169,7 +169,7 @@ NEVER_INLINE void WordLock::unlockSlow()
         uintptr_t currentWordValue = m_word.load();
 
         ASSERT(currentWordValue & isLockedBit);
-
+        
         if (currentWordValue == isLockedBit) {
             if (m_word.compareExchangeWeak(isLockedBit, 0)) {
                 // The fast path's weak CAS had spuriously failed, and now we succeeded. The lock is
@@ -180,7 +180,7 @@ NEVER_INLINE void WordLock::unlockSlow()
             Thread::yield();
             continue;
         }
-
+        
         if (currentWordValue & isQueueLockedBit) {
             Thread::yield();
             continue;
@@ -195,7 +195,7 @@ NEVER_INLINE void WordLock::unlockSlow()
     }
 
     uintptr_t currentWordValue = m_word.load();
-
+        
     // After we acquire the queue lock, the WordLock must still be held and the queue must be
     // non-empty. The queue must be non-empty since only the lockSlow() method could have held the
     // queue lock and if it did then it only releases it after putting something on the queue.
@@ -247,3 +247,4 @@ NEVER_INLINE void WordLock::unlockSlow()
 }
 
 } // namespace WTF
+

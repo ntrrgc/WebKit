@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
 #pragma once
@@ -65,14 +65,14 @@ public:
     // Typically a no-op for many subclasses of PrintStream, this is a hint that
     // the implementation should flush its buffers if it had not done so already.
     WTF_EXPORT_PRIVATE virtual void flush();
-
+    
     template<typename Func>
     void atomically(const Func& func)
     {
         func(begin());
         end();
     }
-
+    
     template<typename... Types>
     void print(const Types&... values)
     {
@@ -81,7 +81,7 @@ public:
                 out.printImpl(values...);
             });
     }
-
+    
     template<typename... Types>
     void println(const Types&... values)
     {
@@ -97,7 +97,7 @@ protected:
         printInternal(*this, value);
         printImpl(remainingValues...);
     }
-
+    
     WTF_EXPORT_PRIVATE virtual PrintStream& begin();
     WTF_EXPORT_PRIVATE virtual void end();
 };
@@ -265,7 +265,7 @@ public:
         : m_ptr(ptr)
     {
     }
-
+    
     void dump(PrintStream& out) const
     {
         if (m_ptr)
@@ -306,7 +306,7 @@ public:
         , m_context(context)
     {
     }
-
+    
     void dump(PrintStream& out) const
     {
         m_value->dumpInContext(out, m_context);
@@ -331,7 +331,7 @@ public:
         , m_context(context)
     {
     }
-
+    
     void dump(PrintStream& out) const
     {
         if (m_ptr)
@@ -358,7 +358,7 @@ public:
         : m_value(&value)
     {
     }
-
+    
     void dump(PrintStream& out) const
     {
         T context;
@@ -380,7 +380,7 @@ struct FormatImplUnpacker {
     template<typename... Args>
     static void unpack(PrintStream& out, const std::tuple<Types...>& tuple, const Args&... values);
 };
-
+    
 template<typename... Types>
 struct FormatImplUnpacker<0, Types...> {
     template<typename... Args>
@@ -389,7 +389,7 @@ struct FormatImplUnpacker<0, Types...> {
         out.printfVariableFormat(std::get<0>(tuple), values...);
     }
 };
-
+    
 template<unsigned index, typename... Types>
 template<typename... Args>
 void FormatImplUnpacker<index, Types...>::unpack(PrintStream& out, const std::tuple<Types...>& tuple, const Args&... values)
@@ -404,7 +404,7 @@ public:
         : m_values(values...)
     {
     }
-
+    
     void dump(PrintStream& out) const
     {
         FormatImplUnpacker<sizeof...(Types) - 1, Types...>::unpack(out, m_values);

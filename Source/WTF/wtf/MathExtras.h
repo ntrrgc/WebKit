@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
 #pragma once
@@ -69,6 +69,14 @@ constexpr float sqrtOfTwoFloat = 1.41421356237309504880f;
 #else
 constexpr double sqrtOfTwoDouble = M_SQRT2;
 constexpr float sqrtOfTwoFloat = static_cast<float>(M_SQRT2);
+#endif
+
+#ifndef M_E
+constexpr double eDouble = 2.71828182845904523536028747135266250;
+constexpr float eFloat = 2.71828182845904523536028747135266250f;
+#else
+constexpr double eDouble = M_E;
+constexpr float eFloat = static_cast<float>(M_E);
 #endif
 
 #if OS(WINDOWS)
@@ -381,7 +389,7 @@ inline void decomposeDouble(double number, bool& sign, int32_t& exponent, uint64
 
     sign = std::signbit(number);
 
-    uint64_t bits = WTF::std::bit_cast<uint64_t>(number);
+    uint64_t bits = std::bit_cast<uint64_t>(number);
     exponent = (static_cast<int32_t>(bits >> 52) & 0x7ff) - 0x3ff;
     mantissa = bits & 0xFFFFFFFFFFFFFull;
 
@@ -569,7 +577,7 @@ inline bool rangesOverlap(T leftMin, T leftMax, T rightMin, T rightMax)
 {
     ASSERT(leftMin <= leftMax);
     ASSERT(rightMin <= rightMax);
-
+    
     // Empty ranges interfere with nothing.
     if (leftMin == leftMax)
         return false;

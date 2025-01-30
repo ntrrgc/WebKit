@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include <wtf/OverflowPolicy.h>
+
 #include <wtf/SaturatedArithmetic.h>
 #include <wtf/text/StringConcatenateNumbers.h>
 
@@ -41,7 +43,7 @@ public:
     StringBuilder(StringBuilder&&) = default;
     StringBuilder& operator=(StringBuilder&&) = default;
 
-    enum class OverflowHandler { CrashOnOverflow, RecordOverflow }; // FIXME: Despite its use in Checked<>, "handler" does not seem the correct name for this.
+    using OverflowHandler = OverflowPolicy;
     explicit StringBuilder(OverflowHandler);
 
     void clear();
@@ -365,3 +367,4 @@ struct SerializeUsingStringBuilder {
 
 using WTF::StringBuilder;
 using WTF::SerializeUsingStringBuilder;
+

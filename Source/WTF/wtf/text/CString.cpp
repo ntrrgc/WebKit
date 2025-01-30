@@ -72,6 +72,14 @@ void CString::init(std::span<const char> string)
     m_buffer->mutableData()[string.size()] = '\0';
 }
 
+std::span<char> CString::mutableSpan()
+{
+    copyBufferIfNeeded();
+    if (!m_buffer)
+        return { };
+    return m_buffer->mutableSpan();
+}
+
 char* CString::mutableData()
 {
     copyBufferIfNeeded();
@@ -87,6 +95,14 @@ CString CString::newUninitialized(size_t length, char*& characterBuffer)
     char* bytes = result.m_buffer->mutableData();
     bytes[length] = '\0';
     characterBuffer = bytes;
+    return result;
+}
+
+CString CString::newUninitialized(size_t length, std::span<char>& characterBuffer)
+{
+    CString result;
+    result.m_buffer = CStringBuffer::createUninitialized(length);
+    characterBuffer = result.m_buffer->mutableSpan();
     return result;
 }
 

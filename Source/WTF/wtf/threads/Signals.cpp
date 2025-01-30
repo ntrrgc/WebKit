@@ -238,7 +238,7 @@ inline ptrauth_generic_signature_t hashThreadState(const thread_state_t source)
     }
     const uint32_t* cpsrPtr = reinterpret_cast<const uint32_t*>(&srcPtr[threadStateSizeInPointers - 1]);
     hash = ptrauth_sign_generic_data(static_cast<uint64_t>(*cpsrPtr), hash);
-
+    
     return hash;
 }
 #endif

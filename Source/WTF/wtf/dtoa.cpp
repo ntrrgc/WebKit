@@ -24,6 +24,20 @@
 
 namespace WTF {
 
+NumberToStringSpan numberToStringAndSize(float number, NumberToStringBuffer& buffer)
+{
+    static_assert(sizeof(buffer) >= (dragonbox::max_string_length<dragonbox::ieee754_binary32>() + 1));
+    auto* result = dragonbox::detail::to_chars_n<WTF::dragonbox::Mode::ToShortest>(number, buffer.data());
+    return std::span { buffer }.first(result - buffer.data());
+}
+
+NumberToStringSpan numberToStringAndSize(double number, NumberToStringBuffer& buffer)
+{
+    static_assert(sizeof(buffer) >= (dragonbox::max_string_length<dragonbox::ieee754_binary64>() + 1));
+    auto* result = dragonbox::detail::to_chars_n<WTF::dragonbox::Mode::ToShortest>(number, buffer.data());
+    return std::span { buffer }.first(result - buffer.data());
+}
+
 const char* numberToString(float number, NumberToStringBuffer& buffer)
 {
     double_conversion::StringBuilder builder(&buffer[0], sizeof(buffer));

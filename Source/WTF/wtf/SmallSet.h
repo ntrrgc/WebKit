@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
 #pragma once
@@ -104,7 +104,7 @@ public:
                 m_index++;
             return *this;
         }
-
+        
         T& operator*() { ASSERT(m_index < m_capacity); return static_cast<T&>(m_buffer[m_index]); }
         T operator*() const { ASSERT(m_index < m_capacity); return static_cast<T>(m_buffer[m_index]); }
         bool operator==(const iterator& other) const { ASSERT(m_buffer == other.m_buffer); return m_index == other.m_index; }
@@ -226,7 +226,7 @@ private:
             return Hash::equal(left, right);
         if (isValidEntry(left) && isValidEntry(right))
             return Hash::equal(left, right);
-        return left == right;
+        return left == right; 
     }
 
     bool isValidEntry(const T value) const

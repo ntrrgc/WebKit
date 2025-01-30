@@ -45,10 +45,20 @@ public:
     const char* data() LIFETIME_BOUND { return mutableData(); }
     size_t length() const { return m_length; }
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+    std::span<const LChar> span() const LIFETIME_BOUND { return unsafeMakeSpan(reinterpret_cast_ptr<const LChar*>(this + 1), m_length); }
+    std::span<const char> spanIncludingNullTerminator() const LIFETIME_BOUND { return unsafeMakeSpan(reinterpret_cast_ptr<const char*>(this + 1), m_length + 1); }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+
 private:
     friend class CString;
 
     static Ref<CStringBuffer> createUninitialized(size_t length);
+
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+    std::span<char> mutableSpan() LIFETIME_BOUND { return unsafeMakeSpan(reinterpret_cast_ptr<char*>(this + 1), m_length); }
+    std::span<char> mutableSpanIncludingNullTerminator() LIFETIME_BOUND { return unsafeMakeSpan(reinterpret_cast_ptr<char*>(this + 1), m_length + 1); }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     CStringBuffer(size_t length) : m_length(length) { }
     char* mutableData() LIFETIME_BOUND { return reinterpret_cast_ptr<char*>(this + 1); }
@@ -68,6 +78,7 @@ public:
     CString(std::span<const char8_t> characters) : CString(byteCast<uint8_t>(characters)) { }
     CString(CStringBuffer* buffer) : m_buffer(buffer) { }
     WTF_EXPORT_PRIVATE static CString newUninitialized(size_t length, char*& characterBuffer);
+    WTF_EXPORT_PRIVATE static CString newUninitialized(size_t length, std::span<char>& characterBuffer);
     CString(HashTableDeletedValueType) : m_buffer(HashTableDeletedValue) { }
 
     const char* data() const LIFETIME_BOUND;
@@ -78,6 +89,7 @@ public:
     std::span<const char> spanIncludingNullTerminator() const LIFETIME_BOUND;
 
     WTF_EXPORT_PRIVATE char* mutableData() LIFETIME_BOUND;
+    WTF_EXPORT_PRIVATE std::span<char> mutableSpan() LIFETIME_BOUND;
     size_t length() const;
 
     bool isNull() const { return !m_buffer; }

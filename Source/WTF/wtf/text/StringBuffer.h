@@ -32,6 +32,7 @@
 #include <unicode/utypes.h>
 #include <wtf/Assertions.h>
 #include <wtf/DebugHeap.h>
+#include <wtf/MallocSpan.h>
 #include <wtf/MallocPtr.h>
 #include <wtf/Noncopyable.h>
 
@@ -70,6 +71,7 @@ public:
 
     unsigned length() const { return m_length; }
     CharType* characters() { return m_data; }
+    std::span<CharType> span() { return unsafeMakeSpan(m_data, m_length); }
 
     CharType& operator[](unsigned i) { RELEASE_ASSERT(i < m_length); return m_data[i]; }
 
@@ -78,6 +80,11 @@ public:
         CharType* data = m_data;
         m_data = nullptr;
         return adoptMallocPtr<CharType, StringBufferMalloc>(data);
+    }
+
+    MallocSpan<CharType, StringBufferMalloc> releaseSpan()
+    {
+        return adoptMallocSpan<CharType, StringBufferMalloc>(unsafeMakeSpan(std::exchange(m_data, nullptr), std::exchange(m_length, 0)));
     }
 
 private:

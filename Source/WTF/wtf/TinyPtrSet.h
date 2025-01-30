@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
 #pragma once
@@ -51,19 +51,19 @@ public:
     {
         setEmpty();
     }
-
+    
     TinyPtrSet(T element)
         : m_pointer(0)
     {
         set(element);
     }
-
+    
     ALWAYS_INLINE TinyPtrSet(const TinyPtrSet& other)
         : m_pointer(0)
     {
         copyFrom(other);
     }
-
+    
     ALWAYS_INLINE TinyPtrSet& operator=(const TinyPtrSet& other)
     {
         if (this == &other)
@@ -72,18 +72,18 @@ public:
         copyFrom(other);
         return *this;
     }
-
+    
     ~TinyPtrSet()
     {
         deleteListIfNecessary();
     }
-
+    
     void clear()
     {
         deleteListIfNecessary();
         setEmpty();
     }
-
+    
     // Returns the only entry if the array has exactly one entry.
     T onlyEntry() const
     {
@@ -94,7 +94,7 @@ public:
             return T();
         return list->list()[0];
     }
-
+    
     bool isEmpty() const
     {
         bool result = isThin() && !singleEntry();
@@ -102,7 +102,7 @@ public:
             ASSERT(m_pointer != reservedValue);
         return result;
     }
-
+    
     // Returns true if the value was added, or false if the value was already there.
     ALWAYS_INLINE bool add(T value)
     {
@@ -114,7 +114,7 @@ public:
                 set(value);
                 return true;
             }
-
+            
             OutOfLineList* list = OutOfLineList::create(defaultStartingSize);
             list->m_length = 2;
             list->list()[0] = singleEntry();
@@ -122,10 +122,10 @@ public:
             set(list);
             return true;
         }
-
+        
         return addOutOfLine(value);
     }
-
+    
     bool remove(T value)
     {
         if (isThin()) {
@@ -135,7 +135,7 @@ public:
             }
             return false;
         }
-
+        
         OutOfLineList* list = this->list();
         for (unsigned i = 0; i < list->m_length; ++i) {
             if (list->list()[i] != value)
@@ -149,14 +149,14 @@ public:
         }
         return false;
     }
-
+    
     bool contains(T value) const
     {
         if (isThin())
             return singleEntry() == value;
         return containsOutOfLine(value);
     }
-
+    
     ALWAYS_INLINE bool merge(const TinyPtrSet& other)
     {
         if (other.isThin()) {
@@ -164,10 +164,10 @@ public:
                 return add(other.singleEntry());
             return false;
         }
-
+        
         return mergeOtherOutOfLine(other);
     }
-
+    
     void forEach(const Invocable<void(const T&)> auto& functor) const
     {
         if (isThin()) {
@@ -176,12 +176,12 @@ public:
             functor(singleEntry());
             return;
         }
-
+        
         OutOfLineList* list = this->list();
         for (unsigned i = 0; i < list->m_length; ++i)
             functor(list->list()[i]);
     }
-
+        
     void genericFilter(const Invocable<bool(const T&)> auto& functor)
     {
         if (isThin()) {
@@ -192,7 +192,7 @@ public:
             clear();
             return;
         }
-
+        
         OutOfLineList* list = this->list();
         for (unsigned i = 0; i < list->m_length; ++i) {
             if (functor(list->list()[i]))
@@ -202,7 +202,7 @@ public:
         if (!list->m_length)
             clear();
     }
-
+        
     void filter(const TinyPtrSet& other)
     {
         if (other.isThin()) {
@@ -214,10 +214,10 @@ public:
             }
             return;
         }
-
+        
         genericFilter([&] (T value) { return other.containsOutOfLine(value); });
     }
-
+    
     void exclude(const TinyPtrSet& other)
     {
         if (other.isThin()) {
@@ -225,10 +225,10 @@ public:
                 remove(other.singleEntry());
             return;
         }
-
+        
         genericFilter([&] (T value) { return !other.containsOutOfLine(value); });
     }
-
+    
     bool isSubsetOf(const TinyPtrSet& other) const
     {
         if (isThin()) {
@@ -236,7 +236,7 @@ public:
                 return true;
             return other.contains(singleEntry());
         }
-
+        
         if (other.isThin()) {
             if (!other.singleEntry())
                 return false;
@@ -247,7 +247,7 @@ public:
                 return true;
             return false;
         }
-
+        
         OutOfLineList* list = this->list();
         for (unsigned i = 0; i < list->m_length; ++i) {
             if (!other.containsOutOfLine(list->list()[i]))
@@ -255,12 +255,12 @@ public:
         }
         return true;
     }
-
+    
     bool isSupersetOf(const TinyPtrSet& other) const
     {
         return other.isSubsetOf(*this);
     }
-
+    
     bool overlaps(const TinyPtrSet& other) const
     {
         if (isThin()) {
@@ -268,13 +268,13 @@ public:
                 return false;
             return other.contains(singleEntry());
         }
-
+        
         if (other.isThin()) {
             if (!other.singleEntry())
                 return false;
             return containsOutOfLine(other.singleEntry());
         }
-
+        
         OutOfLineList* list = this->list();
         for (unsigned i = 0; i < list->m_length; ++i) {
             if (other.containsOutOfLine(list->list()[i]))
@@ -282,14 +282,14 @@ public:
         }
         return false;
     }
-
+    
     size_t size() const
     {
         if (isThin())
             return !!singleEntry();
         return list()->m_length;
     }
-
+    
     T at(size_t i) const
     {
         if (isThin()) {
@@ -300,9 +300,9 @@ public:
         ASSERT(i < list()->m_length);
         return list()->list()[i];
     }
-
+    
     T operator[](size_t i) const { return at(i); }
-
+    
     T last() const
     {
         if (isThin()) {
@@ -311,7 +311,7 @@ public:
         }
         return list()->list()[list()->m_length - 1];
     }
-
+    
     class iterator {
     public:
         iterator()
@@ -319,13 +319,13 @@ public:
             , m_index(0)
         {
         }
-
+        
         iterator(const TinyPtrSet* set, size_t index)
             : m_set(set)
             , m_index(index)
         {
         }
-
+        
         T operator*() const { return m_set->at(m_index); }
         iterator& operator++()
         {
@@ -338,17 +338,17 @@ public:
         const TinyPtrSet* m_set;
         size_t m_index;
     };
-
+    
     iterator begin() const { return iterator(this, 0); }
     iterator end() const { return iterator(this, size()); }
-
+    
     bool operator==(const TinyPtrSet& other) const
     {
         if (size() != other.size())
             return false;
         return isSubsetOf(other);
     }
-
+    
 private:
     friend class JSC::DFG::StructureAbstractValue;
 
@@ -358,7 +358,7 @@ private:
     static constexpr uintptr_t reservedValue = 4;
 
     static constexpr unsigned defaultStartingSize = 4;
-
+    
     NEVER_INLINE bool addOutOfLine(T value)
     {
         OutOfLineList* list = this->list();
@@ -366,12 +366,12 @@ private:
             if (list->list()[i] == value)
                 return false;
         }
-
+        
         if (list->m_length < list->m_capacity) {
             list->list()[list->m_length++] = value;
             return true;
         }
-
+        
         OutOfLineList* newList = OutOfLineList::create(list->m_capacity * 2);
         newList->m_length = list->m_length + 1;
         for (unsigned i = list->m_length; i--;)
@@ -381,7 +381,7 @@ private:
         set(newList);
         return true;
     }
-
+    
     NEVER_INLINE bool mergeOtherOutOfLine(const TinyPtrSet& other)
     {
         OutOfLineList* list = other.list();
@@ -400,11 +400,11 @@ private:
                 changed |= addOutOfLine(list->list()[i]);
             return changed;
         }
-
+        
         ASSERT(list->m_length);
         return add(list->list()[0]);
     }
-
+    
     bool containsOutOfLine(T value) const
     {
         OutOfLineList* list = this->list();
@@ -414,7 +414,7 @@ private:
         }
         return false;
     }
-
+    
     ALWAYS_INLINE void copyFrom(const TinyPtrSet& other)
     {
         if (other.isThin() || other.m_pointer == reservedValue) {
@@ -425,7 +425,7 @@ private:
         }
         copyFromOutOfLine(other);
     }
-
+    
     NEVER_INLINE void copyFromOutOfLine(const TinyPtrSet& other)
     {
         ASSERT(!other.isThin() && other.m_pointer != reservedValue);
@@ -436,21 +436,21 @@ private:
             myList->list()[i] = otherList->list()[i];
         set(myList);
     }
-
+    
     class OutOfLineList {
     public:
         static OutOfLineList* create(unsigned capacity)
         {
             return new (NotNull, fastMalloc(sizeof(OutOfLineList) + capacity * sizeof(T))) OutOfLineList(0, capacity);
         }
-
+        
         static void destroy(OutOfLineList* list)
         {
             fastFree(list);
         }
-
+        
         T* list() { return std::bit_cast<T*>(this + 1); }
-
+        
         OutOfLineList(unsigned length, unsigned capacity)
             : m_length(length)
             , m_capacity(capacity)
@@ -460,7 +460,7 @@ private:
         unsigned m_length;
         unsigned m_capacity;
     };
-
+    
     ALWAYS_INLINE void deleteListIfNecessary()
     {
         if (!isThin()) {
@@ -468,26 +468,26 @@ private:
             OutOfLineList::destroy(list());
         }
     }
-
+    
     bool isThin() const { return !(m_pointer & fatFlag); }
-
+    
     void* pointer() const
     {
         return std::bit_cast<void*>(m_pointer & ~flags);
     }
-
+    
     T singleEntry() const
     {
         ASSERT(isThin());
         return std::bit_cast<T>(pointer());
     }
-
+    
     OutOfLineList* list() const
     {
         ASSERT(!isThin());
         return static_cast<OutOfLineList*>(pointer());
     }
-
+    
     void set(T value)
     {
         set(std::bit_cast<uintptr_t>(value), true);
@@ -512,7 +512,7 @@ private:
         else
             m_pointer &= ~reservedFlag;
     }
-
+    
     uintptr_t m_pointer;
 };
 

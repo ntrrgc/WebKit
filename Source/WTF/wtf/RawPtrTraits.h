@@ -30,7 +30,7 @@
 #include <wtf/StdLibExtras.h>
 
 namespace WTF {
-
+    
 template<typename T>
 struct RawPtrTraits {
     template<typename U> using RebindTraits = RawPtrTraits<U>;

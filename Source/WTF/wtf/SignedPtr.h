@@ -85,7 +85,7 @@ public:
     typename std::enable_if<!std::is_void_v<U>, U&>::type operator*() const { return *get(); }
 
     bool operator!() const { return !m_value; }
-
+    
     // This conversion operator allows implicit conversion to bool but not to other integer types.
     typedef T* (SignedPtr::*UnspecifiedBoolType);
     operator UnspecifiedBoolType() const { return get() ? &SignedPtr::m_value : nullptr; }
@@ -143,3 +143,4 @@ struct SignedPtrTraits {
 } // namespace WTF
 
 using WTF::SignedPtrTraits;
+

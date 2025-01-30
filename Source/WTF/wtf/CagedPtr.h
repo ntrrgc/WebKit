@@ -109,7 +109,7 @@ public:
         ASSERT(result == (getUnsafe() == other.getUnsafe()));
         return result;
     }
-
+    
     explicit operator bool() const
     {
         return getUnsafe() != nullptr;
@@ -119,7 +119,7 @@ public:
     {
         return std::bit_cast<T*>(m_ptr);
     }
-
+    
 protected:
     typename PtrTraits::StorageType m_ptr;
 };
@@ -127,3 +127,4 @@ protected:
 } // namespace WTF
 
 using WTF::CagedPtr;
+

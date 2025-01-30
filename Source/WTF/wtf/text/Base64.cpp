@@ -257,7 +257,7 @@ static std::optional<Vector<uint8_t, 0, CrashOnOverflow, 16, Malloc>> base64Deco
     // Valid data is (n * 4 + [0,2,3]) characters long.
     if ((destinationLength % 4) == 1)
         return std::nullopt;
-
+    
     // 4-byte to 3-byte conversion
     destinationLength -= (destinationLength + 3) / 4;
     if (!destinationLength)

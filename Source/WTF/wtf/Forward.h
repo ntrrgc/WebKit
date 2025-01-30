@@ -136,7 +136,11 @@ template<typename KeyTypeArg, typename ValueTypeArg> struct KeyValuePair;
 template<typename Key, typename Value, typename Extractor, typename HashFunctions, typename Traits, typename KeyTraits> class HashTable;
 template<typename Value, typename = DefaultHash<Value>, typename = HashTraits<Value>> class HashCountedSet;
 template<typename KeyArg, typename MappedArg, typename = DefaultHash<KeyArg>, typename = HashTraits<KeyArg>, typename = HashTraits<MappedArg>, typename = HashTableTraits> class HashMap;
+template<typename KeyArg, typename MappedArg, typename KeyHash = DefaultHash<KeyArg>, typename KeyTraits = HashTraits<KeyArg>, typename MappedTraits = HashTraits<MappedArg>, typename HashTraits = HashTableTraits>
+using UncheckedKeyHashMap = HashMap<KeyArg, MappedArg, KeyHash, KeyTraits, MappedTraits, HashTraits>;
 template<typename ValueArg, typename = DefaultHash<ValueArg>, typename = HashTraits<ValueArg>, typename = HashTableTraits> class HashSet;
+template<typename ValueArg, typename HashArg = DefaultHash<ValueArg>, typename TraitsArg = HashTraits<ValueArg>, typename TableTraitsArg = HashTableTraits>
+using UncheckedKeyHashSet = HashSet<ValueArg, HashArg, TraitsArg, TableTraitsArg>;
 template<typename ResolveValueT, typename RejectValueT, unsigned options = 0> class NativePromise;
 using GenericPromise = NativePromise<void, void>;
 using GenericNonExclusivePromise = NativePromise<void, void, 1>;
@@ -170,7 +174,9 @@ using WTF::FunctionDispatcher;
 using WTF::GenericPromise;
 using WTF::HashCountedSet;
 using WTF::HashMap;
+using WTF::UncheckedKeyHashMap;
 using WTF::HashSet;
+using WTF::UncheckedKeyHashSet;
 using WTF::Hasher;
 using WTF::LazyNeverDestroyed;
 using WTF::LegacyNullableAtomicObjectIdentifier;

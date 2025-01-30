@@ -32,9 +32,6 @@
 
 #include <type_traits>
 #include <wtf/Forward.h>
-#include <wtf/FunctionDispatcher.h>
-#include <wtf/Ref.h>
-#include <wtf/RefPtr.h>
 
 // SFINAE depends on overload resolution. We indicate the overload we'd prefer
 // (if it can compile) using a higher priorty type (int), and the overload
@@ -184,5 +181,16 @@ struct IsExpected : std::false_type { };
 
 template <typename T, typename E>
 struct IsExpected<Expected<T, E>> : std::true_type { };
+
+template <typename... Args>
+struct ParameterCountImpl {
+    static constexpr std::size_t value = sizeof...(Args);
+};
+
+template <typename ReturnType, typename... Args>
+constexpr std::size_t parameterCount(ReturnType(*)(Args...))
+{
+    return ParameterCountImpl<Args...>::value;
+}
 
 } // namespace NTF

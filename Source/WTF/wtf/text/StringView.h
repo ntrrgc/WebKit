@@ -136,10 +136,15 @@ public:
     template<typename CharacterType> void getCharacters(CharacterType*) const;
     template<typename CharacterType> void getCharacters8(CharacterType*) const;
     template<typename CharacterType> void getCharacters16(CharacterType*) const;
+    template<typename CharacterType> void getCharacters(std::span<CharacterType>) const;
+    template<typename CharacterType> void getCharacters8(std::span<CharacterType>) const;
+    template<typename CharacterType> void getCharacters16(std::span<CharacterType>) const;
 
     enum class CaseConvertType { Upper, Lower };
     WTF_EXPORT_PRIVATE void getCharactersWithASCIICase(CaseConvertType, LChar*) const;
     WTF_EXPORT_PRIVATE void getCharactersWithASCIICase(CaseConvertType, UChar*) const;
+    WTF_EXPORT_PRIVATE void getCharactersWithASCIICase(CaseConvertType, std::span<LChar>) const;
+    WTF_EXPORT_PRIVATE void getCharactersWithASCIICase(CaseConvertType, std::span<UChar>) const;
 
     StringView substring(unsigned start, unsigned length = std::numeric_limits<unsigned>::max()) const;
     StringView left(unsigned length) const { return substring(0, length); }
@@ -629,6 +634,24 @@ template<typename CharacterType> inline void StringView::getCharacters16(Charact
 }
 
 template<typename CharacterType> inline void StringView::getCharacters(CharacterType* destination) const
+{
+    if (is8Bit())
+        getCharacters8(destination);
+    else
+        getCharacters16(destination);
+}
+
+template<typename CharacterType> inline void StringView::getCharacters8(std::span<CharacterType> destination) const
+{
+    StringImpl::copyCharacters(destination.data(), span8());
+}
+
+template<typename CharacterType> inline void StringView::getCharacters16(std::span<CharacterType> destination) const
+{
+    StringImpl::copyCharacters(destination.data(), span16());
+}
+
+template<typename CharacterType> inline void StringView::getCharacters(std::span<CharacterType> destination) const
 {
     if (is8Bit())
         getCharacters8(destination);

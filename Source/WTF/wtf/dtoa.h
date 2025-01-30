@@ -32,6 +32,7 @@ namespace WTF {
 // <-> + <21 digits> + decimal point + <100 digits> + null char = 124.
 using NumberToStringBuffer = std::array<char, 124>;
 
+using NumberToStringSpan = std::span<const char>;
 
 // <-> + <320 digits> + decimal point + <6 digits> + null char = 329
 using NumberToCSSStringBuffer = std::array<char, 329>;
@@ -44,6 +45,9 @@ WTF_EXPORT_PRIVATE const char* numberToString(double, NumberToStringBuffer&);
 WTF_EXPORT_PRIVATE const char* numberToStringWithTrailingPoint(double, NumberToStringBuffer&);
 WTF_EXPORT_PRIVATE const char* numberToFixedPrecisionString(double, unsigned significantFigures, NumberToStringBuffer&, bool truncateTrailingZeros = false);
 WTF_EXPORT_PRIVATE const char* numberToFixedWidthString(double, unsigned decimalPlaces, NumberToStringBuffer&);
+
+WTF_EXPORT_PRIVATE NumberToStringSpan numberToStringAndSize(float, NumberToStringBuffer& LIFETIME_BOUND);
+WTF_EXPORT_PRIVATE NumberToStringSpan numberToStringAndSize(double, NumberToStringBuffer& LIFETIME_BOUND);
 
 // Fixed width with up to 6 decimal places, trailing zeros truncated.
 WTF_EXPORT_PRIVATE const char* numberToCSSString(double, NumberToCSSStringBuffer&);
@@ -59,6 +63,7 @@ inline double parseDouble(StringView string, size_t& parsedLength)
 
 using WTF::NumberToStringBuffer;
 using WTF::numberToString;
+using WTF::numberToStringAndSize;
 using WTF::numberToStringWithTrailingPoint;
 using WTF::numberToFixedPrecisionString;
 using WTF::numberToFixedWidthString;

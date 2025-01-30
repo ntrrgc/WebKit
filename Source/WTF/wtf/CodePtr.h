@@ -197,7 +197,7 @@ public:
         return !m_value;
     }
     explicit operator bool() const { return !(!*this); }
-
+    
     friend bool operator==(CodePtr, CodePtr) = default;
 
     // Disallow any casting operations (except for booleans). Instead, the client
@@ -223,15 +223,15 @@ public:
 
     enum EmptyValueTag { EmptyValue };
     enum DeletedValueTag { DeletedValue };
-
+    
     CodePtr(EmptyValueTag)
         : m_value(emptyValue())
     { }
-
+    
     CodePtr(DeletedValueTag)
         : m_value(deletedValue())
     { }
-
+    
     bool isEmptyValue() const { return m_value == emptyValue(); }
     bool isDeletedValue() const { return m_value == deletedValue(); }
 

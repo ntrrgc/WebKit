@@ -122,7 +122,10 @@ RefTrackerLoggingDisabledScope<T>::~RefTrackerLoggingDisabledScope()
 
 #define REFTRACKER_DECL(T) \
     struct T final { \
-        inline static bool enabled() { return Options::enable ## T(); } \
+        inline static bool enabled() { \
+            initializer \
+            return Options::enable ## T(); \
+        } \
         WTF_EXPORT_PRIVATE static WTF::RefTracker& refTrackerSingleton(); \
     };
 
@@ -143,7 +146,7 @@ RefTrackerLoggingDisabledScope<T>::~RefTrackerLoggingDisabledScope()
 
 #else // ENABLE(REFTRACKER)
 
-#define REFTRACKER_DECL(_)
+#define REFTRACKER_DECL(_, initializer)
 #define REFTRACKER_MEMBERS(_)
 #define REFTRACKER_IMPL(_)
 

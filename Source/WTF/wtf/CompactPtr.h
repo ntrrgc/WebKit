@@ -83,7 +83,7 @@ public:
     template <typename X>
     ALWAYS_INLINE CompactPtr(CompactPtr<X>&& o)
         : m_ptr(o.m_ptr)
-    {
+    { 
         static_assert(std::is_convertible_v<X*, T*>);
         std::exchange(o.m_ptr, 0);
     }
