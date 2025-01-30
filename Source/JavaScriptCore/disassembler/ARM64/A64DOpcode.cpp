@@ -48,7 +48,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace JSC { namespace ARM64Disassembler {
 
-WTF_MAKE_TZONE_ALLOCATED_IMPL(A64DOpcode::OpcodeGroup);
+WTF_MAKE_TZONE_ALLOCATED_IMPL_NESTED(A64DOpcode, OpcodeGroup);
 
 A64DOpcode::OpcodeGroup* A64DOpcode::opcodeTable[32];
 
@@ -393,10 +393,10 @@ const char* A64DOpcodeBitfield::format()
         appendRegisterName(rn(), is64Bit());
         appendSeparator();
         appendUnsignedImmediate((is64Bit() ? 64u : 32u) - immediateR());
-        
+
         return m_formatBuffer;
     }
-    
+
     if (immediateS() < immediateR()) {
         if (opc() != 1 || rn() != 0x1f) {
             // bit field insert
@@ -412,7 +412,7 @@ const char* A64DOpcodeBitfield::format()
 
             return m_formatBuffer;
         }
-        
+
         appendInstructionName(opName());
         appendRegisterName(rd(), is64Bit());
         appendSeparator();
@@ -421,10 +421,10 @@ const char* A64DOpcodeBitfield::format()
         appendUnsignedImmediate(immediateR());
         appendSeparator();
         appendUnsignedImmediate(immediateS());
-        
+
         return m_formatBuffer;
     }
-    
+
     // bit field extract
     appendInstructionName(extractOpNames());
 
@@ -443,7 +443,7 @@ const char* A64DOpcodeCompareAndBranchImmediate::format()
 {
     appendInstructionName(opBit() ? "cbnz" : "cbz");
     appendRegisterName(rt(), is64Bit());
-    appendSeparator();    
+    appendSeparator();
     appendPCRelativeOffset(m_currentPC, static_cast<int32_t>(immediate19()));
     return m_formatBuffer;
 }
@@ -499,7 +499,7 @@ const char* A64DOpcodeConditionalSelect::format()
 const char* const A64DOpcodeDataProcessing1Source::s_opNames[8] = {
     "rbit", "rev16", "rev32", "rev", "clz", "cls", 0, 0
 };
-    
+
 const char* const A64DOpcodeDataProcessing1Source::s_pacAutOpNames[18] = {
     "pacia", "pacib", "pacda", "pacdb", "autia", "autib", "autda", "autdb",
     "paciza", "pacizb", "pacdza", "pacdzb", "autiza", "autizb", "autdza", "autdzb",
@@ -543,7 +543,7 @@ const char* A64DOpcodeDataProcessing1Source::format()
     appendZROrRegisterName(rd(), is64Bit());
     appendSeparator();
     appendZROrRegisterName(rn(), is64Bit());
-    
+
     return m_formatBuffer;
 }
 
@@ -727,7 +727,7 @@ const char* A64DOpcodeFloatingPointCompare::format()
         bufferPrintf("#0.0");
     else
         appendFPRegisterName(rm(), registerSize);
-    
+
     return m_formatBuffer;
 }
 
@@ -735,10 +735,10 @@ const char* A64DOpcodeFloatingPointConditionalSelect::format()
 {
     if (mBit())
         return A64DOpcode::format();
-    
+
     if (sBit())
         return A64DOpcode::format();
-    
+
     if (type() & 0x2)
         return A64DOpcode::format();
 
@@ -751,7 +751,7 @@ const char* A64DOpcodeFloatingPointConditionalSelect::format()
     appendFPRegisterName(rm(), registerSize);
     appendSeparator();
     appendString(conditionName(condition()));
-    
+
     return m_formatBuffer;
 }
 
@@ -894,7 +894,7 @@ const char* A64DOpcodeFloatingFixedPointConversions::format()
     appendInstructionName(opName());
     unsigned FPRegisterSize = type() + 2;
     bool destIsFP = !rmode();
-    
+
     if (destIsFP) {
         appendFPRegisterName(rd(), FPRegisterSize);
         appendSeparator();
@@ -906,7 +906,7 @@ const char* A64DOpcodeFloatingFixedPointConversions::format()
     }
     appendSeparator();
     appendUnsignedImmediate(64 - scale());
-    
+
     return m_formatBuffer;
 }
 
@@ -1323,7 +1323,7 @@ const char* A64DOpcodeLoadStoreAuthenticated::format()
 
     if (wBit())
         appendCharacter('!');
-    
+
     return m_formatBuffer;
 }
 
@@ -1421,7 +1421,7 @@ const char* A64DOpcodeLoadStoreRegisterPair::format()
     // https://developer.arm.com/documentation/ddi0596/2020-12/Base-Instructions/LDP--Load-Pair-of-Registers-
     // https://developer.arm.com/documentation/ddi0596/2020-12/Base-Instructions/STP--Store-Pair-of-Registers-
     const char* thisOpName = opName();
-    
+
     if (size() == 0x3)
         return A64DOpcode::format();
 
