@@ -93,7 +93,7 @@ protected:
 #if CHECK_THREAD_SAFE_REF_COUNTED_LIFECYCLE
         if (!m_deletionHasBegun)
             return;
-        RefCountedBase::logRefDuringDestruction(this);
+        // RefCountedBase::logRefDuringDestruction(this);
 #endif
     }
 
@@ -120,8 +120,7 @@ inline ThreadSafeRefCountedWithSuppressingSaferCPPCheckingBase::~ThreadSafeRefCo
     m_deletionHasBegun = true;
 
     // FIXME: Test performance, then add a RELEASE_ASSERT for this too.
-    if (m_refCount != 1)
-        RefCountedBase::printRefDuringDestructionLogAndCrash(this);
+    RELEASE_ASSERT(m_refCount == 1);
 }
 #endif
 
