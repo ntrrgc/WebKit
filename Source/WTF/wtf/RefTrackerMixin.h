@@ -37,8 +37,14 @@ namespace WTF {
 template<typename T>
 struct RefTrackerLoggingDisabledScope {
     WTF_MAKE_NONCOPYABLE(RefTrackerLoggingDisabledScope);
-    WTF_EXPORT_PRIVATE RefTrackerLoggingDisabledScope();
-    WTF_EXPORT_PRIVATE ~RefTrackerLoggingDisabledScope();
+    RefTrackerLoggingDisabledScope()
+    {
+        ++T::refTrackerSingleton().loggingDisabledDepth;
+    }
+    ~RefTrackerLoggingDisabledScope()
+    {
+        --T::refTrackerSingleton().loggingDisabledDepth;
+    }
 };
 
 struct RefTracker {
@@ -53,7 +59,7 @@ public:
     WTF_EXPORT_PRIVATE void logAllLiveReferences();
 
     Lock lock { };
-    HashMap<void*, std::unique_ptr<StackShot>> map WTF_GUARDED_BY_LOCK(lock) { };
+    UncheckedKeyHashMap<void*, std::unique_ptr<StackShot>> map WTF_GUARDED_BY_LOCK(lock) { };
     std::atomic<int> loggingDisabledDepth { };
 };
 
@@ -108,19 +114,7 @@ struct RefTrackerMixin final {
     RefTrackerMixin* originalThis = nullptr;
 };
 
-template<typename T>
-RefTrackerLoggingDisabledScope<T>::RefTrackerLoggingDisabledScope()
-{
-    ++T::refTrackerSingleton().loggingDisabledDepth;
-}
-
-template<typename T>
-RefTrackerLoggingDisabledScope<T>::~RefTrackerLoggingDisabledScope()
-{
-    --T::refTrackerSingleton().loggingDisabledDepth;
-}
-
-#define REFTRACKER_DECL(T) \
+#define REFTRACKER_DECL(T, initializer) \
     struct T final { \
         inline static bool enabled() { \
             initializer \
