@@ -311,7 +311,7 @@ SoupMessageHeaders* webkit_uri_response_get_http_headers(WebKitURIResponse* resp
  * webkit_uri_response_is_main_frame:
  * @response: a #WebKitURIResponse
  *
- * Returns: (transfer none): TRUE if the response is for a request from main frame or FALSE
+ * Returns: TRUE if the response is for a request from main frame or FALSE
  */
 gboolean webkit_uri_response_is_main_frame(WebKitURIResponse* response)
 {
@@ -336,4 +336,3 @@ const WebCore::ResourceResponse& webkitURIResponseGetResourceResponse(WebKitURIR
 {
     return uriResponse->priv->resourceResponse;
 }
-

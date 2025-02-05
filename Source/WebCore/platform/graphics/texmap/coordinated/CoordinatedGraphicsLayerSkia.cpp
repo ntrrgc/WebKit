@@ -104,6 +104,7 @@ Ref<Nicosia::Buffer> CoordinatedGraphicsLayer::paintTile(const IntRect& tileRect
         paintIntoGraphicsContext(recordingContext->context());
 
         workerPool->postTask([buffer = Ref { buffer }, recordingContext = WTFMove(recordingContext), tileRect] mutable {
+            (void) tileRect;
             RELEASE_ASSERT(buffer->surface());
             if (auto* canvas = buffer->surface()->getCanvas()) {
                 WTFBeginSignpost(canvas, PaintTile, "Skia unaccelerated multithread, dirty region %ix%i+%i+%i", tileRect.x(), tileRect.y(), tileRect.width(), tileRect.height());

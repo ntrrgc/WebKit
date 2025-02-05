@@ -535,7 +535,7 @@ void WebKitProtocolHandler::handleGPU(WebKitURISchemeRequest* request)
 #elif PLATFORM(WPE) && ENABLE(WPE_PLATFORM)
         if (usingWPEPlatformAPI) {
             addTableRow(hardwareAccelerationObject, "Renderer"_s, dmabufRendererWithSupportedBuffers());
-            addTableRow(hardwareAccelerationObject, "Buffer format"_s, renderBufferFormat(request));
+            // addTableRow(hardwareAccelerationObject, "Buffer format"_s, renderBufferFormat(request));
         }
 #endif
         addTableRow(hardwareAccelerationObject, "Native interface"_s, uiProcessContextIsEGL() ? "EGL"_s : "None"_s);
