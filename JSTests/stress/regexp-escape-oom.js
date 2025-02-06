@@ -1,5 +1,5 @@
 //@ runDefault
-
+//@ skip if $memoryLimited
 var exception;
 try {
     RegExp.escape('퀀'.repeat?.(2 ** 30));
