@@ -58,7 +58,12 @@ GamepadLibWPE::GamepadLibWPE(struct wpe_gamepad_provider* provider, uintptr_t ga
             auto& self = *static_cast<GamepadLibWPE*>(data);
             self.absoluteAxisChanged(static_cast<unsigned>(axis), value);
         },
-        nullptr, nullptr, nullptr,
+        // analog_button_value
+        [](void* data, enum wpe_gamepad_button button, double value) {
+            auto& self = *static_cast<GamepadLibWPE*>(data);
+            self.analogButtonChanged(static_cast<unsigned>(button), value);
+        },
+        nullptr, nullptr,
     };
     wpe_gamepad_set_client(m_gamepad.get(), &s_client, this);
 }
@@ -82,6 +87,15 @@ void GamepadLibWPE::absoluteAxisChanged(unsigned axis, double value)
     m_axisValues[axis].setValue(value);
 
     GamepadProviderLibWPE::singleton().scheduleInputNotification(*this, GamepadProviderLibWPE::ShouldMakeGamepadsVisible::Yes);
+}
+
+void GamepadLibWPE::analogButtonChanged(unsigned button, double value)
+{
+    m_lastUpdateTime = MonotonicTime::now();
+    m_buttonValues[button].setValue(clampTo(value, 0.0, 1.0));
+
+    GamepadProviderLibWPE::singleton().scheduleInputNotification(*this, GamepadProviderLibWPE::ShouldMakeGamepadsVisible::Yes);
+
 }
 
 } // namespace WebCore

@@ -18,7 +18,7 @@ find_package(SQLite3 REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Unifdef REQUIRED)
 find_package(WebP REQUIRED COMPONENTS demux)
-find_package(WPE REQUIRED)
+find_package(WPE 1.16.2 REQUIRED)
 find_package(ZLIB REQUIRED)
 
 # TODO(277627): Remove once the SDKs include the package.
