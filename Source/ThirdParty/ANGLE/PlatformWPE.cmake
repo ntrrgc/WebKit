@@ -1,3 +1,5 @@
+add_compile_options(-O2)
+
 if (is_android)
     list(APPEND ANGLE_DEFINITIONS ANGLE_PLATFORM_ANDROID)
 else ()

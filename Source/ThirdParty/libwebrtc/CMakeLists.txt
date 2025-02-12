@@ -2314,6 +2314,7 @@ target_compile_options(webrtc PRIVATE
     "-UHAVE_CONFIG_H"
     "-DWEBRTC_WEBKIT_BUILD=1"
     "-w"
+    "-O2"
 )
 
 set_target_properties(webrtc PROPERTIES CXX_VISIBILITY_PRESET hidden)

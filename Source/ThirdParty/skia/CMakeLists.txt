@@ -895,6 +895,8 @@ add_library(Skia STATIC
     modules/skcms/src/skcms_TransformSkx.cc
 )
 
+target_compile_options(Skia PRIVATE -O2)
+
 if (ANDROID)
     target_sources(Skia PRIVATE src/ports/SkDebug_android.cpp)
     target_sources(Skia PRIVATE src/ports/SkFontMgr_android.cpp)
