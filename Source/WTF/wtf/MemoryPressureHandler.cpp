@@ -49,7 +49,7 @@ static const double s_conservativeThresholdFraction = 0.8;
 static const double s_strictThresholdFraction = 0.9;
 #endif
 static const std::optional<double> s_killThresholdFraction;
-static const Seconds s_pollInterval = 30_s;
+static const Seconds s_pollInterval = 15_s;
 
 static std::atomic<bool> s_hasCreatedMemoryPressureHandler;
 
