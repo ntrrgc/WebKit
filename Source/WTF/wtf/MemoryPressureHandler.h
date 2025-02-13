@@ -134,6 +134,7 @@ public:
     bool isSimulatingMemoryWarning() const { return m_isSimulatingMemoryWarning; }
     bool isSimulatingMemoryPressure() const { return m_isSimulatingMemoryPressure; }
     void setMemoryPressureStatus(SystemMemoryPressureStatus);
+    double criticalMemoryThreshold() const { return m_configuration.baseThreshold * m_configuration.strictThresholdFraction; }
 
     WTF_EXPORT_PRIVATE MemoryUsagePolicy currentMemoryUsagePolicy();
 
