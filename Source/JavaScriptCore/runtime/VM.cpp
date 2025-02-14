@@ -682,8 +682,10 @@ static ThunkGenerator thunkGeneratorForIntrinsic(Intrinsic intrinsic)
         return toIntegerOrInfinityThunkGenerator;
     case ToLengthIntrinsic:
         return toLengthThunkGenerator;
+#if ENABLE(WEBASSEMBLY) && ENABLE(JIT)
     case WasmFunctionIntrinsic:
         return Wasm::wasmFunctionThunkGenerator;
+#endif
     default:
         return nullptr;
     }
