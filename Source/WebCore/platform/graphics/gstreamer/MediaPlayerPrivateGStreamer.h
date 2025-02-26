@@ -409,6 +409,8 @@ protected:
     bool m_didErrorOccur { false };
     mutable bool m_isEndReached { false };
     mutable std::optional<bool> m_isLiveStream;
+
+    // Must reflect whether the last successfull call to gst_element_set_state() was for PLAYING.
     bool m_isPipelinePlaying = false;
 
     // m_isPaused represents:
@@ -434,6 +436,9 @@ protected:
     SeekTarget m_seekTarget;
     GRefPtr<GstElement> m_source { nullptr };
     bool m_areVolumeAndMuteInitialized { false };
+
+    // Reflects whether the pipeline was paused due to the HTMLMediaElement being both muted and invisible in the viewport.
+    bool m_isPausedByViewport { false };
 
 #if USE(TEXTURE_MAPPER)
     OptionSet<TextureMapperFlags> m_textureMapperFlags;
@@ -696,7 +701,6 @@ private:
 
     bool m_didTryToRecoverPlayingState { false };
 
-    bool m_isVisibleInViewport { true };
     GstState m_invisiblePlayerState { GST_STATE_VOID_PENDING };
 
     // Specific to MediaStream playback.

@@ -1,4 +1,3 @@
-//@ skip if $memoryLimited
 //@ runDefault("--useConcurrentJIT=0")
 
 function main() {

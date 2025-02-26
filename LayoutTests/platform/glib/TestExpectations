@@ -1089,7 +1089,6 @@ media/video-seek-to-current-time.html [ Pass Failure ]
 webkit.org/b/213699 http/wpt/mediarecorder/mimeType.html [ Failure ]
 webkit.org/b/213699 http/wpt/mediarecorder/mute-tracks.html [ Failure Crash ]
 webkit.org/b/213699 http/wpt/mediarecorder/video-rotation.html [ Failure ]
-webkit.org/b/213699 imported/w3c/web-platform-tests/mediacapture-record/MediaRecorder-mimetype.html [ Pass Timeout ]
 webkit.org/b/213699 imported/w3c/web-platform-tests/mediacapture-record/MediaRecorder-no-sink.https.html [ Failure ]
 webkit.org/b/213699 imported/w3c/web-platform-tests/mediacapture-record/MediaRecorder-peerconnection.https.html [ Failure ]
 webkit.org/b/213699 http/wpt/mediarecorder/set-srcObject-MediaStream-Blob.html [ Pass Failure ]
@@ -1099,6 +1098,9 @@ webkit.org/b/213699 http/wpt/mediarecorder/MediaRecorder-AV-audio-video-dataavai
 # The mp4 test here is passing but the webm test fails, matroskademux fails to seek in push mode,
 # due to missing index. GLib baselines reflect this, the Pass expectation is kept here for future reference.
 webkit.org/b/282534 http/wpt/mediarecorder/MediaRecorder-audio-samplingrate-change.html [ Pass ]
+
+# The "Pausing and resuming the recording should impact the video duration" test fails.
+webkit.org/b/285813 http/wpt/mediarecorder/pause-recording.html [ Failure ]
 
 webkit.org/b/218317 media/media-source/media-source-trackid-change.html [ Failure ]
 webkit.org/b/238201 media/media-source/media-mp4-hevc-bframes.html [ Failure ]
@@ -1223,31 +1225,15 @@ imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.
 # A bit flaky on Debug bot.
 imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.html?mp4_aac [ Pass Failure ]
 
-imported/w3c/web-platform-tests/webcodecs/audio-data-serialization.any.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audio-data.any.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audio-data.any.worker.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audio-decoder.https.any.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audio-decoder.https.any.worker.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audio-decoder.crossOriginIsolated.https.any.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audio-decoder.crossOriginIsolated.https.any.worker.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.html?adts_aac [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.html?opus [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.html?pcm_alaw [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.html?pcm_mulaw [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.worker.html?adts_aac [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.worker.html?mp4_aac [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.worker.html?opus [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.worker.html?pcm_alaw [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.worker.html?pcm_mulaw [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/encoded-audio-chunk.any.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/encoded-audio-chunk.any.worker.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/encoded-audio-chunk.crossOriginIsolated.https.any.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/encoded-audio-chunk.crossOriginIsolated.https.any.worker.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audio-encoder-codec-specific.https.any.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audio-encoder-config.https.any.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audio-encoder-config.https.any.worker.html [ Pass ]
-imported/w3c/web-platform-tests/webcodecs/audio-encoder.https.any.html [ Pass DumpJSConsoleLogInStdErr ]
-http/wpt/webcodecs/encoder-task-failing.html [ Pass ]
+webkit.org/b/284626 imported/w3c/web-platform-tests/webcodecs/audio-data.any.html [ Failure ]
+webkit.org/b/284626 imported/w3c/web-platform-tests/webcodecs/audio-data.any.worker.html [ Failure ]
+
+# webkit.org/b/286526 
+imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.html?opus [ Failure ] # Do not drain decoder on flush.
+imported/w3c/web-platform-tests/webcodecs/audioDecoder-codec-specific.https.any.worker.html?opus [ Failure ]
+
+# Input/output waveforms don't match...
+webkit.org/b/284429 imported/w3c/web-platform-tests/webcodecs/audio-encoder.https.any.html [ Failure ]
 
 # H.264 high-4:2:2 encoding is supported in the GStreamer ports, so this test (checking that profile
 # is not supported) is expected to fail.
@@ -2138,7 +2124,6 @@ webkit.org/b/262989 imported/w3c/web-platform-tests/webrtc-stats/getStats-remote
 
 # Pending investigation.
 webkit.org/b/235885 fast/mediastream/RTCPeerConnection-addIceCandidate.html [ Failure ]
-webkit.org/b/235885 fast/mediastream/RTCPeerConnection-addTrack-reuse-sender.html [ Failure ]
 webkit.org/b/235885 fast/mediastream/RTCPeerConnection-have-local-pranswer.html [ Failure ]
 webkit.org/b/235885 fast/mediastream/RTCPeerConnection-have-remote-offer.html [ Failure ]
 webkit.org/b/235885 fast/mediastream/RTCPeerConnection-have-remote-pranswer.html [ Failure ]
@@ -2176,7 +2161,6 @@ webrtc/captureCanvas-webrtc.html [ Pass Timeout ]
 webkit.org/b/252878 webrtc/audio-peer-connection-webaudio.html [ Failure Pass Timeout ]
 webkit.org/b/252878 webrtc/audio-samplerate-change.html [ Pass Timeout ]
 webkit.org/b/252878 webrtc/datachannel/bufferedAmountLowThreshold-default.html [ Failure Pass ]
-webkit.org/b/252878 webrtc/video-h264.html [ Pass Timeout ]
 imported/w3c/web-platform-tests/webrtc-extensions/RTCRtpReceiver-jitterBufferTarget-stats.html [ Failure ]
 imported/w3c/web-platform-tests/webrtc-extensions/RTCRtpTransceiver-headerExtensionControl.html [ Failure ]
 
@@ -2202,7 +2186,6 @@ webrtc/video-vp8-videorange.html [ Skip ]
 # tests unexpected timeouts.
 imported/w3c/web-platform-tests/webrtc/ [ Skip ]
 imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-canTrickleIceCandidates.html [ Pass ]
-imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-setLocalDescription-parameterless.https.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-addIceCandidate-timing.https.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpParameters-codecs.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpParameters-encodings.html [ Pass ]
@@ -2281,8 +2264,6 @@ webkit.org/b/235885 imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-getSyn
 webkit.org/b/235885 imported/w3c/web-platform-tests/webrtc/protocol/rtp-clockrate.html [ Skip ]
 webkit.org/b/235885 imported/w3c/web-platform-tests/webrtc-extensions/RTCRtpSynchronizationSource-senderCaptureTimeOffset.html [ Skip ]
 
-webkit.org/b/215007 webrtc/h264-high.html [ Failure Timeout ]
-
 # We don't support spatial encoding yet.
 webkit.org/b/235885 webrtc/vp9-svc.html [ Skip ]
 
@@ -2307,6 +2288,15 @@ http/tests/webrtc/muted-video-mediastream-invisible-autoplay.html [ Failure Time
 
 # webrtcbin doesn't emit "outbound-rtp" stats until it's in connected state
 webrtc/audio-muted-stats.html [ Failure ]
+
+# webrtcbin sets the transceiver name as track id on SSRC lines.
+fast/mediastream/RTCPeerConnection-inspect-offer.html [ Failure ]
+
+# webrtcbin blocks outgoing data flow until the signaling state has switched to stable. The
+# "Parameterless SLD() in 'have-remote-offer' sets transceiver.currentDirection" test times out
+# because the answerer is blocked waiting on the track event before the offerer has completed its
+# setup and unblocked data flow.
+imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-setLocalDescription-parameterless.https.html [ Failure ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of WebRTC-related bugs
@@ -3716,7 +3706,6 @@ imported/w3c/web-platform-tests/preload/preload-type-match.html [ DumpJSConsoleL
 
 # WPT import failures
 imported/w3c/web-platform-tests/html/canvas/offscreen/layers [ Skip ]
-imported/w3c/web-platform-tests/html/canvas/element/fill-and-stroke-styles/2d.pattern.image.broken.html [ Failure ]
 imported/w3c/web-platform-tests/html/canvas/offscreen/fill-and-stroke-styles/2d.fillStyle.get.halftransparent.html [ Failure ]
 imported/w3c/web-platform-tests/html/canvas/offscreen/fill-and-stroke-styles/2d.fillStyle.get.halftransparent.worker.html [ Failure ]
 imported/w3c/web-platform-tests/html/canvas/offscreen/filters/2d.filter.canvasFilterObject.dropShadow.tentative.html [ ImageOnlyFailure ]
