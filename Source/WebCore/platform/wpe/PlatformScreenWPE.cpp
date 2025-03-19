@@ -28,6 +28,8 @@
 
 #include "DestinationColorSpace.h"
 #include "FloatRect.h"
+#include "Frame.h"
+#include "FrameView.h"
 #include "HostWindow.h"
 #include "LocalFrameView.h"
 #include "NotImplemented.h"
@@ -161,5 +163,13 @@ bool screenIsTouchPrimaryInputDevice()
     return true;
 }
 #endif
+
+bool screenSupportsHighDynamicRange(Widget* widget)
+{
+    if(!widget || !widget->root())
+        return false;
+
+    return widget->root()->frame().settings().screenSupportsHDR();
+}
 
 } // namespace WebCore

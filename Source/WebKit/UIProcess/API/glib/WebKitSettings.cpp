@@ -197,6 +197,7 @@ enum {
     PROP_ENABLE_ICE_CANDIDATE_FILTERING,
     PROP_WEBRTC_UDP_PORTS_RANGE,
     PROP_ENABLE_NON_COMPOSITED_WEBGL,
+    PROP_SCREEN_SUPPORTS_HDR,
     N_PROPERTIES,
 };
 
@@ -455,6 +456,9 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     case PROP_ENABLE_NON_COMPOSITED_WEBGL:
         webkit_settings_set_enable_non_composited_webgl(settings, g_value_get_boolean(value));
         break;
+    case PROP_SCREEN_SUPPORTS_HDR:
+        webkit_settings_set_screen_supports_hdr(settings, g_value_get_boolean(value));
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, propId, paramSpec);
         break;
@@ -692,6 +696,9 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         break;
     case PROP_ENABLE_NON_COMPOSITED_WEBGL:
         g_value_set_boolean(value, webkit_settings_get_enable_non_composited_webgl(settings));
+        break;
+    case PROP_SCREEN_SUPPORTS_HDR:
+        g_value_set_boolean(value, webkit_settings_get_screen_supports_hdr(settings));
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, propId, paramSpec);
@@ -1872,6 +1879,19 @@ static void webkit_settings_class_init(WebKitSettingsClass* klass)
         "enable-non-composited-webgl",
         _("Enable non composited WebGL"),
         _("Whether non composited WebGL should be enabled"),
+        FALSE,
+        readWriteConstructParamFlags);
+
+     /**
+     * WebKitSettings:screen-supports-hdr:
+     *
+     * Screen supports HDR.
+     *
+     */
+    sObjProperties[PROP_SCREEN_SUPPORTS_HDR] = g_param_spec_boolean(
+        "screen-supports-hdr",
+        _("Screen supports HDR"),
+        _("Does screen support HDR."),
         FALSE,
         readWriteConstructParamFlags);
 
@@ -4890,4 +4910,41 @@ webkit_settings_set_webrtc_udp_ports_range(WebKitSettings* settings, const gchar
 #else
     UNUSED_PARAM(udpPortsRange);
 #endif
+}
+
+/**
+ * webkit_settings_get_screen_supports_hdr:
+ * @settings: a #WebKitSettings
+ *
+ * Get the [property@Settings:screen-supports-hdr] property.
+ *
+ * Returns: Screen supports HDR, or FALSE if un-set.
+ *
+ */
+gboolean
+webkit_settings_get_screen_supports_hdr(WebKitSettings* settings)
+{
+    g_return_val_if_fail(WEBKIT_IS_SETTINGS(settings), FALSE);
+    return settings->priv->preferences->screenSupportsHDR();
+}
+
+/**
+ * webkit_settings_set_screen_supports_hdr:
+ * @settings: a #WebKitSettings
+ * @screenSupportsHDR: Value to be set
+ *
+ * Set the [property@Settings:screen-supports-hdr] property.
+ *
+ */
+void
+webkit_settings_set_screen_supports_hdr(WebKitSettings* settings, gboolean screenSupportsHDR)
+{
+    g_return_if_fail(WEBKIT_IS_SETTINGS(settings));
+    WebKitSettingsPrivate* priv = settings->priv;
+    bool currentValue = priv->preferences->screenSupportsHDR();
+    if (currentValue == screenSupportsHDR)
+        return;
+
+    priv->preferences->setScreenSupportsHDR(screenSupportsHDR);
+    g_object_notify_by_pspec(G_OBJECT(settings), sObjProperties[PROP_SCREEN_SUPPORTS_HDR]);
 }
