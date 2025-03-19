@@ -3931,7 +3931,7 @@ void SpeculativeJIT::compile(Node* node)
         if (!ok)
             break;
 
-        SuppressRegisetrAllocationValidation suppressScope(*this);
+        SuppressRegisterAllocationValidation suppressScope(*this);
 
         StorageOperand storage(this, storageEdge);
         GPRTemporary oldValue(this);
