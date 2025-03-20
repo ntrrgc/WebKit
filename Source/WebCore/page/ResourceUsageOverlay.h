@@ -62,6 +62,8 @@ public:
     void platformDraw(CGContextRef);
 #endif
 
+    void detachFromPage() { m_page.clear(); }
+
     static const int normalWidth = 570;
     static const int normalHeight = 180;
 

@@ -487,6 +487,14 @@ void CDMInstanceSessionClearKey::updateLicense(const String& sessionId, LicenseT
         return;
     }
 
+    RefPtr parentInstance = protectedParentInstance();
+    if (!parentInstance) {
+        LOG(EME, "EME - ClearKey - session %s is in an invalid state", sessionId.utf8().data());
+        dispatchCallback(false, std::nullopt, SuccessValue::Failed);
+        return;
+    }
+
+
     LOG(EME, "EME - ClearKey - updating license for session %s which currently contains %u keys", sessionId.utf8().data(), m_keyStore.numKeys());
 
     if (auto decodedKeys = parseLicenseFormat(*root)) {
@@ -497,7 +505,7 @@ void CDMInstanceSessionClearKey::updateLicense(const String& sessionId, LicenseT
         std::optional<KeyStatusVector> changedKeys;
         if (keysChanged) {
             LOG(EME, "EME - ClearKey - session %s has changed keys", sessionId.utf8().data());
-            parentInstance().mergeKeysFrom(m_keyStore);
+            parentInstance->mergeKeysFrom(m_keyStore);
             changedKeys = m_keyStore.convertToJSKeyStatusVector();
         }
 
@@ -507,7 +515,7 @@ void CDMInstanceSessionClearKey::updateLicense(const String& sessionId, LicenseT
 
     if (parseLicenseReleaseAcknowledgementFormat(*root)) {
         LOG(EME, "EME - ClearKey - session %s release acknowledged, clearing all known keys", sessionId.utf8().data());
-        parentInstance().unrefAllKeysFrom(m_keyStore);
+        parentInstance->unrefAllKeysFrom(m_keyStore);
         m_keyStore.clear();
         dispatchCallback(true, std::nullopt, SuccessValue::Succeeded);
         return;
@@ -585,11 +593,9 @@ void CDMInstanceSessionClearKey::storeRecordOfKeyUsage(const String&)
 {
 }
 
-CDMInstanceClearKey& CDMInstanceSessionClearKey::parentInstance() const
+RefPtr<CDMInstanceClearKey> CDMInstanceSessionClearKey::protectedParentInstance() const
 {
-    auto instance = cdmInstanceProxy();
-    ASSERT(instance);
-    return static_cast<CDMInstanceClearKey&>(*instance);
+    return dynamicDowncast<CDMInstanceClearKey>(cdmInstanceProxy().get());
 }
 
 } // namespace WebCore

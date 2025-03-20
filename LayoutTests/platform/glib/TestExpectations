@@ -3048,6 +3048,8 @@ webkit.org/b/68512 accessibility/aria-hidden-updates-alldescendants.html [ Failu
 webkit.org/b/77568 fast/text/locale-shaping-complex.html [ ImageOnlyFailure ]
 webkit.org/b/77568 fast/text/locale-shaping.html [ ImageOnlyFailure ]
 
+webkit.org/b/161587 fast/text/locale-shaping-3.html  [ ImageOnlyFailure ]
+
 # Fails because MutationObservers are not notified at end-of-task.
 webkit.org/b/78290 fast/dom/MutationObserver/end-of-task-delivery.html [ Failure ]
 

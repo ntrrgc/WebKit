@@ -118,7 +118,7 @@ public:
     GstElement* makeElement(const gchar* factoryName)
     {
         static Atomic<uint32_t> elementId;
-        auto name = makeString(span(Name()), "-enc-"_s, span(factoryName), "-"_s, elementId.exchangeAdd(1));
+        auto name = makeString(Name(), "-enc-"_s, span(factoryName), "-"_s, elementId.exchangeAdd(1));
         auto* elem = makeGStreamerElement(factoryName, name.utf8().data());
         return elem;
     }
@@ -314,7 +314,7 @@ public:
     }
 
     virtual webrtc::VideoCodecType CodecType() = 0;
-    virtual const gchar* Name() = 0;
+    virtual ASCIILiteral Name() = 0;
     virtual webrtc::SdpVideoFormat sdpVideoFormat() = 0;
     virtual int KeyframeInterval(const webrtc::VideoCodec* codecSettings) = 0;
 
@@ -355,7 +355,7 @@ public:
     }
 
     const gchar* Caps() final { return "video/x-h264"; }
-    const gchar* Name() final { return "h264"; }
+    ASCIILiteral Name() final { return "h264"_s; }
     webrtc::SdpVideoFormat sdpVideoFormat() final { return webrtc::SdpVideoFormat::H264(); }
     webrtc::VideoCodecType CodecType() final { return webrtc::kVideoCodecH264; }
 };

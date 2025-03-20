@@ -1,4 +1,17 @@
 =================
+WPE WebKit 2.46.7
+=================
+
+What's new in WPE WebKit 2.46.7?
+
+  - Propagate computed locale computed for fonts to HarfBuzz.
+  - Improved reading of large messages from the Remote Web Inspector.
+  - Fix YouTube playback by using a different User-Agent quirk.
+  - Fix the build with USE_GSTREAMER_GL disabled.
+  - Fix the build with ENABLE_WEB_RTC enabled when (LTO) is in use.
+  - Fix several crashes and rendering issues.
+
+=================
 WPE WebKit 2.46.6
 =================
 

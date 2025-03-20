@@ -108,7 +108,7 @@ ScrollingNodeID LayerAncestorClippingStack::lastOverflowScrollProxyNodeID() cons
 void LayerAncestorClippingStack::updateScrollingNodeLayers(ScrollingCoordinator& scrollingCoordinator)
 {
     for (const auto& entry : m_stack) {
-        if (!entry.clipData.isOverflowScroll)
+        if (!entry.clipData.isOverflowScroll || !entry.overflowScrollProxyNodeID)
             continue;
 
         scrollingCoordinator.setNodeLayers(entry.overflowScrollProxyNodeID, { entry.scrollingLayer.get() });
