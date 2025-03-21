@@ -45,8 +45,10 @@ enum class SpeechBoundary : uint8_t {
     SpeechSentenceBoundary
 };
 
-#if USE(GSTREAMER)
+#if USE(GSTREAMER) && USE(FLITE)
 class GstSpeechSynthesisWrapper;
+#elif USE(TTS_CLIENT)
+class TTSClientPlatformSpeechSynthesizerWrapper;
 #endif
 class PlatformSpeechSynthesisUtterance;
 
@@ -95,8 +97,10 @@ private:
 
 #if PLATFORM(COCOA)
     RetainPtr<WebSpeechSynthesisWrapper> m_platformSpeechWrapper;
-#elif USE(GSTREAMER)
+#elif USE(GSTREAMER) && USE(FLITE)
     std::unique_ptr<GstSpeechSynthesisWrapper> m_platformSpeechWrapper { nullptr };
+#elif USE(TTS_CLIENT)
+    std::unique_ptr<TTSClientPlatformSpeechSynthesizerWrapper> m_platformSpeechWrapper { nullptr };
 #endif
 };
 

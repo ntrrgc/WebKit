@@ -729,7 +729,7 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
     pageConfiguration.performanceLoggingClient = makeUnique<WebPerformanceLoggingClient>(*this);
     pageConfiguration.screenOrientationManager = m_screenOrientationManager.get();
 
-#if ENABLE(SPEECH_SYNTHESIS) && !USE(GSTREAMER)
+#if ENABLE(SPEECH_SYNTHESIS) && !(USE(GSTREAMER) && USE(FLITE)) && !USE(TTS_CLIENT)
     pageConfiguration.speechSynthesisClient = makeUnique<WebSpeechSynthesisClient>(*this);
 #endif
 

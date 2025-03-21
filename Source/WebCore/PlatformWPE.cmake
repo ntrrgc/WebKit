@@ -141,12 +141,16 @@ if (ENABLE_GAMEPAD)
 endif ()
 
 if (ENABLE_SPEECH_SYNTHESIS)
-    list(APPEND WebCore_SYSTEM_INCLUDE_DIRECTORIES
-        ${Flite_INCLUDE_DIRS}
-    )
-    list(APPEND WebCore_LIBRARIES
-        ${Flite_LIBRARIES}
-    )
+    if (USE_FLITE)
+        list(APPEND WebCore_SYSTEM_INCLUDE_DIRECTORIES
+            ${Flite_INCLUDE_DIRS}
+        )
+        list(APPEND WebCore_LIBRARIES
+            ${Flite_LIBRARIES}
+        )
+    elseif (USE_TTS_CLIENT)
+        list(APPEND WebCore_LIBRARIES TTSClient)
+    endif ()
 endif ()
 
 # This sets the maximum amount of memory that BitmapTexturePool can hold before being more

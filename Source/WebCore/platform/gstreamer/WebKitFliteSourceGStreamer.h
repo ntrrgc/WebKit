@@ -18,7 +18,7 @@
 
 #pragma once
 
-#if ENABLE(SPEECH_SYNTHESIS) && USE(GSTREAMER)
+#if ENABLE(SPEECH_SYNTHESIS) && USE(GSTREAMER) && USE(FLITE)
 
 #include <gst/gst.h>
 #include <wtf/Forward.h>
@@ -37,4 +37,4 @@ GType webkit_flite_src_get_type();
 Vector<Ref<WebCore::PlatformSpeechSynthesisVoice>>& ensureFliteVoicesInitialized();
 void webKitFliteSrcSetUtterance(WebKitFliteSrc*, const WebCore::PlatformSpeechSynthesisVoice*, const String&);
 
-#endif // ENABLE(SPEECH_SYNTHESIS) && USE(GSTREAMER)
+#endif // ENABLE(SPEECH_SYNTHESIS) && USE(GSTREAMER) && USE(FLITE)

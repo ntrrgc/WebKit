@@ -87,6 +87,8 @@ platform/libwpe/PlatformPasteboardLibWPE.cpp
 platform/text/Hyphenation.cpp
 platform/text/LocaleICU.cpp
 
+platform/ttsclient/PlatformSpeechSynthesizerTTSClient.cpp
+
 platform/unix/LoggingUnix.cpp
 platform/unix/SharedMemoryUnix.cpp
 
