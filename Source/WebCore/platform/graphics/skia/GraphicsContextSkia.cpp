@@ -792,7 +792,7 @@ void GraphicsContextSkia::beginTransparencyLayer(CompositeOperator operation, Bl
         return;
 
     GraphicsContext::beginTransparencyLayer(operation, blendMode);
-    m_layerStateStack.append({ CompositeMode(operation, blendMode) });
+    m_layerStateStack.append({ CompositeMode{operation, blendMode} });
 
     SkPaint paint;
     paint.setBlendMode(toSkiaBlendMode(operation, blendMode));
