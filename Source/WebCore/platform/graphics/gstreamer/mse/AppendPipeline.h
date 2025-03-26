@@ -58,7 +58,7 @@ public:
 private:
     // Similar to TrackPrivateBaseGStreamer::TrackType, but with a new value (Invalid) for when the codec is
     // not supported on this system, which should result in ParsingFailed error being thrown in SourceBuffer.
-    enum StreamType { Audio, Video, Text, Unknown, Invalid };
+    enum StreamType { Audio, Video, Text, Unknown, Invalid, Ignore };
 #ifndef GST_DISABLE_GST_DEBUG
     static const char * streamTypeToString(StreamType);
 #endif
