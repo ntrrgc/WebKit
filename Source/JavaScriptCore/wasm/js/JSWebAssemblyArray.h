@@ -28,6 +28,8 @@
 
 #if ENABLE(WEBASSEMBLY)
 
+#include "wtf/CheckedArithmetic.h"
+#include "wtf/DataLog.h"
 #include "WasmFormat.h"
 #include "WasmOps.h"
 #include "WasmTypeDefinition.h"
@@ -56,8 +58,11 @@ public:
 
     static Structure* createStructure(VM&, JSGlobalObject*, JSValue);
 
-    static JSWebAssemblyArray* create(VM& vm, Structure* structure, Wasm::FieldType elementType, size_t size, RefPtr<const Wasm::RTT> rtt)
+    static JSWebAssemblyArray* tryCreate(VM& vm, Structure* structure, Wasm::FieldType elementType, size_t size, RefPtr<const Wasm::RTT> rtt)
     {
+        // We have no good way to test for a failed allocation in FixedVector, so we open-code the test here.
+        if (is32Bit() && WTF::sumOverflows<uint32_t>(EmbeddedFixedVector<v128_t>::offsetOfData(), elementType.type.elementSize() * size))
+            return nullptr;
         auto* object = new (NotNull, allocateCell<JSWebAssemblyArray>(vm)) JSWebAssemblyArray(vm, structure, elementType, size, rtt);
         object->finishCreation(vm);
         return object;
