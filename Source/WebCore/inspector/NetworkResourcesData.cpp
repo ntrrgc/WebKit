@@ -40,8 +40,7 @@ namespace WebCore {
 
 using namespace Inspector;
 
-static const size_t maximumResourcesContentSize = 200 * 1000 * 1000; // 200MB
-static const size_t maximumSingleResourceContentSize = 50 * 1000 * 1000; // 50MB
+static const unsigned maximumSingleResourceContentSizeMB = 50; // 50MB
 
 NetworkResourcesData::ResourceData::ResourceData(const String& requestId, const String& loaderId)
     : m_requestId(requestId)
@@ -111,9 +110,9 @@ void NetworkResourcesData::ResourceData::decodeDataToContent()
     }
 }
 
-NetworkResourcesData::NetworkResourcesData()
-    : m_maximumResourcesContentSize(maximumResourcesContentSize)
-    , m_maximumSingleResourceContentSize(maximumSingleResourceContentSize)
+NetworkResourcesData::NetworkResourcesData(uint32_t maximumResourcesContentSize)
+    : m_maximumResourcesContentSize(maximumResourcesContentSize * MB)
+    , m_maximumSingleResourceContentSize(maximumSingleResourceContentSizeMB * MB)
 {
 }
 
