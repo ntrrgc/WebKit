@@ -53,6 +53,7 @@ namespace WebCore {
 GType AppendPipeline::s_endOfAppendMetaType = 0;
 const GstMetaInfo* AppendPipeline::s_webKitEndOfAppendMetaInfo = nullptr;
 std::once_flag AppendPipeline::s_staticInitializationFlag;
+static constexpr std::array<ASCIILiteral, 1> s_ignoreMediaTypes = { "closedcaption/"_s };
 
 struct EndOfAppendMeta {
     GstMeta base;
@@ -301,7 +302,12 @@ std::tuple<GRefPtr<GstCaps>, AppendPipeline::StreamType, FloatSize> AppendPipeli
 
     auto originalMediaType = capsMediaType(demuxerSrcPadCaps);
     auto& gstRegistryScanner = GStreamerRegistryScannerMSE::singleton();
-    if (!gstRegistryScanner.isCodecSupported(GStreamerRegistryScanner::Configuration::Decoding, originalMediaType.toStringWithoutCopying())) {
+    auto shouldIgnore = std::find_if(s_ignoreMediaTypes.begin(), s_ignoreMediaTypes.end(), [&originalMediaType](const ASCIILiteral& type) {
+        return originalMediaType.startsWithIgnoringASCIICase(type);
+    }) != s_ignoreMediaTypes.end();
+    if (shouldIgnore) {
+        streamType = StreamType::Ignore;
+    } else if (!gstRegistryScanner.isCodecSupported(GStreamerRegistryScanner::Configuration::Decoding, originalMediaType.toStringWithoutCopying())) {
         streamType = StreamType::Invalid;
     } else if (doCapsHaveType(demuxerSrcPadCaps, GST_VIDEO_CAPS_TYPE_PREFIX)) {
         presentationSize = getVideoResolutionFromCaps(demuxerSrcPadCaps).value_or(FloatSize());
@@ -784,7 +790,7 @@ std::pair<AppendPipeline::CreateTrackResult, AppendPipeline::Track*> AppendPipel
         // append error algorithm and abort these steps.
         return { CreateTrackResult::AppendParsingFailed, nullptr };
     }
-    if (streamType == StreamType::Unknown) {
+    if (streamType == StreamType::Unknown || streamType == StreamType::Ignore) {
         GST_WARNING_OBJECT(pipeline(), "Pad '%s' with parsed caps %" GST_PTR_FORMAT " has an unknown type, will be connected to a black hole probe.", GST_PAD_NAME(demuxerSrcPad), parsedCaps.get());
         gst_pad_add_probe(demuxerSrcPad, GST_PAD_PROBE_TYPE_BUFFER, reinterpret_cast<GstPadProbeCallback>(appendPipelineDemuxerBlackHolePadProbe), nullptr, nullptr);
         return { CreateTrackResult::TrackIgnored, nullptr };
@@ -830,7 +836,7 @@ bool AppendPipeline::recycleTrackForPad(GstPad* demuxerSrcPad)
         GST_WARNING_OBJECT(pipeline(), "Couldn't find a matching pre-existing track for pad '%s' with parsed caps %" GST_PTR_FORMAT
             " on non-first initialization segment, will be connected to a black hole probe.", GST_PAD_NAME(demuxerSrcPad), parsedCaps.get());
         gst_pad_add_probe(demuxerSrcPad, GST_PAD_PROBE_TYPE_BUFFER, reinterpret_cast<GstPadProbeCallback>(appendPipelineDemuxerBlackHolePadProbe), nullptr, nullptr);
-        return false;
+        return (streamType == StreamType::Ignore);
     }
 
     // The https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/4535 merge request in qtdemux is causing EOS on
@@ -1036,6 +1042,8 @@ const char* AppendPipeline::streamTypeToString(StreamType streamType)
         return "Invalid";
     case StreamType::Unknown:
         return "Unknown";
+    case StreamType::Ignore:
+        return "Ignore";
     default:
         return "(Unsupported stream type)";
     }
