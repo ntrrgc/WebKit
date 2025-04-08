@@ -37,6 +37,12 @@ GStreamerQuirkBroadcom::GStreamerQuirkBroadcom()
     m_disallowedWebAudioDecoders = { "brcmaudfilter"_s };
 }
 
+bool GStreamerQuirkBroadcom::isPlatformSupported() const
+{
+    auto broadcomFactory = adoptGRef(gst_element_factory_find("brcmaudiosink"));
+    return broadcomFactory;
+}
+
 void GStreamerQuirkBroadcom::configureElement(GstElement* element, const OptionSet<ElementRuntimeCharacteristics>& characteristics)
 {
     if (!g_strcmp0(G_OBJECT_TYPE_NAME(element), "Gstbrcmaudiosink"))

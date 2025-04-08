@@ -51,6 +51,12 @@ GStreamerQuirkWesteros::GStreamerQuirkWesteros()
     }
 }
 
+bool GStreamerQuirkWesteros::isPlatformSupported() const
+{
+    auto westerosFactory = adoptGRef(gst_element_factory_find("westerossink"));
+    return westerosFactory;
+}
+
 void GStreamerQuirkWesteros::configureElement(GstElement* element, const OptionSet<ElementRuntimeCharacteristics>& characteristics)
 {
     if (g_str_has_prefix(GST_ELEMENT_NAME(element), "uridecodebin3")) {
