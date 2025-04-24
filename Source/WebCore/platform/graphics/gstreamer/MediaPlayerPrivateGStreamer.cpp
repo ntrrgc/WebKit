@@ -4829,7 +4829,7 @@ void MediaPlayerPrivateGStreamer::setPageIsVisible(bool visible)
     if (m_visible == visible)
         return;
 
-    if (!isHolePunchRenderingEnabled()) {
+    if (!isHolePunchRenderingEnabled() || !m_videoSink) {
         m_visible = visible;
         return;
     }
@@ -4853,7 +4853,7 @@ void MediaPlayerPrivateGStreamer::setPageIsSuspended(bool suspended)
     if (m_suspended == suspended)
         return;
 
-    if (!isHolePunchRenderingEnabled()) {
+    if (!isHolePunchRenderingEnabled() || !m_videoSink) {
         m_suspended = suspended;
         return;
     }
