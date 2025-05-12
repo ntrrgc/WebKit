@@ -60,6 +60,17 @@ ViewLegacy::ViewLegacy(struct wpe_view_backend* backend, const API::PageConfigur
 {
     ASSERT(m_backend);
 
+    bool isHeadless = WTF::findIgnoringASCIICaseWithoutLength(
+        wpe_loader_get_loaded_implementation_library_name(), "headless") != WTF::notFound;
+    if (isHeadless) {
+        configuration.preferences().setNonCompositedWebGLEnabled(true);
+        configuration.preferences().setAcceleratedCompositingEnabled(false);
+        configuration.preferences().setForceCompositingMode(false);
+        configuration.preferences().setThreadedScrollingEnabled(false);
+        configuration.preferences().setAcceleratedDrawingEnabled(false);
+        configuration.preferences().setWebGLEnabled(false);
+    }
+
     m_size = { 800, 600 };
     m_viewStateFlags = { WebCore::ActivityState::WindowIsActive, WebCore::ActivityState::IsFocused, WebCore::ActivityState::IsVisible, WebCore::ActivityState::IsInWindow };
 
