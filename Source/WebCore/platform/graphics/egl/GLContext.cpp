@@ -378,6 +378,7 @@ GLContext::~GLContext()
 {
     EGLDisplay display = m_display.eglDisplay();
     if (m_context) {
+        makeContextCurrent();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         eglDestroyContext(display, m_context);
