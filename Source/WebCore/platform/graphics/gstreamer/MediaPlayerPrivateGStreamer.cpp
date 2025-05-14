@@ -4072,7 +4072,6 @@ void MediaPlayerPrivateGStreamer::triggerRepaint(GRefPtr<GstSample>&& sample)
 
         pushTextureToCompositor(isDuplicateSample);
     }
-    pushTextureToCompositor(isDuplicateSample);
 #endif // USE(TEXTURE_MAPPER)
 }
 
