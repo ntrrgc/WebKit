@@ -4610,6 +4610,11 @@ void webkit_settings_set_allow_running_of_insecure_content(WebKitSettings* setti
         return;
 
     priv->preferences->setAllowRunningOfInsecureContent(allowed);
+
+    // If we are allowed to run insecure content, then upgrade mixed content should not be performed
+    if (allowed)
+        priv->preferences->setUpgradeMixedContentEnabled(false);
+
     g_object_notify_by_pspec(G_OBJECT(settings), sObjProperties[PROP_ALLOW_RUNNING_OF_INSECURE_CONTENT]);
 }
 
@@ -4645,6 +4650,11 @@ void webkit_settings_set_allow_display_of_insecure_content(WebKitSettings* setti
         return;
 
     priv->preferences->setAllowDisplayOfInsecureContent(allowed);
+
+    // If we are allowed to display insecure content, then upgrade mixed content should not be performed
+    if (allowed)
+        priv->preferences->setUpgradeMixedContentEnabled(false);
+
     g_object_notify_by_pspec(G_OBJECT(settings), sObjProperties[PROP_ALLOW_DISPLAY_OF_INSECURE_CONTENT]);
 }
 
