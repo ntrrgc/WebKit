@@ -38,7 +38,10 @@ DrawingContext::DrawingContext(const FloatSize& logicalSize, const AffineTransfo
 {
 }
 
-DrawingContext::~DrawingContext() = default;
+DrawingContext::~DrawingContext()
+{
+    m_displayList.clear();
+}
 
 void DrawingContext::setTracksDisplayListReplay(bool tracksDisplayListReplay)
 {
@@ -56,7 +59,6 @@ void DrawingContext::replayDisplayList(GraphicsContext& destContext)
         m_replayedDisplayList = replayer.replay({ }, m_tracksDisplayListReplay).trackedDisplayList;
     else
         replayer.replay();
-    m_displayList.clear();
 }
 
 } // DisplayList
