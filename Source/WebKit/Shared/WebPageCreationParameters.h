@@ -273,6 +273,7 @@ struct WebPageCreationParameters {
 
     String overriddenMediaType;
     Vector<String> corsDisablingPatterns;
+    Vector<String> localUniversalAccessAllowList;
     HashSet<String> maskedURLSchemes;
     bool userScriptsShouldWaitUntilNotification { true };
     bool loadsSubresources { true };
