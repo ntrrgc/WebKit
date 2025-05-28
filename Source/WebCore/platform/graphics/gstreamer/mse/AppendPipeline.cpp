@@ -42,6 +42,7 @@
 #include <gst/pbutils/pbutils.h>
 #include <gst/video/video.h>
 #include <wtf/Condition.h>
+#include <wtf/Scope.h>
 #include <wtf/glib/RunLoopSourcePriority.h>
 #include <wtf/text/ASCIILiteral.h>
 #include <wtf/text/MakeString.h>
@@ -117,6 +118,25 @@ void AppendPipeline::configureOptionalDemuxerFromAnyThread()
                 return AbortableTaskQueue::Void();
             });
         }), this);
+
+        g_signal_connect_swapped(m_demux.get(), "pad-added", G_CALLBACK(+[](AppendPipeline* appendPipeline, GstPad* pad) {
+            ASSERT(!isMainThread());
+            GST_DEBUG_OBJECT(appendPipeline->pipeline(), "Pad added: %" GST_PTR_FORMAT, pad);
+            gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, reinterpret_cast<GstPadProbeCallback>(+[](GstPad* pad, GstPadProbeInfo* info, AppendPipeline* appendPipeline) -> GstPadProbeReturn {
+                auto event = GST_PAD_PROBE_INFO_EVENT(info);
+                if (GST_EVENT_TYPE(event) != GST_EVENT_CAPS)
+                    return GST_PAD_PROBE_OK;
+
+                GstCaps* caps;
+                gst_event_parse_caps(event, &caps);
+                if (!areEncryptedCaps(caps))
+                    return GST_PAD_PROBE_OK;
+
+                appendPipeline->removeParserForDemuxerPad(GRefPtr(pad));
+                return GST_PAD_PROBE_OK;
+            }), appendPipeline, nullptr);
+        }), this);
+
     } else {
         // m_demux can be an identity or an id3demux element at this point.
         gst_pad_add_probe(demuxerSrcPad.get(), GST_PAD_PROBE_TYPE_BUFFER, reinterpret_cast<GstPadProbeCallback>(
@@ -342,10 +362,54 @@ GstPadProbeReturn AppendPipeline::appsrcEndOfAppendCheckerProbe(GstPadProbeInfo*
     return GST_PAD_PROBE_DROP;
 }
 
+void AppendPipeline::removeParserForDemuxerPad(const GRefPtr<GstPad>& pad)
+{
+    auto peer = adoptGRef(gst_pad_get_peer(pad.get()));
+    if (!peer)
+        return;
+
+    auto parser = adoptGRef(gst_pad_get_parent_element(peer.get()));
+    if (!parser) [[unlikely]]
+        return;
+
+    Track* matchingTrack = nullptr;
+    for (std::unique_ptr<Track>& track : m_tracks) {
+        if (track->parser != parser)
+            continue;
+        matchingTrack = &*track;
+    }
+
+    if (!matchingTrack)
+        return;
+
+    auto srcPad = adoptGRef(gst_element_get_static_pad(parser.get(), "src"));
+    if (!srcPad) [[unlikely]]
+        return;
+
+    auto parserPeerPad = adoptGRef(gst_pad_get_peer(srcPad.get()));
+    if (!parserPeerPad) [[unlikely]]
+        return;
+
+    gstElementLockAndSetState(parser.get(), GST_STATE_NULL);
+    gst_pad_unlink(pad.get(), peer.get());
+    gst_pad_unlink(srcPad.get(), parserPeerPad.get());
+    gst_bin_remove(GST_BIN_CAST(m_pipeline.get()), parser.get());
+    gst_pad_link(pad.get(), parserPeerPad.get());
+    matchingTrack->entryPad = WTFMove(parserPeerPad);
+}
+
 void AppendPipeline::handleNeedContextSyncMessage(GstMessage* message)
 {
-    // MediaPlayerPrivateGStreamerBase will take care of setting up encryption.
-    m_playerPrivate->handleNeedContextMessage(message);
+    auto scopeExit = makeScopeExit([&] {
+        // MediaPlayerPrivateGStreamerBase will take care of setting up encryption.
+        m_playerPrivate->handleNeedContextMessage(message);
+    });
+
+    if (!m_demux->numsrcpads)
+        return;
+
+    GRefPtr pad = GST_PAD_CAST(m_demux->srcpads->data);
+    removeParserForDemuxerPad(pad);
 }
 
 std::tuple<GRefPtr<GstCaps>, AppendPipeline::StreamType, FloatSize> AppendPipeline::parseDemuxerSrcPadCaps(GstCaps* demuxerSrcPadCaps)
@@ -1018,9 +1082,9 @@ void AppendPipeline::Track::emplaceOptionalParserForFormat(GstBin* bin, const GR
 
     parser = createOptionalParserForFormat(bin, trackId, newCaps.get());
     gst_bin_add(bin, parser.get());
-    gst_element_sync_state_with_parent(parser.get());
     gst_element_link(parser.get(), appsink.get());
     ASSERT(GST_PAD_IS_LINKED(appsinkPad.get()));
+    gst_element_sync_state_with_parent(parser.get());
     entryPad = adoptGRef(gst_element_get_static_pad(parser.get(), "sink"));
 }
 
