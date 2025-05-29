@@ -790,14 +790,6 @@ void NetworkConnectionToWebProcess::registerURLSchemeAsHandledBySchemeHandler(co
     WebCore::LegacySchemeRegistry::registerURLSchemeAsHandledBySchemeHandler(scheme);
 }
 
-static bool shouldTreatAsSameSite(const URL& firstParty, const URL& url)
-{
-    if (SecurityPolicy::shouldInheritSecurityOriginFromOwner(url))
-        return true;
-
-    return RegistrableDomain(firstParty) == RegistrableDomain(url);
-}
-
 void NetworkConnectionToWebProcess::cookiesForDOM(const URL& firstParty, const SameSiteInfo& sameSiteInfo, const URL& url, FrameIdentifier frameID, PageIdentifier pageID, IncludeSecureCookies includeSecureCookies, ApplyTrackingPrevention applyTrackingPrevention, ShouldRelaxThirdPartyCookieBlocking shouldRelaxThirdPartyCookieBlocking, CompletionHandler<void(String cookieString, bool secureCookiesAccessed)>&& completionHandler)
 {
     auto allowCookieAccess = m_networkProcess->allowsFirstPartyForCookies(m_webProcessIdentifier, firstParty);
