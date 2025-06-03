@@ -166,6 +166,7 @@ std::optional<GRefPtr<GTlsCertificate>> ArgumentCoder<GRefPtr<GTlsCertificate>>:
 #endif
             nullptr)));
         issuer = certificate.get();
+        ++i;
     }
 
     return certificate;
