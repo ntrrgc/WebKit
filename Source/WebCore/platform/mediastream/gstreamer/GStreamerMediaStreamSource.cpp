@@ -1086,7 +1086,7 @@ static GstPadProbeReturn webkitMediaStreamSrcPadProbeCb(GstPad* pad, GstPadProbe
             gst_event_unref(event);
             data->streamStartEvent = adoptGRef(gst_event_make_writable(data->streamStartEvent.leakRef()));
             gst_event_set_seqnum(data->streamStartEvent.get(), sequenceNumber);
-            info->data = gst_event_ref(data->streamStartEvent.get());
+            info->data = data->streamStartEvent.ref();
         }
         return GST_PAD_PROBE_OK;
     }
