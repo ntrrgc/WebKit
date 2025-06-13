@@ -2588,12 +2588,12 @@ void MediaPlayerPrivateGStreamer::configureElement(GstElement* element)
     if (webkitGstCheckVersion(1, 22, 0) && g_str_has_prefix(elementName.get(), "urisourcebin") && (isMediaSource() || isMediaStreamPlayer()))
         g_object_set(element, "use-buffering", FALSE, "parse-streams", !isMediaStreamPlayer(), nullptr);
 
-    if (nameView.startsWith("parsebin"_s))
+    if (g_str_has_prefix(elementName.get(), "parsebin"))
         configureParsebin(element);
 
     // The legacy decodebin2 stack doesn't integrate well with parsebin, so prevent auto-plugging of
     // the webkitthunderparser.
-    if (nameView.startsWith("uridecodebin"_s) && m_isLegacyPlaybin)
+    if (g_str_has_prefix(elementName.get(), "uridecodebin") && m_isLegacyPlaybin)
         configureUriDecodebin2(element);
 
     // In case of playbin3 with <video ... preload="auto">, instantiate
