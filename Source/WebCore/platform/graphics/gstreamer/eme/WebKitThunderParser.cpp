@@ -35,6 +35,7 @@ GST_DEBUG_CATEGORY(webkitMediaThunderParserDebugCategory);
 
 typedef struct _WebKitMediaThunderParserPrivate {
     GRefPtr<GstElement> decryptor;
+    GRefPtr<GstElement> payloader;
     GRefPtr<GstElement> parser;
 } WebKitMediaThunderParserPrivate;
 
@@ -127,6 +128,63 @@ static void webkitMediaThunderParserConstructed(GObject* object)
 
     gst_bin_add_many(GST_BIN_CAST(self), self->priv->decryptor.get(), self->priv->parser.get(), nullptr);
     gst_element_link(self->priv->decryptor.get(), self->priv->parser.get());
+
+    // Try setting up an 'svppay' payloader element.
+    // It is not available on all platforms and needed for video streams only.
+    // decryptor -> payloader -> parser
+    GRefPtr<GstElementFactory> payloaderFactory = adoptGRef(gst_element_factory_find("svppay"));
+    if (payloaderFactory) {
+        self->priv->payloader = gst_element_factory_make("svppay", nullptr);
+    }
+    if (self->priv->payloader) {
+        auto decryptorSrc = adoptGRef(gst_element_get_static_pad(self->priv->decryptor.get(), "src"));
+        gst_pad_add_probe(decryptorSrc.get(), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, +[](
+            GstPad* pad, GstPadProbeInfo* info, gpointer userData) -> GstPadProbeReturn {
+
+            if (!(GST_PAD_PROBE_INFO_TYPE (info) & GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM))
+                return GST_PAD_PROBE_OK;
+
+            GstEvent *event = GST_PAD_PROBE_INFO_EVENT (info);
+            if (GST_EVENT_TYPE (event) != GST_EVENT_CAPS)
+                return GST_PAD_PROBE_OK;
+
+            auto* self = static_cast<WebKitMediaThunderParser*>(userData);
+            GST_DEBUG_OBJECT(pad, "Probe triggered on pad: %s", GST_PAD_NAME(pad));
+
+            GstCaps* caps = nullptr;
+            gst_event_parse_caps(event, &caps);
+
+            if (!caps)
+                return GST_PAD_PROBE_OK;
+
+            GST_DEBUG_OBJECT(pad, "Current caps: %" GST_PTR_FORMAT, caps);
+            if (!WebCore::doCapsHaveType(caps, GST_VIDEO_CAPS_TYPE_PREFIX))
+                return GST_PAD_PROBE_REMOVE;
+
+            GST_INFO("Attach payloader %s on pad %s for CAPS %" GST_PTR_FORMAT, GST_OBJECT_NAME(self->priv->payloader.get()), GST_PAD_NAME(pad), caps);
+
+            gst_bin_add(GST_BIN_CAST(self), self->priv->payloader.get());
+            gst_element_sync_state_with_parent(self->priv->payloader.get());
+
+            // Insert payloader between decryptor src pad and the parser sink pad.
+            GRefPtr<GstPad> peerPad = adoptGRef(gst_pad_get_peer(pad));
+            GRefPtr<GstPad> payloaderSinkPad = adoptGRef(gst_element_get_static_pad(self->priv->payloader.get(), "sink"));
+            GRefPtr<GstPad> payloaderSrcPad = adoptGRef(gst_element_get_static_pad(self->priv->payloader.get(), "src"));
+            ASSERT(peerPad);
+            ASSERT(payloaderSinkPad);
+            ASSERT(payloaderSrcPad);
+
+            GstPadLinkReturn rc;
+            if (!gst_pad_unlink(pad, peerPad.get()))
+                GST_ERROR("Failed to unlink '%s' src pad", GST_PAD_NAME(pad));
+            else if (GST_PAD_LINK_OK != (rc = gst_pad_link_full(pad, payloaderSinkPad.get(), GST_PAD_LINK_CHECK_NOTHING)))
+                GST_ERROR("Failed to link pad to payloaderSinkPad, rc = %d", rc);
+            else if (GST_PAD_LINK_OK != (rc = gst_pad_link_full(payloaderSrcPad.get(), peerPad.get(), GST_PAD_LINK_CHECK_NOTHING)))
+                GST_ERROR("Failed to link payloaderSrcPad to peerPad, rc = %d", rc);
+
+            return GST_PAD_PROBE_REMOVE;
+        }, self, nullptr);
+    }
 
     g_signal_connect(self->priv->parser.get(), "autoplug-factories", G_CALLBACK(+[](GstElement*, GstPad*, GstCaps* caps, gpointer userData) -> GValueArray* {
         auto self = WEBKIT_MEDIA_THUNDER_PARSER(userData);
