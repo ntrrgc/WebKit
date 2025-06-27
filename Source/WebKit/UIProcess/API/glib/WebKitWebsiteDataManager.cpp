@@ -88,7 +88,8 @@ enum {
     PROP_IS_EPHEMERAL,
     PROP_LOCAL_STORAGE_QUOTA,
     PROP_ORIGIN_STORAGE_RATIO,
-    PROP_TOTAL_STORAGE_RATIO
+    PROP_TOTAL_STORAGE_RATIO,
+    PROP_VOLUME_CAPACITY_OVERRIDE
 };
 
 struct _WebKitWebsiteDataManagerPrivate {
@@ -119,6 +120,7 @@ struct _WebKitWebsiteDataManagerPrivate {
 
     gdouble originStorageRatio;
     gdouble totalStorageRatio;
+    guint64 volumeCapacityOverride;
     unsigned localStorageQuota { 0 };
 };
 
@@ -227,6 +229,9 @@ static void webkitWebsiteDataManagerSetProperty(GObject* object, guint propID, c
         break;
     case PROP_TOTAL_STORAGE_RATIO:
         manager->priv->totalStorageRatio = g_value_get_double(value);
+        break;
+    case PROP_VOLUME_CAPACITY_OVERRIDE:
+        manager->priv->volumeCapacityOverride = g_value_get_uint64(value);
         break;
     case PROP_LOCAL_STORAGE_QUOTA:
         manager->priv->localStorageQuota = g_value_get_uint(value);
@@ -549,6 +554,24 @@ static void webkit_website_data_manager_class_init(WebKitWebsiteDataManagerClass
             nullptr, nullptr,
             -1.0, 1.0, -1.0,
             static_cast<GParamFlags>(WEBKIT_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)));
+
+    /**
+     * WebKitWebsiteDataManager:volume-capacity-override:
+     *
+     * The volume capacity that shall be considered as available for any data storage. Relevant for
+     * origin and total storage ratios.
+     * A value of 0, which is the default, means no override shall take place and auto-detection shall
+     * be performed.
+     *
+     * Since: 2.46
+     */
+    g_object_class_install_property(
+        gObjectClass,
+        PROP_VOLUME_CAPACITY_OVERRIDE,
+        g_param_spec_uint64("volume-capacity-override",
+            nullptr, nullptr,
+            0, G_MAXUINT64, 0,
+            static_cast<GParamFlags>(WEBKIT_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)));
 }
 
 WebKit::WebsiteDataStore& webkitWebsiteDataManagerGetDataStore(WebKitWebsiteDataManager* manager)
@@ -582,6 +605,9 @@ WebKit::WebsiteDataStore& webkitWebsiteDataManagerGetDataStore(WebKitWebsiteData
 
         if (priv->totalStorageRatio >= 0.0)
             configuration->setTotalQuotaRatio(priv->totalStorageRatio);
+
+        if (priv->volumeCapacityOverride > 0)
+            configuration->setVolumeCapacityOverride(priv->volumeCapacityOverride);
 
         priv->websiteDataStore = WebKit::WebsiteDataStore::create(WTFMove(configuration), PAL::SessionID::generatePersistentSessionID());
 #if !ENABLE(2022_GLIB_API)
