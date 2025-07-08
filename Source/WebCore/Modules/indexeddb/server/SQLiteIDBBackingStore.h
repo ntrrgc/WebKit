@@ -202,6 +202,8 @@ private:
     SQLiteStatementAutoResetScope cachedStatement(SQL, ASCIILiteral);
     SQLiteStatementAutoResetScope cachedStatementForGetAllObjectStoreRecords(const IDBGetAllRecordsData&);
 
+    void incrementalVacuumIfNeeded();
+
     std::unique_ptr<SQLiteStatement> m_cachedStatements[static_cast<int>(SQL::Invalid)];
 
     IDBDatabaseIdentifier m_identifier;
