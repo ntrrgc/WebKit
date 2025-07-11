@@ -118,8 +118,12 @@ RefPtr<Font> FontCache::systemFallbackForCharacterCluster(const FontDescription&
 
     // FIXME: handle synthetic properties.
     auto features = computeFeatures(description, { });
-    auto typeface = fontManager().matchFamilyStyleCharacter(nullptr, skiaFontStyle(description), bcp47.data(), bcp47.size(), baseCharacter);
-    FontPlatformData alternateFontData(WTFMove(typeface), description.computedSize(), false /* syntheticBold */, false /* syntheticOblique */, description.orientation(), description.widthVariant(), description.textRenderingMode(), WTFMove(features));
+    auto skFontStyle = skiaFontStyle(description);
+    auto typeface = fontManager().matchFamilyStyleCharacter(nullptr, skFontStyle, bcp47.data(), bcp47.size(), baseCharacter);
+    auto syntheticBold = description.hasAutoFontSynthesisWeight() && skFontStyle.weight() >= SkFontStyle::kSemiBold_Weight && !typeface->isBold();
+    auto syntheticOblique = description.hasAutoFontSynthesisStyle() && skFontStyle.slant() != SkFontStyle::kUpright_Slant && !typeface->isItalic();
+    FontPlatformData alternateFontData(WTFMove(typeface), description.computedSize(), syntheticBold, syntheticOblique, description.orientation(), description.widthVariant(), description.textRenderingMode(), WTFMove(features));
+
     return fontForPlatformData(alternateFontData);
 }
 
@@ -148,13 +152,17 @@ Ref<Font> FontCache::lastResortFallbackFont(const FontDescription& fontDescripti
         return font.releaseNonNull();
 
     // Passing nullptr as family name makes Skia use a weak match.
-    auto typeface = fontManager().matchFamilyStyle(nullptr, skiaFontStyle(fontDescription));
+    auto skFontStyle = skiaFontStyle(fontDescription);
+    auto typeface = fontManager().matchFamilyStyle(nullptr, skFontStyle);
     if (!typeface) {
         // LastResort is guaranteed to be non-null, so fallback to empty font with not glyphs.
         typeface = SkTypeface::MakeEmpty();
     }
 
-    FontPlatformData platformData(WTFMove(typeface), fontDescription.computedSize(), false /* syntheticBold */, false /* syntheticOblique */,
+    auto syntheticBold = fontDescription.hasAutoFontSynthesisWeight() && skFontStyle.weight() >= SkFontStyle::kSemiBold_Weight && !typeface->isBold();
+    auto syntheticOblique = fontDescription.hasAutoFontSynthesisStyle() && skFontStyle.slant() != SkFontStyle::kUpright_Slant && !typeface->isItalic();
+
+    FontPlatformData platformData(WTFMove(typeface), fontDescription.computedSize(), syntheticBold, syntheticOblique,
         fontDescription.orientation(), fontDescription.widthVariant(), fontDescription.textRenderingMode(), computeFeatures(fontDescription, { }));
     return fontForPlatformData(platformData);
 }
@@ -351,14 +359,18 @@ Vector<hb_feature_t> FontCache::computeFeatures(const FontDescription& fontDescr
 std::unique_ptr<FontPlatformData> FontCache::createFontPlatformData(const FontDescription& fontDescription, const AtomString& family, const FontCreationContext& fontCreationContext, OptionSet<FontLookupOptions> options)
 {
     auto familyName = getFamilyNameStringFromFamily(family);
-    auto typeface = fontManager().matchFamilyStyle(familyName.utf8().data(), skiaFontStyle(fontDescription));
+    auto skFontStyle = skiaFontStyle(fontDescription);
+    auto typeface = fontManager().matchFamilyStyle(familyName.utf8().data(), skFontStyle);
     if (!typeface)
         return nullptr;
 
     auto size = fontDescription.adjustedSizeForFontFace(fontCreationContext.sizeAdjust());
     auto features = computeFeatures(fontDescription, fontCreationContext);
-    UNUSED_PARAM(options);
-    FontPlatformData platformData(WTFMove(typeface), size, false /* syntheticBold */, false /* syntheticOblique */, fontDescription.orientation(), fontDescription.widthVariant(), fontDescription.textRenderingMode(), WTFMove(features));
+    auto syntheticBold = fontDescription.hasAutoFontSynthesisWeight() && !options.contains(FontLookupOptions::DisallowBoldSynthesis)
+        && skFontStyle.weight() >= SkFontStyle::kSemiBold_Weight && !typeface->isBold();
+    auto syntheticOblique = fontDescription.hasAutoFontSynthesisStyle() && !options.contains(FontLookupOptions::DisallowObliqueSynthesis)
+        && skFontStyle.slant() != SkFontStyle::kUpright_Slant && !typeface->isItalic();
+    FontPlatformData platformData(WTFMove(typeface), size, syntheticBold, syntheticOblique, fontDescription.orientation(), fontDescription.widthVariant(), fontDescription.textRenderingMode(), WTFMove(features));
 
     platformData.updateSizeWithFontSizeAdjust(fontDescription.fontSizeAdjust(), fontDescription.computedSize());
     auto platformDataUniquePtr = makeUnique<FontPlatformData>(platformData);
