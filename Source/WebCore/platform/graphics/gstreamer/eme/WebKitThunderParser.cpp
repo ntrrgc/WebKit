@@ -110,7 +110,17 @@ static void webkitMediaThunderParserConstructed(GObject* object)
     self->priv->parser = makeGStreamerElement("parsebin"_s, "inner-parser"_s);
 
     auto factories = gst_element_factory_list_get_elements(GST_ELEMENT_FACTORY_TYPE_DECRYPTOR, GST_RANK_MARGINAL);
-    factories = g_list_sort(factories, gst_plugin_feature_rank_compare_func);
+    factories = g_list_sort(factories, [](gconstpointer p1, gconstpointer p2) -> gint {
+        GstPluginFeature *f1, *f2;
+        const gchar* name;
+        f1 = (GstPluginFeature *) p1;
+        f2 = (GstPluginFeature *) p2;
+        if ((name = gst_plugin_feature_get_name(f1)) && g_str_has_prefix(name, "webkit"))
+            return -1;
+        if ((name = gst_plugin_feature_get_name(f2)) && g_str_has_prefix(name, "webkit"))
+            return 1;
+        return gst_plugin_feature_rank_compare_func(p1, p2);
+    });
     for (GList* tmp = factories; tmp; tmp = tmp->next) {
         auto factory = GST_ELEMENT_FACTORY_CAST(tmp->data);
         self->priv->decryptor = gst_element_factory_create(factory, nullptr);
