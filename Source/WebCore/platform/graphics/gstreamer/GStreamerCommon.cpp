@@ -429,7 +429,12 @@ void registerWebKitGStreamerElements()
             // The Thunder parser is auto-plugged by parsebin and its internal parsebin can
             // auto-plug the Thunder decryptor.
             gst_element_register(nullptr, "webkitthunder", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_THUNDER_DECRYPT);
-            gst_element_register(nullptr, "webkitthunderparser", GST_RANK_PRIMARY + 101, WEBKIT_TYPE_MEDIA_THUNDER_PARSER);
+            // We don't want the webkitthunderparser to be preferred in players other than WebKit Media Player GStreamer.
+            // Unfortunately, GstParseBin prefers "Parser" elements over eny other elements,
+            // including higher ranked "Decryptor" elements.
+            // So we register it with GST_RANK_NONE, so that it is not auto-plugged by parsebin at all
+            // and inject it manually in the MediaPlayerPrivateGStreamer.
+            gst_element_register(nullptr, "webkitthunderparser", GST_RANK_NONE, WEBKIT_TYPE_MEDIA_THUNDER_PARSER);
         }
 #endif
 

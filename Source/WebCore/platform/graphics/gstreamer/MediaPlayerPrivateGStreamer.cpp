@@ -2516,11 +2516,6 @@ void MediaPlayerPrivateGStreamer::configureParsebin(GstElement* parsebin)
     g_signal_connect(parsebin, "autoplug-select",
         G_CALLBACK(+[](GstElement*, GstPad*, GstCaps* caps, GstElementFactory* factory, MediaPlayerPrivateGStreamer* player) -> unsigned {
             static auto tryAutoPlug = *gstGetAutoplugSelectResult("try"_s);
-            static auto skipAutoPlug = *gstGetAutoplugSelectResult("skip"_s);
-
-            auto name = StringView::fromLatin1(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE_CAST(factory)));
-            if (name == "webkitthunderparser"_s && player->m_url.protocolIsBlob())
-                return skipAutoPlug;
 
             auto* structure = gst_caps_get_structure(caps, 0);
             if (!structure)
@@ -2551,6 +2546,35 @@ void MediaPlayerPrivateGStreamer::configureParsebin(GstElement* parsebin)
 
             return tryAutoPlug;
         }), this);
+
+    // We need to ensure that the webkitthunderparser factory is preferred over other parsers.
+    g_signal_connect(parsebin, "autoplug-factories",
+        G_CALLBACK(+[](GstElement*, GstPad*, GstCaps* caps, MediaPlayerPrivateGStreamer* player) -> GValueArray* {
+            ALLOW_DEPRECATED_DECLARATIONS_BEGIN; // GValueArray is deprecated
+            GValueArray* result;
+            // First, build a list of all decodable factories that can handle the caps,
+            // similar to what parsebin does.
+            auto factories = gst_element_factory_list_get_elements(GST_ELEMENT_FACTORY_TYPE_DECODABLE, GST_RANK_MARGINAL);
+            // Add the webkitthunderparser factory if it exists, at the beginning of the list
+            // so that it is preferred over other elements.
+            if (!player->m_url.protocolIsBlob() && gst_element_factory_find("webkitthunderparser"_s))
+                factories = g_list_prepend(factories, gst_element_factory_find("webkitthunderparser"_s));
+            // Filter the factories based on the caps and return them as a GValueArray.
+            auto list = gst_element_factory_list_filter(factories, caps, GST_PAD_SINK, gst_caps_is_fixed(caps));
+            result = g_value_array_new(g_list_length(list));
+            for (GList* tmp = list; tmp; tmp = tmp->next) {
+                auto factory = GST_ELEMENT_FACTORY_CAST(tmp->data);
+                GValue value = G_VALUE_INIT;
+                g_value_init(&value, G_TYPE_OBJECT);
+                g_value_set_object(&value, factory);
+                g_value_array_append(result, &value);
+                g_value_unset(&value);
+            }
+            gst_plugin_feature_list_free(list);
+            gst_plugin_feature_list_free(factories);
+            return result;
+            ALLOW_DEPRECATED_DECLARATIONS_END;
+    }), this);
 }
 
 void MediaPlayerPrivateGStreamer::configureUriDecodebin2(GstElement* element)
