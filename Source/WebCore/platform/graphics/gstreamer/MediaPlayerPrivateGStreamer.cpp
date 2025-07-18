@@ -2547,7 +2547,17 @@ void MediaPlayerPrivateGStreamer::configureParsebin(GstElement* parsebin)
             return tryAutoPlug;
         }), this);
 
-    // We need to ensure that the webkitthunderparser factory is preferred over other parsers.
+#if ENABLE(ENCRYPTED_MEDIA) && ENABLE(THUNDER)
+    // Inject the webkitthunderparser factory into parsebin's autoplug-factories signal.
+
+    // If no DRM is supported, we can skip the webkitthunderparser factory
+    if (CDMFactoryThunder::singleton().supportedKeySystems().isEmpty())
+        return;
+    if (m_url.protocolIsBlob())
+        return;
+
+    // Otherwise we need to ensure that the webkitthunderparser factory is present
+    // and preferred over other parsers
     g_signal_connect(parsebin, "autoplug-factories",
         G_CALLBACK(+[](GstElement*, GstPad*, GstCaps* caps, MediaPlayerPrivateGStreamer* player) -> GValueArray* {
             ALLOW_DEPRECATED_DECLARATIONS_BEGIN; // GValueArray is deprecated
@@ -2557,7 +2567,7 @@ void MediaPlayerPrivateGStreamer::configureParsebin(GstElement* parsebin)
             auto factories = gst_element_factory_list_get_elements(GST_ELEMENT_FACTORY_TYPE_DECODABLE, GST_RANK_MARGINAL);
             // Add the webkitthunderparser factory if it exists, at the beginning of the list
             // so that it is preferred over other elements.
-            if (!player->m_url.protocolIsBlob() && gst_element_factory_find("webkitthunderparser"_s))
+            if (gst_element_factory_find("webkitthunderparser"_s))
                 factories = g_list_prepend(factories, gst_element_factory_find("webkitthunderparser"_s));
             // Filter the factories based on the caps and return them as a GValueArray.
             auto list = gst_element_factory_list_filter(factories, caps, GST_PAD_SINK, gst_caps_is_fixed(caps));
@@ -2575,26 +2585,7 @@ void MediaPlayerPrivateGStreamer::configureParsebin(GstElement* parsebin)
             return result;
             ALLOW_DEPRECATED_DECLARATIONS_END;
     }), this);
-}
-
-void MediaPlayerPrivateGStreamer::configureUriDecodebin2(GstElement* element)
-{
-    ASSERT(m_isLegacyPlaybin);
-#if ENABLE(ENCRYPTED_MEDIA) && ENABLE(THUNDER)
-    if (CDMFactoryThunder::singleton().supportedKeySystems().isEmpty())
-        return;
-
-    g_signal_connect(element, "autoplug-select", G_CALLBACK(+[](GstElement*, GstPad*, GstCaps*, GstElementFactory* factory, gpointer) -> unsigned {
-        static auto tryAutoPlug = *gstGetAutoplugSelectResult("try"_s);
-        static auto skipAutoPlug = *gstGetAutoplugSelectResult("skip"_s);
-        auto name = StringView::fromLatin1(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE_CAST(factory)));
-        if (name == "webkitthunderparser"_s)
-            return skipAutoPlug;
-        return tryAutoPlug;
-    }), nullptr);
-#else
-    UNUSED_PARAM(element);
-#endif
+#endif // ENABLE(ENCRYPTED_MEDIA) && ENABLE(THUNDER)
 }
 
 void MediaPlayerPrivateGStreamer::configureElement(GstElement* element)
@@ -2614,11 +2605,6 @@ void MediaPlayerPrivateGStreamer::configureElement(GstElement* element)
 
     if (g_str_has_prefix(elementName.get(), "parsebin"))
         configureParsebin(element);
-
-    // The legacy decodebin2 stack doesn't integrate well with parsebin, so prevent auto-plugging of
-    // the webkitthunderparser.
-    if (g_str_has_prefix(elementName.get(), "uridecodebin") && m_isLegacyPlaybin)
-        configureUriDecodebin2(element);
 
     // In case of playbin3 with <video ... preload="auto">, instantiate
     // downloadbuffer element, otherwise the playbin3 would instantiate
