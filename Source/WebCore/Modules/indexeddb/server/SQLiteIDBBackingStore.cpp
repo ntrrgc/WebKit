@@ -2859,7 +2859,7 @@ void SQLiteIDBBackingStore::incrementalVacuumIfNeeded()
     if (totalSize <= 10 * freeSpaceSize) {
         int result = m_sqliteDB->runIncrementalVacuumCommand();
         if (result != SQLITE_DONE)
-            LOG_ERROR("Failed to perform incremental vacuum on database for path '%s'", m_sqliteDB->utf8().data());
+            LOG_ERROR("Failed to perform incremental vacuum on database for path '%s'", fullDatabasePath().utf8().data());
     }
 }
 
