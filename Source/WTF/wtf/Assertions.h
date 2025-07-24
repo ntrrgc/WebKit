@@ -642,6 +642,11 @@ constexpr bool assertionFailureDueToUnreachableCode = false;
 
 #endif
 
+#if USE(SYSPROF_CAPTURE)
+#define _XSTRINGIFY(line) #line
+#define _STRINGIFY(line) _XSTRINGIFY(line)
+#endif
+
 #if !RELEASE_LOG_DISABLED
 #define RELEASE_LOG_STACKTRACE(channel) WTFReleaseLogStackTrace(&LOG_CHANNEL(channel))
 #define RELEASE_LOG_IF(isAllowed, channel, ...) do { if (isAllowed) RELEASE_LOG(channel, __VA_ARGS__); } while (0)
