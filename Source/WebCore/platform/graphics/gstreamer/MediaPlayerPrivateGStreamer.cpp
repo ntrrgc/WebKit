@@ -2553,7 +2553,10 @@ void MediaPlayerPrivateGStreamer::configureParsebin(GstElement* parsebin)
     // If no DRM is supported, we can skip the webkitthunderparser factory
     if (CDMFactoryThunder::singleton().supportedKeySystems().isEmpty())
         return;
-    if (m_url.protocolIsBlob())
+    // Enable for MSE only.
+    // Progressive playback doesn't use parsebin element so the below makes no effect there.
+    // Don't use thunder parser for MediaStream also.
+    if (!isMediaSource())
         return;
 
     // Otherwise we need to ensure that the webkitthunderparser factory is present
