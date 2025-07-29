@@ -120,6 +120,9 @@ RefPtr<Font> FontCache::systemFallbackForCharacterCluster(const FontDescription&
     auto features = computeFeatures(description, { });
     auto skFontStyle = skiaFontStyle(description);
     auto typeface = fontManager().matchFamilyStyleCharacter(nullptr, skFontStyle, bcp47.data(), bcp47.size(), baseCharacter);
+    if (!typeface) {
+        typeface = SkTypeface::MakeEmpty();
+    }
     auto syntheticBold = description.hasAutoFontSynthesisWeight() && skFontStyle.weight() >= SkFontStyle::kSemiBold_Weight && !typeface->isBold();
     auto syntheticOblique = description.hasAutoFontSynthesisStyle() && skFontStyle.slant() != SkFontStyle::kUpright_Slant && !typeface->isItalic();
     FontPlatformData alternateFontData(WTFMove(typeface), description.computedSize(), syntheticBold, syntheticOblique, description.orientation(), description.widthVariant(), description.textRenderingMode(), WTFMove(features));
