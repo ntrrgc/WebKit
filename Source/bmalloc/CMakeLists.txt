@@ -678,6 +678,12 @@ set(bmalloc_LIBRARIES
     ${CMAKE_DL_LIBS}
 )
 
+if (ENABLE_MALLOC_HEAP_BREAKDOWN)
+    list(APPEND bmalloc_LIBRARIES
+        ${MALLOC_ZONE_LIBRARIES}
+    )
+endif ()
+
 if (ATOMICS_REQUIRE_LIBATOMIC)
     list(APPEND bmalloc_LIBRARIES atomic)
 endif ()

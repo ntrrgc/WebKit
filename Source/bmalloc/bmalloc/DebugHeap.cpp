@@ -42,7 +42,7 @@ DebugHeap* debugHeapCache { nullptr };
     
 DEFINE_STATIC_PER_PROCESS_STORAGE(DebugHeap);
 
-#if BOS(DARWIN)
+#if BENABLE_MALLOC_HEAP_BREAKDOWN
 
 static bool shouldUseDefaultMallocZone()
 {

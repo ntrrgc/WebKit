@@ -32,7 +32,7 @@
 #include <mutex>
 #include <unordered_map>
 
-#if BOS(DARWIN)
+#if BENABLE_MALLOC_HEAP_BREAKDOWN
 #include <malloc/malloc.h>
 #endif
 
@@ -67,7 +67,7 @@ public:
 private:
     static DebugHeap* tryGetSlow();
     
-#if BOS(DARWIN)
+#if BENABLE_MALLOC_HEAP_BREAKDOWN
     malloc_zone_t* m_zone;
 #endif
     
