@@ -141,28 +141,43 @@ void GCController::deleteAllLinkedCode(DeleteAllCodeEffort effort)
 
 void GCController::dumpHeapForVM(VM& vm)
 {
-    auto [tempFilePath, fileHandle] = FileSystem::openTemporaryFile("GCHeap"_s);
+    static const char* sHeapDumpDirOverride = []() {
+        return getenv("WEBKIT_HEAP_SNAPSHOT_DIR");
+    }();
+
+    String tempFilePath;
+    FileSystem::PlatformFileHandle fileHandle;
+
+    if (sHeapDumpDirOverride) {
+        char buf[32];
+        time_t now = time(nullptr);
+        struct tm* tstruct = localtime(&now);
+        std::strftime(buf, sizeof(buf), "%Y%m%d_%H%M%S", tstruct);
+
+        tempFilePath = FileSystem::fileSystemRepresentation(
+            FileSystem::pathByAppendingComponent(WTF::String::fromUTF8(sHeapDumpDirOverride),
+                                                 makeString("GCHeap_"_s, WTF::String::fromUTF8(buf)))).span();
+        fileHandle = FileSystem::openFile(tempFilePath, FileSystem::FileOpenMode::ReadWrite);
+    } else {
+        std::tie(tempFilePath, fileHandle) = FileSystem::openTemporaryFile("GCHeap"_s);
+    }
+
     if (!FileSystem::isHandleValid(fileHandle)) {
-        WTFLogAlways("Dumping GC heap failed to open temporary file");
+        WTFLogAlways("Dumping GC heap failed to open temporary file: %s", tempFilePath.utf8().data());
         return;
     }
 
     JSLockHolder lock(vm);
     sanitizeStackForVM(vm);
 
-    String jsonData;
     {
         DeferGCForAWhile deferGC(vm); // Prevent concurrent GC from interfering with the full GC that the snapshot does.
 
         HeapSnapshotBuilder snapshotBuilder(vm.ensureHeapProfiler(), HeapSnapshotBuilder::SnapshotType::GCDebuggingSnapshot);
         snapshotBuilder.buildSnapshot();
-
-        jsonData = snapshotBuilder.json();
+        snapshotBuilder.writeJsonToFile(fileHandle);
     }
 
-    CString utf8String = jsonData.utf8();
-
-    FileSystem::writeToFile(fileHandle, utf8String.span());
     FileSystem::closeFile(fileHandle);
     WTFLogAlways("Dumped GC heap to %s%s", tempFilePath.utf8().data(), isMainThread() ? ""_s : " for Worker");
 }

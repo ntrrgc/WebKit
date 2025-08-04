@@ -40,6 +40,81 @@
 
 namespace JSC {
 
+namespace {
+
+class FileOutputStringBuilder {
+    WTF_MAKE_NONCOPYABLE(FileOutputStringBuilder);
+
+    FileSystem::PlatformFileHandle m_fileHandle;
+    StringBuilder m_builder;
+    OverflowPolicy m_overflowPolicy;
+    bool m_overflowed { false };
+
+public:
+    FileOutputStringBuilder(FileSystem::PlatformFileHandle fileHandle, OverflowPolicy overflowPolicy)
+        : m_fileHandle(WTFMove(fileHandle))
+        , m_builder(overflowPolicy)
+        , m_overflowPolicy(overflowPolicy)
+    {
+    }
+
+    ~FileOutputStringBuilder()
+    {
+        flush(true);
+    }
+
+    template<typename... StringTypes> void append(StringTypes... fragment)
+    {
+        m_builder.append(fragment...);
+        flush();
+    }
+
+    void appendQuotedJSONString(const String& string)
+    {
+        m_builder.appendQuotedJSONString(string);
+        flush();
+    }
+
+    void flush(bool force = false)
+    {
+        constexpr size_t kBufferLengthLimit = 4 * WTF::KB;
+        if ((force && !m_builder.isEmpty()) || m_builder.length() >= kBufferLengthLimit)
+        {
+            CString utf8String = m_builder.toStringPreserveCapacity().utf8();
+            auto ret = FileSystem::writeToFile(m_fileHandle, utf8String.span());
+
+            if (ret < 0)
+            {
+                // A negative return value does not necessarily mean we ran out of disk space, but due the
+                // lack of a better indicator, we'll assume that is the case
+                m_overflowed = true;
+
+                if (m_overflowPolicy == OverflowPolicy::CrashOnOverflow)
+                {
+                    WTFLogAlways("Forcing crash (policy based) due lack of disk space in heap snapshot builder");
+                    CRASH();
+                }
+            }
+
+            m_builder.clear();
+            m_builder.reserveCapacity(kBufferLengthLimit);
+        }
+    }
+
+    bool hasOverflowed() const
+    {
+        return m_overflowed || m_builder.hasOverflowed();
+    }
+
+    void clear()
+    {
+        m_builder.clear();
+        FileSystem::truncateFile(m_fileHandle, 0);
+    }
+};
+
+} // namespace
+
 WTF_MAKE_TZONE_ALLOCATED_IMPL(HeapSnapshotBuilder);
 
 NodeIdentifier HeapSnapshotBuilder::nextAvailableObjectIdentifier = 1;
@@ -336,6 +411,20 @@ String HeapSnapshotBuilder::descriptionForCell(JSCell *cell) const
 
 String HeapSnapshotBuilder::json(Function<bool (const HeapSnapshotNode&)> allowNodeCallback)
 {
+    StringBuilder json(m_overflowPolicy);
+    writeJson(WTFMove(allowNodeCallback), json);
+    return json.toString();
+}
+
+void HeapSnapshotBuilder::writeJsonToFile(FileSystem::PlatformFileHandle fileHandle)
+{
+    FileOutputStringBuilder json(fileHandle, m_overflowPolicy);
+    writeJson([] (const HeapSnapshotNode&) { return true; }, json);
+}
+
+template<typename FileOutputStringBuilder>
+void HeapSnapshotBuilder::writeJson(Function<bool (const HeapSnapshotNode&)>&& allowNodeCallback, FileOutputStringBuilder &json)
+{
     VM& vm = m_profiler.vm();
     DeferGCForAWhile deferGC(vm);
 
@@ -355,8 +444,6 @@ String HeapSnapshotBuilder::json(Function<bool (const HeapSnapshotNode&)> allowN
     // Build a list of used edge names.
     UncheckedKeyHashMap<UniquedStringImpl*, unsigned> edgeNameIndexes;
     unsigned nextEdgeNameIndex = 0;
-
-    StringBuilder json(m_overflowPolicy);
 
     auto appendNodeJSON = [&] (const HeapSnapshotNode& node) {
         // Let the client decide if they want to allow or disallow certain nodes.
@@ -633,9 +720,9 @@ String HeapSnapshotBuilder::json(Function<bool (const HeapSnapshotNode&)> allowN
     json.append('}');
     if (json.hasOverflowed()) {
         m_hasOverflowed = true;
-        return { };
+
+        json.clear();
     }
-    return json.toString();
 }
 
 } // namespace JSC
