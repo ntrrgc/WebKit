@@ -33,7 +33,7 @@
 
 #if !BUSE(LIBPAS)
 
-#if BOS(DARWIN)
+#if BENABLE_MALLOC_HEAP_BREAKDOWN
 #include <malloc/malloc.h>
 #endif
 

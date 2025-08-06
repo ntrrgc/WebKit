@@ -117,6 +117,9 @@ WEBKIT_OPTION_DEFINE(ENABLE_JSC_RESTRICTED_OPTIONS_BY_DEFAULT "Whether to enable
 WEBKIT_OPTION_DEFINE(USE_FLITE "Whether to use Flite library for SpeechSynthesis" PRIVATE ${ENABLE_EXPERIMENTAL_FEATURES})
 WEBKIT_OPTION_DEFINE(USE_TTS_CLIENT "Whether to use TTSClient API for SpeechSynthesis" PRIVATE OFF)
 
+# Debug memory heap breakdown with malloc-zone allocator
+WEBKIT_OPTION_DEFINE(ENABLE_MALLOC_HEAP_BREAKDOWN "Whether to enable malloc heap breakdown" PRIVATE OFF)
+
 WEBKIT_OPTION_CONFLICT(ENABLE_WPE_PLATFORM ENABLE_WPE_1_1_API)
 
 WEBKIT_OPTION_DEPEND(ENABLE_DOCUMENTATION ENABLE_INTROSPECTION)
@@ -484,6 +487,17 @@ EXPOSE_STRING_VARIABLE_TO_BUILD(WPE_WEB_PROCESS_EXTENSION_PC_MODULE)
 
 set(WPEWebProcessExtension_PKGCONFIG_FILE ${CMAKE_BINARY_DIR}/${WPE_WEB_PROCESS_EXTENSION_PC_MODULE}.pc)
 set(WPEWebProcessExtension_Uninstalled_PKGCONFIG_FILE ${CMAKE_BINARY_DIR}/${WPE_WEB_PROCESS_EXTENSION_PC_MODULE}-uninstalled.pc)
+
+if (ENABLE_MALLOC_HEAP_BREAKDOWN)
+    # Use same heap breakdown setting for bmalloc
+    add_definitions(-DBENABLE_MALLOC_HEAP_BREAKDOWN=1)
+
+    # Darwin OS has support for malloc zones without additional libraries. On non Darwin OS
+    # targets, the library needs to be provided if heap breakdown is enabled
+    if (NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        set(MALLOC_ZONE_LIBRARIES malloc-zone)
+    endif()
+endif()
 
 include(BubblewrapSandboxChecks)
 include(GStreamerChecks)
