@@ -205,6 +205,12 @@ TrackID MediaSourcePrivateGStreamer::registerTrackId(TrackID preferredId)
     return assignedId;
 }
 
+void MediaSourcePrivateGStreamer::willSeek()
+{
+    for (auto* sourceBuffer : m_activeSourceBuffers)
+        downcast<SourceBufferPrivateGStreamer>(sourceBuffer)->willSeek();
+}
+
 bool MediaSourcePrivateGStreamer::unregisterTrackId(TrackID trackId)
 {
     ASSERT(isMainThread());

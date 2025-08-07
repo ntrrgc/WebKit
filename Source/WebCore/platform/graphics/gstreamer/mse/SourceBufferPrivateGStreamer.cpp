@@ -403,6 +403,24 @@ size_t SourceBufferPrivateGStreamer::platformEvictionThreshold() const
     return evictionThreshold;
 }
 
+void SourceBufferPrivateGStreamer::willSeek()
+{
+    ALWAYS_LOG(LOGIDENTIFIER);
+    m_seeking = true;
+}
+
+bool SourceBufferPrivateGStreamer::isSeeking() const
+{
+    return m_seeking;
+}
+
+void SourceBufferPrivateGStreamer::seekToTime(const MediaTime& time)
+{
+    m_seeking = false;
+    // WebKit now has the samples to complete the seek and is about to enqueue them.
+    SourceBufferPrivate::seekToTime(time);
+}
+
 #undef GST_CAT_DEFAULT
 
 } // namespace WebCore
