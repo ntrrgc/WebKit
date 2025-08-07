@@ -39,6 +39,7 @@ enum class ElementRuntimeCharacteristics : uint8_t {
     HasVideo = 1 << 1,
     HasAudio = 1 << 2,
     IsLiveStream = 1 << 3,
+    IsMediaSource = 1 << 4,
 };
 
 class GStreamerQuirkBase {

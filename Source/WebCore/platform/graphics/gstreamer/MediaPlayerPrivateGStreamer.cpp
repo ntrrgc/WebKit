@@ -2656,6 +2656,8 @@ void MediaPlayerPrivateGStreamer::configureElementPlatformQuirks(GstElement* ele
         characteristics.add({ ElementRuntimeCharacteristics::HasAudio });
     if (m_isLiveStream.value_or(false))
         characteristics.add({ ElementRuntimeCharacteristics::IsLiveStream });
+    if (isMediaSource())
+        characteristics.add({ ElementRuntimeCharacteristics::IsMediaSource });
 
     GStreamerQuirksManager::singleton().configureElement(element, WTFMove(characteristics));
 }

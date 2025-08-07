@@ -76,7 +76,7 @@ bool GStreamerQuirkRialto::isPlatformSupported() const
     return gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(sinkFactory.get())) > GST_RANK_MARGINAL;
 }
 
-void GStreamerQuirkRialto::configureElement(GstElement* element, const OptionSet<ElementRuntimeCharacteristics>&)
+void GStreamerQuirkRialto::configureElement(GstElement* element, const OptionSet<ElementRuntimeCharacteristics>& characteristics)
 {
     if (!g_strcmp0(G_OBJECT_TYPE_NAME(G_OBJECT(element)), "GstURIDecodeBin3")) {
         GRefPtr<GstCaps> defaultCaps;
@@ -84,6 +84,13 @@ void GStreamerQuirkRialto::configureElement(GstElement* element, const OptionSet
         defaultCaps = adoptGRef(gst_caps_merge(gst_caps_ref(m_sinkCaps.get()), defaultCaps.leakRef()));
         GST_INFO("Setting stop caps to %" GST_PTR_FORMAT, defaultCaps.get());
         g_object_set(element, "caps", defaultCaps.get(), nullptr);
+    }
+    if (!g_strcmp0(G_OBJECT_TYPE_NAME(G_OBJECT(element)), "GstParseBin") &&
+        characteristics.contains(ElementRuntimeCharacteristics::IsMediaSource)) {
+        auto autoplugId = g_signal_lookup("autoplug-continue", G_OBJECT_TYPE (element));
+        g_signal_handlers_disconnect_matched(
+            element, static_cast<GSignalMatchType>(G_SIGNAL_MATCH_ID | G_SIGNAL_MATCH_DATA),
+            autoplugId, 0, nullptr, nullptr, GST_OBJECT_PARENT(element));
     }
 }
 

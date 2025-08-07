@@ -59,13 +59,27 @@ bool GStreamerQuirkWesteros::isPlatformSupported() const
 
 void GStreamerQuirkWesteros::configureElement(GstElement* element, const OptionSet<ElementRuntimeCharacteristics>& characteristics)
 {
+    // Decodebin3 will try to autoplug available elements until it reaches a raw video format.
+    // Set stop caps on decodebin3 to prevent it from decoding the stream.
+    // Instead, it should expose a pad with encoded caps that platform sink can handle directly as a sink element.
+    // That brings unwanted side effects for parsebin element.
+    // Decodebin3 installs "autoplug-continue" signal handler on parsebin to stop its autoplugging process
+    // when it reaches decodebin stop caps. We still may want to use some parsers elements,
+    // like webkithunderparser, so we need to disconnect the "autoplug-continue" signal handler
+    // and let parsebin to control the autoplugging process. (Default handler will stop on decoder element)
     if (equalIgnoringASCIICase(G_OBJECT_TYPE_NAME(G_OBJECT(element)), "GstURIDecodeBin3")) {
         GRefPtr<GstCaps> defaultCaps;
         g_object_get(element, "caps", &defaultCaps.outPtr(), nullptr);
         defaultCaps = adoptGRef(gst_caps_merge(gst_caps_ref(m_sinkCaps.get()), defaultCaps.leakRef()));
         GST_INFO("Setting stop caps to %" GST_PTR_FORMAT, defaultCaps.get());
         g_object_set(element, "caps", defaultCaps.get(), nullptr);
-        return;
+    }
+    if (equalIgnoringASCIICase(G_OBJECT_TYPE_NAME(G_OBJECT(element)), "GstParseBin") &&
+        characteristics.contains(ElementRuntimeCharacteristics::IsMediaSource)) {
+        auto autoplugId = g_signal_lookup("autoplug-continue", G_OBJECT_TYPE (element));
+        g_signal_handlers_disconnect_matched(
+            element, static_cast<GSignalMatchType>(G_SIGNAL_MATCH_ID | G_SIGNAL_MATCH_DATA),
+            autoplugId, 0, nullptr, nullptr, GST_OBJECT_PARENT(element));
     }
 
     if (!characteristics.contains(ElementRuntimeCharacteristics::IsMediaStream))
