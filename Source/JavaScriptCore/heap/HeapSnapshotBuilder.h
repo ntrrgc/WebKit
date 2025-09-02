@@ -33,6 +33,7 @@
 #include <wtf/OverflowPolicy.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>
+#include <wtf/FileSystem.h>
 
 namespace JSC {
 
@@ -132,6 +133,7 @@ public:
 
     String json();
     String json(Function<bool (const HeapSnapshotNode&)> allowNodeCallback);
+    void writeJsonToFile(FileSystem::PlatformFileHandle fileHandle);
 
     bool hasOverflowed() const { return m_hasOverflowed; }
 
@@ -145,6 +147,9 @@ private:
     
     String descriptionForCell(JSCell*) const;
     
+    template<typename OutputStringBuilder>
+    void writeJson(Function<bool (const HeapSnapshotNode&)>&& allowNodeCallback, OutputStringBuilder &json);
+
     struct RootData {
         ASCIILiteral reachabilityFromOpaqueRootReasons;
         RootMarkReason markReason { RootMarkReason::None };
