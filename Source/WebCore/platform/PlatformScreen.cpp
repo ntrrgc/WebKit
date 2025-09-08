@@ -26,7 +26,7 @@
 #include "config.h"
 #include "PlatformScreen.h"
 
-#if PLATFORM(COCOA) || PLATFORM(GTK) || (PLATFORM(WPE) && ENABLE(WPE_PLATFORM))
+#if PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)
 
 #include "ScreenProperties.h"
 #include <wtf/NeverDestroyed.h>

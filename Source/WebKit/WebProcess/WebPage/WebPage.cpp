@@ -463,6 +463,11 @@
 #include <pal/cf/CoreTextSoftLink.h>
 #endif
 
+#if PLATFORM(WPE) && !ENABLE(WPE_PLATFORM)
+#include <WebCore/PlatformScreen.h>
+#include <WebCore/ScreenProperties.h>
+#endif // PLATFORM(WPE) && !ENABLE(WPE_PLATFORM)
+
 namespace WebKit {
 using namespace JSC;
 using namespace WebCore;
@@ -4813,6 +4818,20 @@ void WebPage::updatePreferences(const WebPreferencesStore& store)
 #endif
 
     m_page->settingsDidChange();
+
+#if PLATFORM(WPE) && !ENABLE(WPE_PLATFORM)
+    // On WPE, we don't have a way to get screen properties from the system, so
+    // we fake them here based on the settings.
+    auto* currentScreenData = WebCore::screenData(primaryScreenDisplayID());
+    if (!currentScreenData || currentScreenData->screenSupportsHighDynamicRange != settings.screenSupportsHDR()) {
+        WebCore::ScreenData data;
+        data.screenSupportsHighDynamicRange = settings.screenSupportsHDR();
+        WebCore::ScreenProperties props;
+        props.primaryDisplayID = 1; // Fake display ID
+        props.screenDataMap.add(props.primaryDisplayID, WTFMove(data));
+        WebCore::setScreenProperties(props);
+    }
+#endif // PLATFORM(WPE) && !ENABLE(WPE_PLATFORM
 }
 
 #if ENABLE(DATA_DETECTION)

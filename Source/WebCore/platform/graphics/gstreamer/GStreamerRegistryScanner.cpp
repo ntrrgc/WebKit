@@ -42,6 +42,11 @@
 #include "VideoEncoderPrivateGStreamer.h"
 #endif
 
+#if PLATFORM(WPE)
+#include "PlatformScreen.h"
+#include "ScreenProperties.h"
+#endif // PLATFORM(WPE)
+
 namespace {
 struct VideoDecodingLimits {
     unsigned mediaMaxWidth = 0;
@@ -510,6 +515,10 @@ void GStreamerRegistryScanner::initializeDecoders(const GStreamerRegistryScanner
         m_decoderCodecMap.add("x-h265"_s, h265DecoderAvailable);
         m_decoderCodecMap.add("hvc1*"_s, h265DecoderAvailable);
         m_decoderCodecMap.add("hev1*"_s, h265DecoderAvailable);
+#if PLATFORM(WPE)
+        m_decoderCodecMap.add("dvhe*"_s, h265DecoderAvailable);
+        m_decoderCodecMap.add("dvh1*"_s, h265DecoderAvailable);
+#endif // PLATFORM(WPE)
     }
 
     if (shouldAddMP4Container) {
@@ -747,11 +756,22 @@ GStreamerRegistryScanner::CodecLookupResult GStreamerRegistryScanner::isCodecSup
     String subType = slashIndex != notFound ? codec.substring(slashIndex + 1) : codec;
     auto codecName = caseSensitive == CaseSensitiveCodecName::Yes ? subType : subType.convertToASCIILowercase();
 
+#if PLATFORM(WPE)
+    bool supportsDVHCodec = false;
+    auto* scrData = screenData(primaryScreenDisplayID());
+    if (scrData && scrData->screenSupportsHighDynamicRange)
+        supportsDVHCodec = true;
+#endif // PLATFORM(WPE)
+
     CodecLookupResult result;
     if (codecName.startsWith("avc1"_s))
         result = isAVC1CodecSupported(configuration, codecName, shouldCheckForHardwareUse);
     else if (codecName.startsWith("hev1"_s) || codecName.startsWith("hvc1"_s))
         result = isHEVCCodecSupported(configuration, codecName, shouldCheckForHardwareUse);
+#if PLATFORM(WPE)
+    else if ((codecName.startsWith("dvhe"_s) || codecName.startsWith("dvh1"_s)) && !supportsDVHCodec)
+        result = { false, nullptr };
+#endif // PLATFORM(WPE)
     else {
         auto& codecMap = configuration == Configuration::Decoding ? m_decoderCodecMap : m_encoderCodecMap;
         for (const auto& [codecId, lookupResult] : codecMap) {
