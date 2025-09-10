@@ -16,6 +16,7 @@
 
 #include <GLSLANG/ShaderVars.h>
 
+#include <cstdint>
 #include "common/PackedEnums.h"
 #include "compiler/translator/BuiltInFunctionEmulator.h"
 #include "compiler/translator/CallDAG.h"

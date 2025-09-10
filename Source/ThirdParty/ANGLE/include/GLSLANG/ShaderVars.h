@@ -14,6 +14,7 @@
 #include <array>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 // This type is defined here to simplify ANGLE's integration with glslang for SPIR-V.
 using ShCompileOptions = uint64_t;
