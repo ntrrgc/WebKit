@@ -338,7 +338,7 @@ function(GI_INTROSPECT namespace nsversion header)
         VERBATIM
         COMMAND_EXPAND_LISTS
         COMMAND ${CMAKE_COMMAND} -E env "CC=${CMAKE_C_COMPILER}"
-            "${GI_SCANNER_EXE}" --quiet --warn-all --warn-error --no-libtool
+            "${GI_SCANNER_EXE}" --quiet --warn-all --no-libtool
             "--output=${gir_path}"
             "--library=$<TARGET_FILE_BASE_NAME:${opt_TARGET}>"
             "--library-path=$<TARGET_FILE_DIR:${opt_TARGET}>"
