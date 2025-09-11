@@ -52,7 +52,6 @@ if (DEVELOPER_MODE AND ENABLE_COG)
         CONFIGURE_COMMAND
             meson setup <BINARY_DIR> <SOURCE_DIR>
             --buildtype ${COG_MESON_BUILDTYPE}
-            -Dsoup2=${COG_MESON_SOUP2}
             -Dplatforms=drm,headless,gtk4,x11,wayland
         BUILD_COMMAND
             meson compile -C <BINARY_DIR>
