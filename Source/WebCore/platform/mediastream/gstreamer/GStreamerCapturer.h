@@ -55,7 +55,7 @@ public:
     GStreamerCapturer(const char* sourceFactory, GRefPtr<GstCaps>&&, CaptureDevice::DeviceType);
     virtual ~GStreamerCapturer();
 
-    void tearDown(bool disconnectSignals = true);
+    virtual void tearDown(bool disconnectSignals);
 
     void addObserver(GStreamerCapturerObserver&);
     void removeObserver(GStreamerCapturerObserver&);

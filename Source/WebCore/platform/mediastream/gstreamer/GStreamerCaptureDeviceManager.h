@@ -57,7 +57,7 @@ public:
     void unregisterCapturer(const GStreamerCapturer&);
     void stopCapturing(const String& persistentId);
 
-    void teardown();
+    virtual void teardown();
 
 private:
     void addDevice(GRefPtr<GstDevice>&&);
@@ -83,6 +83,7 @@ class GStreamerVideoCaptureDeviceManager final : public GStreamerCaptureDeviceMa
     friend class NeverDestroyed<GStreamerVideoCaptureDeviceManager>;
 public:
     static GStreamerVideoCaptureDeviceManager& singleton();
+
     CaptureDevice::DeviceType deviceType() final { return CaptureDevice::DeviceType::Camera; }
 };
 

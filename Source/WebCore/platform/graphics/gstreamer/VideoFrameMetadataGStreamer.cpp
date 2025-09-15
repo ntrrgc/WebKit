@@ -61,14 +61,17 @@ GType videoFrameMetadataAPIGetType()
 
 const GstMetaInfo* videoFrameMetadataGetInfo();
 
-std::pair<GstBuffer*, VideoFrameMetadataGStreamer*> ensureVideoFrameMetadata(GstBuffer* buffer)
+static std::pair<GRefPtr<GstBuffer>, VideoFrameMetadataGStreamer*> ensureVideoFrameMetadata(GRefPtr<GstBuffer>&& buffer)
 {
-    auto* meta = getInternalVideoFrameMetadata(buffer);
+    auto* meta = getInternalVideoFrameMetadata(buffer.get());
     if (meta)
-        return { buffer, meta };
+        return { WTFMove(buffer), meta };
 
-    buffer = gst_buffer_make_writable(buffer);
-    return { buffer, VIDEO_FRAME_METADATA_CAST(gst_buffer_add_meta(buffer, videoFrameMetadataGetInfo(), nullptr)) };
+    IGNORE_WARNINGS_BEGIN("cast-align");
+    auto modifiedBuffer = adoptGRef(gst_buffer_make_writable(buffer.leakRef()));
+    IGNORE_WARNINGS_END;
+    meta = VIDEO_FRAME_METADATA_CAST(gst_buffer_add_meta(modifiedBuffer.get(), videoFrameMetadataGetInfo(), nullptr));
+    return { WTFMove(modifiedBuffer), meta };
 }
 
 const GstMetaInfo* videoFrameMetadataGetInfo()
@@ -90,8 +93,8 @@ const GstMetaInfo* videoFrameMetadataGetInfo()
                 if (!GST_META_TRANSFORM_IS_COPY(type))
                     return FALSE;
 
-                auto* frameMeta = VIDEO_FRAME_METADATA_CAST(meta);
-                auto [buf, copyMeta] = ensureVideoFrameMetadata(buffer);
+                auto frameMeta = VIDEO_FRAME_METADATA_CAST(meta);
+                auto copyMeta = VIDEO_FRAME_METADATA_CAST(gst_buffer_add_meta(buffer, videoFrameMetadataGetInfo(), nullptr));
                 copyMeta->priv->videoSampleMetadata = frameMeta->priv->videoSampleMetadata;
 
                 Locker frameMetaLocker { frameMeta->priv->lock };
@@ -137,8 +140,8 @@ void webkitGstTraceProcessingTimeForElement(GstElement* element)
     static auto probeType = static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_PUSH | GST_PAD_PROBE_TYPE_BUFFER);
 
     gst_pad_add_probe(sinkPad.get(), probeType, [](GstPad*, GstPadProbeInfo* info, gpointer userData) -> GstPadProbeReturn {
-        auto [modifiedBuffer, meta] = ensureVideoFrameMetadata(GST_PAD_PROBE_INFO_BUFFER(info));
-        GST_PAD_PROBE_INFO_DATA(info) = modifiedBuffer;
+        auto [modifiedBuffer, meta] = ensureVideoFrameMetadata(GRefPtr(GST_PAD_PROBE_INFO_BUFFER(info)));
+        gst_pad_probe_info_set_buffer(info, modifiedBuffer.leakRef());
         Locker locker { meta->priv->lock };
         meta->priv->processingTimes.set(GST_ELEMENT_CAST(userData), std::make_pair(gst_util_get_timestamp(), GST_CLOCK_TIME_NONE));
         return GST_PAD_PROBE_OK;
