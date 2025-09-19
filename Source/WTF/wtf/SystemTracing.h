@@ -25,6 +25,9 @@
 
 #pragma once
 
+#define _XSTRINGIFY(line) #line
+#define _STRINGIFY(line) _XSTRINGIFY(line)
+
 #if USE(APPLE_INTERNAL_SDK)
 #include <sys/kdebug_private.h>
 #define HAVE_KDEBUG_H 1
@@ -147,12 +150,30 @@ enum TracePointCode {
 
 #ifdef __cplusplus
 
+#if USE(LINUX_FTRACE)
+#include <wtf/linux/SystemTracingFTrace.h>
+#endif
+
+// This has to be included after the TracePointCode enum.
+#if USE(SYSPROF_CAPTURE)
+#include <wtf/glib/SysprofAnnotator.h>
+#endif
+
 namespace WTF {
 
 inline void tracePoint(TracePointCode code, uint64_t data1 = 0, uint64_t data2 = 0, uint64_t data3 = 0, uint64_t data4 = 0)
 {
 #if HAVE(KDEBUG_H)
     kdebug_trace(ARIADNEDBG_CODE(WEBKIT_COMPONENT, code), data1, data2, data3, data4);
+#elif USE(LINUX_FTRACE)
+    SystemTracingFTrace::instance().tracePoint(code, data1);
+#elif USE(SYSPROF_CAPTURE)
+    if (auto* annotator = SysprofAnnotator::singletonIfCreated())
+        annotator->tracePoint(code);
+    UNUSED_PARAM(data1);
+    UNUSED_PARAM(data2);
+    UNUSED_PARAM(data3);
+    UNUSED_PARAM(data4);
 #else
     UNUSED_PARAM(code);
     UNUSED_PARAM(data1);
@@ -243,6 +264,43 @@ do { \
     os_signpost_id_t wtfSignpostID = wtfPointer ? os_signpost_id_make_with_pointer(wtfHandle, wtfPointer) : OS_SIGNPOST_ID_EXCLUSIVE; \
     emitFunc(wtfHandle, wtfSignpostID, name, ##__VA_ARGS__); \
 } while (0)
+
+#elif USE(SYSPROF_CAPTURE)
+
+#define WTFEmitSignpost(pointer, name, ...) \
+    do { \
+        if (auto* annotator = SysprofAnnotator::singletonIfCreated()) \
+            annotator->instantMark(std::span(_STRINGIFY(name)), " " __VA_ARGS__); \
+    } while (0)
+
+#define WTFBeginSignpost(pointer, name, ...) \
+    do { \
+        if (auto* annotator = SysprofAnnotator::singletonIfCreated()) \
+            annotator->beginMark(pointer, std::span(_STRINGIFY(name)), " " __VA_ARGS__); \
+    } while (0)
+
+#define WTFEndSignpost(pointer, name, ...)  \
+    do { \
+        if (auto* annotator = SysprofAnnotator::singletonIfCreated()) \
+            annotator->endMark(pointer, std::span(_STRINGIFY(name)), " " __VA_ARGS__); \
+    } while (0)
+
+#define WTFEmitSignpostAlways(pointer, name, ...) WTFEmitSignpost((pointer), name, ##__VA_ARGS__)
+#define WTFBeginSignpostAlways(pointer, name, ...) WTFBeginSignpost((pointer), name, ##__VA_ARGS__)
+#define WTFEndSignpostAlways(pointer, name, ...) WTFEndSignpost((pointer), name, ##__VA_ARGS__)
+
+#define WTFEmitSignpostWithTimeDelta(pointer, name, timeDelta, ...) \
+    do { \
+        if (auto* annotator = SysprofAnnotator::singletonIfCreated()) \
+            annotator->mark((timeDelta), std::span(_STRINGIFY(name)), " " __VA_ARGS__); \
+    } while (0)
+
+#define WTFBeginSignpostWithTimeDelta(pointer, name, timeDelta, ...) WTFEmitSignpostWithTimeDelta((pointer), name, (timeDelta), ##__VA_ARGS__)
+#define WTFEndSignpostWithTimeDelta(pointer, name, timeDelta, ...) WTFEmitSignpostWithTimeDelta((pointer), name, (timeDelta), ##__VA_ARGS__)
+
+#define WTFEmitSignpostAlwaysWithTimeDelta(pointer, name, timeDelta, ...) WTFEmitSignpostWithTimeDelta((pointer), name, (timeDelta), ##__VA_ARGS__)
+#define WTFBeginSignpostAlwaysWithTimeDelta(pointer, name, timeDelta, ...) WTFBeginSignpostWithTimeDelta((pointer), name, (timeDelta), ##__VA_ARGS__)
+#define WTFEndSignpostAlwaysWithTimeDelta(pointer, name, timeDelta, ...) WTFEndSignpostWithTimeDelta((pointer), name, (timeDelta), ##__VA_ARGS__)
 
 #else
 

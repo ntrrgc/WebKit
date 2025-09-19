@@ -131,7 +131,7 @@ class WPEPort(GLibPort):
         return env
 
     def run_minibrowser(self, args):
-        env = None
+        env = self.setup_environ_for_minibrowser()
         miniBrowser = None
 
         if self.browser_name() == "cog":
@@ -155,6 +155,17 @@ class WPEPort(GLibPort):
         if os.environ.get("WEBKIT_MINI_BROWSER_PREFIX"):
             command = shlex.split(os.environ["WEBKIT_MINI_BROWSER_PREFIX"]) + command
 
+        pass_fds = ()
+        if os.environ.get("SYSPROF_CONTROL_FD"):
+            try:
+                control_fd = int(os.environ.get("SYSPROF_CONTROL_FD"))
+                copy_fd = os.dup(control_fd)
+                pass_fds += (copy_fd, )
+                env["SYSPROF_CONTROL_FD"] = str(copy_fd)
+
+            except (ValueError):
+                pass
+
         if self._should_use_jhbuild():
             command = self._jhbuild_wrapper + command
-        return self._executive.run_command(command + args, cwd=self.webkit_base(), stdout=None, return_stderr=False, decode_output=False, env=self.setup_environ_for_minibrowser())
+        return self._executive.run_command(command + args, cwd=self.webkit_base(), stdout=None, return_stderr=False, decode_output=False, env=env, pass_fds=pass_fds)

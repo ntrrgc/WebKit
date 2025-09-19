@@ -35,6 +35,10 @@
 #include <wtf/glib/GRefPtr.h>
 #include <wtf/glib/GUniquePtr.h>
 
+#if USE(SYSPROF_CAPTURE)
+#include <wtf/SystemTracing.h>
+#endif
+
 namespace WebKit {
 
 #if ENABLE(REMOTE_INSPECTOR)
@@ -100,6 +104,9 @@ void webkitInitialize()
     static std::once_flag onceFlag;
 
     std::call_once(onceFlag, [] {
+#if USE(SYSPROF_CAPTURE)
+        SysprofAnnotator::createIfNeeded("WebKit (UI)"_s);
+#endif
         InitializeWebKit2();
 #if ENABLE(REMOTE_INSPECTOR)
         initializeRemoteInspectorServer();

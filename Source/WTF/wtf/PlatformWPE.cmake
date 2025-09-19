@@ -9,6 +9,7 @@ list(APPEND WTF_PUBLIC_HEADERS
     glib/RunLoopSourcePriority.h
     glib/Sandbox.h
     glib/SocketConnection.h
+    glib/SysprofAnnotator.h
     glib/WTFGType.h
 
     linux/ProcessMemoryFootprint.h
@@ -57,6 +58,12 @@ list(APPEND WTF_LIBRARIES
 
 if (Journald_FOUND)
     list(APPEND WTF_LIBRARIES Journald::Journald)
+endif ()
+
+if (USE_SYSPROF_CAPTURE)
+    list(APPEND WTF_LIBRARIES
+        SysProfCapture::SysProfCapture
+    )
 endif ()
 
 list(APPEND WTF_SYSTEM_INCLUDE_DIRECTORIES
