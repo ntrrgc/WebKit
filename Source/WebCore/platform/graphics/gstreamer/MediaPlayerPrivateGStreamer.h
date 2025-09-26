@@ -229,6 +229,7 @@ public:
     bool handleNeedContextMessage(GstMessage*);
 
     void handleStreamCollectionMessage(GstMessage*);
+    void handleSyncErrorMessage(GstMessage*);
     void handleMessage(GstMessage*);
 
     void triggerRepaint(GRefPtr<GstSample>&&);
@@ -407,6 +408,8 @@ protected:
     bool isPipelineWaitingPreroll(GstState current, GstState pending, GstStateChangeReturn) const;
     bool isPipelineWaitingPreroll() const;
 
+    void didEnd();
+
     Ref<MainThreadNotifier<MainThreadNotification>> m_notifier;
     ThreadSafeWeakPtr<MediaPlayer> m_player;
     String m_referrer;
@@ -489,6 +492,7 @@ protected:
     std::optional<GstVideoDecoderPlatform> m_videoDecoderPlatform;
     GstSeekFlags m_seekFlags;
     bool m_ignoreErrors { false };
+    Atomic<unsigned> m_queuedSyncErrors { 0 };
 
     TrackIDHashMap<Ref<AudioTrackPrivateGStreamer>> m_audioTracks;
     TrackIDHashMap<Ref<VideoTrackPrivateGStreamer>> m_videoTracks;
@@ -541,7 +545,6 @@ private:
     bool isMuted() const;
     void commitLoad();
     void fillTimerFired();
-    void didEnd();
     void setPlaybackFlags(bool isMediaStream);
 
     GstElement* createVideoSink();
