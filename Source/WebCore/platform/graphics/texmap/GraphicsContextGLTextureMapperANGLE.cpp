@@ -68,8 +68,8 @@ GraphicsContextGLANGLE::~GraphicsContextGLANGLE()
     if (m_rendersToHostWindow) {
         // When rendering to the host window, destroy the context only, not the surface, as it's the static one.
         if (m_contextObj) {
-            EGL_MakeCurrent(m_displayObj, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
             EGL_DestroyContext(m_displayObj, m_contextObj);
+            EGL_MakeCurrent(m_displayObj, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
             s_windowSurfaceUsers--;
             if (!s_windowSurfaceUsers) {
                 EGL_DestroySurface(m_displayObj, s_windowSurfaceObj);
@@ -312,10 +312,12 @@ bool GraphicsContextGLTextureMapperANGLE::platformInitializeContext()
     }
     eglContextAttributes.append(EGL_NONE);
 
-    m_angleSharingContextObj = sharedDisplay.angleSharingGLContext();
-    if (m_angleSharingContextObj == EGL_NO_CONTEXT) {
-        LOG(WebGL, "ANGLE sharing EGLContext Initialization failed.");
-        return false;
+    if (!m_rendersToHostWindow) {
+        m_angleSharingContextObj = sharedDisplay.angleSharingGLContext();
+        if (m_angleSharingContextObj == EGL_NO_CONTEXT) {
+            LOG(WebGL, "ANGLE sharing EGLContext Initialization failed.");
+            return false;
+        }
     }
 
     m_contextObj = EGL_CreateContext(m_displayObj, m_configObj, m_angleSharingContextObj, eglContextAttributes.data());
