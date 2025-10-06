@@ -130,15 +130,10 @@ private:
     void invalidateSkiaGLContexts();
 #endif
 
-#if ENABLE(WEBGL) && !PLATFORM(WIN)
-    void clearANGLESharingGLContext();
-#endif
-
     void terminateEGLDisplay();
 
 #if ENABLE(WEBGL) && !PLATFORM(WIN)
     mutable EGLDisplay m_angleEGLDisplay { nullptr };
-    EGLContext m_angleSharingGLContext { nullptr };
 #endif
 
 #if ENABLE(VIDEO) && USE(GSTREAMER_GL)

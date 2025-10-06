@@ -108,9 +108,15 @@ GraphicsContextGLANGLE::~GraphicsContextGLANGLE()
     GL_DeleteFramebuffers(1, &m_fbo);
 
     if (m_contextObj) {
-        EGL_MakeCurrent(m_displayObj, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         EGL_DestroyContext(m_displayObj, m_contextObj);
     }
+
+    if (m_angleSharingContextObj)
+        EGL_DestroyContext(m_displayObj, m_angleSharingContextObj);
+
+    // Ideally this should go before the m_contextObj destruction, but there are platforms where it breaks
+    // the destruction m_contextObj. Putting it here works for all the platforms that I've tested.
+    EGL_MakeCurrent(m_displayObj, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
     if (m_surfaceObj)
         EGL_DestroySurface(m_displayObj, m_surfaceObj);
@@ -306,7 +312,13 @@ bool GraphicsContextGLTextureMapperANGLE::platformInitializeContext()
     }
     eglContextAttributes.append(EGL_NONE);
 
-    m_contextObj = EGL_CreateContext(m_displayObj, m_configObj, sharedDisplay.angleSharingGLContext(), eglContextAttributes.data());
+    m_angleSharingContextObj = sharedDisplay.angleSharingGLContext();
+    if (m_angleSharingContextObj == EGL_NO_CONTEXT) {
+        LOG(WebGL, "ANGLE sharing EGLContext Initialization failed.");
+        return false;
+    }
+
+    m_contextObj = EGL_CreateContext(m_displayObj, m_configObj, m_angleSharingContextObj, eglContextAttributes.data());
     if (m_contextObj == EGL_NO_CONTEXT) {
         LOG(WebGL, "EGLContext Initialization failed.");
         return false;
