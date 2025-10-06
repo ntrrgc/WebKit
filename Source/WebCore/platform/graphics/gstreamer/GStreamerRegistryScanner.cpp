@@ -25,7 +25,9 @@
 #include "ContentType.h"
 #include "GStreamerCodecUtilities.h"
 #include "GStreamerCommon.h"
+#include "PlatformScreen.h"
 #include "RuntimeApplicationChecks.h"
+#include "ScreenProperties.h"
 #include <fnmatch.h>
 #include <gst/pbutils/codec-utils.h>
 #include <wtf/NeverDestroyed.h>
@@ -1005,7 +1007,6 @@ ASCIILiteral GStreamerRegistryScanner::configurationNameForLogging(Configuration
 
 GStreamerRegistryScanner::RegistryLookupResult GStreamerRegistryScanner::isConfigurationSupported(Configuration configuration, const MediaConfiguration& mediaConfiguration) const
 {
-    bool isSupported = false;
     bool isUsingHardware = false;
 #ifndef GST_DISABLE_GST_DEBUG
     ASCIILiteral configLogString = configurationNameForLogging(configuration);
@@ -1020,11 +1021,30 @@ GStreamerRegistryScanner::RegistryLookupResult GStreamerRegistryScanner::isConfi
             videoConfiguration.bitrate, videoConfiguration.framerate);
 #endif
 
+        auto* scrData = screenData(primaryScreenDisplayID());
+        if (!scrData || !scrData->screenSupportsHighDynamicRange) {
+            // Check HDR metadata field
+            if (videoConfiguration.hdrMetadataType.has_value())
+                return { false, false, nullptr };
+            // Transfer function (EOTF)
+            if (videoConfiguration.transferFunction.has_value()) {
+                auto tf = videoConfiguration.transferFunction.value();
+                // compare to your enum values for PQ/HLG; adjust names if different
+                if (tf == TransferFunction::PQ || tf == TransferFunction::HLG)
+                    return { false, false, nullptr };
+            }
+        }
+
         auto contentType = ContentType(videoConfiguration.contentType);
-        isSupported = isContainerTypeSupported(configuration, contentType.containerType());
+        if (!isContainerTypeSupported(configuration, contentType.containerType()))
+            return { false, false, nullptr };
+
         auto codecs = contentType.codecs();
-        if (!codecs.isEmpty())
+        if (!codecs.isEmpty()) {
+            if (!areAllCodecsSupported(configuration, codecs, false))
+                return { false, false, nullptr };
             isUsingHardware = areAllCodecsSupported(configuration, codecs, true);
+        }
     }
 
     if (mediaConfiguration.audio) {
@@ -1035,10 +1055,11 @@ GStreamerRegistryScanner::RegistryLookupResult GStreamerRegistryScanner::isConfi
             audioConfiguration.bitrate.value_or(0), audioConfiguration.samplerate.value_or(0));
 #endif
         auto contentType = ContentType(audioConfiguration.contentType);
-        isSupported = isContainerTypeSupported(configuration, contentType.containerType());
+        if (!isContainerTypeSupported(configuration, contentType.containerType()))
+            return { false, false, nullptr };
     }
 
-    return { isSupported, isUsingHardware, nullptr };
+    return { true, isUsingHardware, nullptr };
 }
 
 #if USE(GSTREAMER_WEBRTC)
