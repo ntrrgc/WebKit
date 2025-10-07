@@ -1021,6 +1021,7 @@ GStreamerRegistryScanner::RegistryLookupResult GStreamerRegistryScanner::isConfi
             videoConfiguration.bitrate, videoConfiguration.framerate);
 #endif
 
+#if ENABLE(WPE_PLATFORM)
         auto* scrData = screenData(primaryScreenDisplayID());
         if (!scrData || !scrData->screenSupportsHighDynamicRange) {
             // Check HDR metadata field
@@ -1034,6 +1035,7 @@ GStreamerRegistryScanner::RegistryLookupResult GStreamerRegistryScanner::isConfi
                     return { false, false, nullptr };
             }
         }
+#endif
 
         auto contentType = ContentType(videoConfiguration.contentType);
         if (!isContainerTypeSupported(configuration, contentType.containerType()))
