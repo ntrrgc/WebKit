@@ -1021,7 +1021,7 @@ GStreamerRegistryScanner::RegistryLookupResult GStreamerRegistryScanner::isConfi
             videoConfiguration.bitrate, videoConfiguration.framerate);
 #endif
 
-#if ENABLE(WPE_PLATFORM)
+#if PLATFORM(WPE)
         auto* scrData = screenData(primaryScreenDisplayID());
         if (!scrData || !scrData->screenSupportsHighDynamicRange) {
             // Check HDR metadata field
