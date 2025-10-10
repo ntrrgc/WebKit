@@ -68,8 +68,8 @@ GraphicsContextGLANGLE::~GraphicsContextGLANGLE()
     if (m_rendersToHostWindow) {
         // When rendering to the host window, destroy the context only, not the surface, as it's the static one.
         if (m_contextObj) {
-            EGL_DestroyContext(m_displayObj, m_contextObj);
             EGL_MakeCurrent(m_displayObj, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+            EGL_DestroyContext(m_displayObj, m_contextObj);
             s_windowSurfaceUsers--;
             if (!s_windowSurfaceUsers) {
                 EGL_DestroySurface(m_displayObj, s_windowSurfaceObj);
