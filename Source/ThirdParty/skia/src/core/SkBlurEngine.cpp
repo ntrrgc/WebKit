@@ -879,7 +879,7 @@ public:
 class RasterBlurEngine : public SkBlurEngine {
 public:
     const Algorithm* findAlgorithm(SkSize sigma,  SkColorType colorType) const override {
-        static constexpr float kBoxBlurMinSigma = 2.f;
+        static constexpr float kBoxBlurMinSigma = 1.5f;
 
         // If the sigma is larger than kBoxBlurMinSigma, we should assume that we won't encounter
         // an identity window assertion later on.
