@@ -35,6 +35,7 @@
 #include <wtf/Expected.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/NumberOfCores.h>
+#include <wtf/MainThread.h>
 #include <wtf/Vector.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/StringCommon.h>
@@ -1184,6 +1185,7 @@ void TestAPI::testBigInt()
 
 void configureJSCForTesting()
 {
+    WTF::initializeMainThread();
     JSC::Config::configureForTesting();
     JSC::Options::machExceptionHandlerSandboxPolicy = JSC::Options::SandboxPolicy::Allow;
 }
