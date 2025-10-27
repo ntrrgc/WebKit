@@ -246,6 +246,8 @@ set(webrtc_SOURCES
     Source/third_party/boringssl/src/crypto/evp/evp.c
     Source/third_party/boringssl/src/crypto/evp/evp_ctx.c
     Source/third_party/boringssl/src/crypto/evp/pbkdf.c
+    Source/third_party/boringssl/src/crypto/evp/p_dh_asn1.c
+    Source/third_party/boringssl/src/crypto/evp/p_dh.c
     Source/third_party/boringssl/src/crypto/evp/p_dsa_asn1.c
     Source/third_party/boringssl/src/crypto/evp/p_ec_asn1.c
     Source/third_party/boringssl/src/crypto/evp/p_ec.c
