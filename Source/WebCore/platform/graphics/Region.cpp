@@ -27,6 +27,7 @@
 #include "Region.h"
 
 #include <stdio.h>
+#include <wtf/NeverDestroyed.h>
 #include <wtf/text/TextStream.h>
 
 // A region class based on the paper "Scanline Coherent Shape Algebra"

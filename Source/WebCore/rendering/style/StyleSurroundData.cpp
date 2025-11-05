@@ -21,6 +21,7 @@
 
 #include "config.h"
 #include "StyleSurroundData.h"
+#include <wtf/NeverDestroyed.h>
 
 namespace WebCore {
 
