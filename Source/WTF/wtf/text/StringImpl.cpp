@@ -37,6 +37,7 @@
 #include <wtf/text/SymbolRegistry.h>
 #include <wtf/unicode/CharacterNames.h>
 #include <wtf/unicode/UTF8Conversion.h>
+#include <wtf/NeverDestroyed.h>
 
 #if STRING_STATS
 #include <unistd.h>
