@@ -649,6 +649,20 @@ WEBKIT_API void
 webkit_settings_set_opportunistic_sweeping_and_gc              (WebKitSettings* settings,
                                                                 gboolean        enabled);
 
+WEBKIT_API gboolean
+webkit_settings_get_enable_page_lifecycle                      (WebKitSettings* settings);
+
+WEBKIT_API void
+webkit_settings_set_enable_page_lifecycle                      (WebKitSettings* settings,
+                                                                gboolean enabled);
+
+WEBKIT_API gboolean
+webkit_settings_get_destroy_window_on_freeze                   (WebKitSettings* settings);
+
+WEBKIT_API void
+webkit_settings_set_destroy_window_on_freeze                   (WebKitSettings* settings,
+                                                                gboolean destroy_window);
+
 G_END_DECLS
 
 #endif /* WebKitSettings_h */

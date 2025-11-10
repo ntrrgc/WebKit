@@ -5305,6 +5305,34 @@ PageAtRuleMarginDescriptorsEnabled:
     WebCore:
       default: true
 
+PageLifecycleAPIDestroyWindowOnFreeze:
+  type: bool
+  status: testable
+  category: dom
+  humanReadableName: "Page Lifecycle API destroy window on freeze"
+  humanReadableDescription: "Whether to destroy the native window on freeze"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
+
+PageLifecycleAPIEnabled:
+  type: bool
+  status: testable
+  category: dom
+  humanReadableName: "Page Lifecycle API"
+  humanReadableDescription: "Enable the Page Lifecycle API"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: true
+    WebCore:
+      default: true
+
 PageVisibilityBasedProcessSuppressionEnabled:
   type: bool
   status: internal

@@ -412,6 +412,8 @@ struct _WebKitWebViewPrivate {
     WebKitWebExtensionMode webExtensionMode;
 
     bool isWebProcessResponsive;
+
+    bool isWaitingForPLCCallback;
 };
 
 static guint signals[LAST_SIGNAL] = { 0, };
@@ -974,6 +976,8 @@ static void webkitWebViewConstructed(GObject* object)
     priv->backForwardList = adoptGRef(webkitBackForwardListCreate(&getPage(webView).backForwardList()));
     priv->windowProperties = adoptGRef(webkitWindowPropertiesCreate());
     priv->isWebProcessResponsive = true;
+
+    priv->isWaitingForPLCCallback = false;
 }
 
 static void webkitWebViewSetProperty(GObject* object, guint propId, const GValue* value, GParamSpec* paramSpec)
@@ -5839,4 +5843,252 @@ void webkit_web_view_show(WebKitWebView *webView)
     auto viewStateFlags = webView->priv->view->viewState();
     viewStateFlags.add(WebCore::ActivityState::IsVisible);
     webView->priv->view->setViewState(viewStateFlags);
+}
+
+// Page LifeCycle states, ActivityState flags used to define them and transitions:
+//
+//          Active   IsFocused &&  IsVisible && !isSuspended()
+//           ^ |
+//           | |
+//     focus | | blur
+//           | |
+//           | v
+//         Passive  !IsFocused &&  IsVisible && !isSuspended()
+//           ^ |
+//           | |
+//      show | | hide
+//           | |
+//           | v
+//          Hidden   !IsFocused && !IsVisible && !isSuspended()
+//           ^ |
+//           | |
+//    resume | | freeze
+//           | |
+//           | v
+//          Frozen   !IsFocused && !IsVisible && isSuspended()
+//
+//
+// Unless overwritten by the API, the default initial values are IsFocused && IsVisible && !IsFrozen (so Active state).
+
+
+gboolean webkit_web_view_hide_plc(WebKitWebView *webView, GAsyncReadyCallback callback, gpointer userData)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), FALSE);
+
+    if (!webkit_settings_get_enable_page_lifecycle(webView->priv->settings.get()))
+        return FALSE;
+
+    auto state = webView->priv->view->viewState();
+    bool passive = !state.contains(WebCore::ActivityState::IsFocused) && state.contains(WebCore::ActivityState::IsVisible) && !getPage(webView).isSuspended();
+
+    if (!passive)
+        return FALSE;
+
+    if (webView->priv->isWaitingForPLCCallback)
+        return FALSE;
+
+    webView->priv->isWaitingForPLCCallback = true;
+    GRefPtr<GTask> task = adoptGRef(g_task_new(webView, NULL, callback, userData));
+    getPage(webView).installActivityStateChangeCompletionHandler([task = WTFMove(task)]() {
+        WebKitWebView* webView = WEBKIT_WEB_VIEW(g_task_get_source_object(task.get()));
+        webView->priv->isWaitingForPLCCallback = false;
+        g_task_return_boolean(task.get(), TRUE);
+    });
+
+    state.remove(WebCore::ActivityState::IsVisible);
+    webView->priv->view->setViewState(state);
+
+    return TRUE;
+}
+
+gboolean webkit_web_view_hide_plc_finish(WebKitWebView* webView, GAsyncResult* result, GError** error)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), FALSE);
+    g_return_val_if_fail(g_task_is_valid(result, webView), FALSE);
+
+    return g_task_propagate_boolean(G_TASK(result), error);
+}
+
+gboolean webkit_web_view_show_plc(WebKitWebView *webView, GAsyncReadyCallback callback, gpointer userData)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), FALSE);
+
+    if (!webkit_settings_get_enable_page_lifecycle(webView->priv->settings.get()))
+        return FALSE;
+
+    auto state = webView->priv->view->viewState();
+    bool hidden = !state.containsAny({ WebCore::ActivityState::IsFocused, WebCore::ActivityState::IsVisible }) && !getPage(webView).isSuspended();
+
+    if (!hidden)
+        return FALSE;
+
+    if (webView->priv->isWaitingForPLCCallback)
+        return FALSE;
+
+    webView->priv->isWaitingForPLCCallback = true;
+    GRefPtr<GTask> task = adoptGRef(g_task_new(webView, NULL, callback, userData));
+    getPage(webView).installActivityStateChangeCompletionHandler([task = WTFMove(task)]() {
+        WebKitWebView* webView = WEBKIT_WEB_VIEW(g_task_get_source_object(task.get()));
+        webView->priv->isWaitingForPLCCallback = false;
+        g_task_return_boolean(task.get(), TRUE);
+    });
+
+    state.add(WebCore::ActivityState::IsVisible);
+    webView->priv->view->setViewState(state);
+
+    return TRUE;
+}
+
+gboolean webkit_web_view_show_plc_finish(WebKitWebView* webView, GAsyncResult* result, GError** error)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), FALSE);
+    g_return_val_if_fail(g_task_is_valid(result, webView), FALSE);
+
+    return g_task_propagate_boolean(G_TASK(result), error);
+}
+
+gboolean webkit_web_view_focus_plc(WebKitWebView *webView, GAsyncReadyCallback callback, gpointer userData)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), FALSE);
+
+    if (!webkit_settings_get_enable_page_lifecycle(webView->priv->settings.get()))
+        return FALSE;
+
+    auto state = webView->priv->view->viewState();
+    bool passive = !state.contains(WebCore::ActivityState::IsFocused) && state.contains(WebCore::ActivityState::IsVisible) && !getPage(webView).isSuspended();
+
+    if (!passive)
+        return FALSE;
+
+    if (webView->priv->isWaitingForPLCCallback)
+        return FALSE;
+
+    webView->priv->isWaitingForPLCCallback = true;
+    GRefPtr<GTask> task = adoptGRef(g_task_new(webView, NULL, callback, userData));
+    getPage(webView).installActivityStateChangeCompletionHandler([task = WTFMove(task)]() {
+        WebKitWebView* webView = WEBKIT_WEB_VIEW(g_task_get_source_object(task.get()));
+        webView->priv->isWaitingForPLCCallback = false;
+        g_task_return_boolean(task.get(), TRUE);
+    });
+
+    state.add({ WebCore::ActivityState::IsFocused, WebCore::ActivityState::WindowIsActive });
+    webView->priv->view->setViewState(state);
+
+    return TRUE;
+}
+
+gboolean webkit_web_view_focus_plc_finish(WebKitWebView* webView, GAsyncResult* result, GError** error)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), FALSE);
+    g_return_val_if_fail(g_task_is_valid(result, webView), FALSE);
+
+    return g_task_propagate_boolean(G_TASK(result), error);
+}
+
+gboolean webkit_web_view_blur_plc(WebKitWebView *webView, GAsyncReadyCallback callback, gpointer userData)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), FALSE);
+
+    if (!webkit_settings_get_enable_page_lifecycle(webView->priv->settings.get()))
+        return FALSE;
+
+    auto state = webView->priv->view->viewState();
+    bool active = state.containsAll({ WebCore::ActivityState::IsFocused, WebCore::ActivityState::IsVisible }) && !getPage(webView).isSuspended();
+
+    if (!active)
+        return FALSE;
+
+    if (webView->priv->isWaitingForPLCCallback)
+        return FALSE;
+
+    webView->priv->isWaitingForPLCCallback = true;
+    GRefPtr<GTask> task = adoptGRef(g_task_new(webView, NULL, callback, userData));
+    getPage(webView).installActivityStateChangeCompletionHandler([task = WTFMove(task)]() {
+        WebKitWebView* webView = WEBKIT_WEB_VIEW(g_task_get_source_object(task.get()));
+        webView->priv->isWaitingForPLCCallback = false;
+        g_task_return_boolean(task.get(), TRUE);
+    });
+
+    state.remove({ WebCore::ActivityState::IsFocused, WebCore::ActivityState::WindowIsActive });
+    webView->priv->view->setViewState(state);
+
+    return TRUE;
+}
+
+gboolean webkit_web_view_blur_plc_finish(WebKitWebView* webView, GAsyncResult* result, GError** error)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), FALSE);
+    g_return_val_if_fail(g_task_is_valid(result, webView), FALSE);
+
+    return g_task_propagate_boolean(G_TASK(result), error);
+}
+
+gboolean webkit_web_view_freeze_plc(WebKitWebView *webView, GAsyncReadyCallback callback, gpointer userData)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), FALSE);
+
+    if (!webkit_settings_get_enable_page_lifecycle(webView->priv->settings.get()))
+        return FALSE;
+
+    auto state = webView->priv->view->viewState();
+    bool hidden = !state.containsAny({ WebCore::ActivityState::IsFocused, WebCore::ActivityState::IsVisible }) && !getPage(webView).isSuspended();
+
+    if (!hidden)
+        return FALSE;
+
+    if (webView->priv->isWaitingForPLCCallback)
+        return FALSE;
+
+    webView->priv->isWaitingForPLCCallback = true;
+    GRefPtr<GTask> task = adoptGRef(g_task_new(webView, NULL, callback, userData));
+    getPage(webView).suspend([task = WTFMove(task)](bool success) {
+        WebKitWebView* webView = WEBKIT_WEB_VIEW(g_task_get_source_object(task.get()));
+        webView->priv->isWaitingForPLCCallback = false;
+        g_task_return_boolean(task.get(), success);
+    });
+
+    return TRUE;
+}
+
+gboolean webkit_web_view_freeze_plc_finish(WebKitWebView* webView, GAsyncResult* result, GError** error)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), FALSE);
+    g_return_val_if_fail(g_task_is_valid(result, webView), FALSE);
+
+    return g_task_propagate_boolean(G_TASK(result), error);
+}
+
+gboolean webkit_web_view_resume_plc(WebKitWebView *webView, GAsyncReadyCallback callback, gpointer userData)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), FALSE);
+
+    if (!webkit_settings_get_enable_page_lifecycle(webView->priv->settings.get()))
+        return FALSE;
+
+    auto state = webView->priv->view->viewState();
+    bool frozen = !state.containsAny({ WebCore::ActivityState::IsFocused, WebCore::ActivityState::IsVisible }) && getPage(webView).isSuspended();
+
+    if (!frozen)
+        return FALSE;
+
+    if (webView->priv->isWaitingForPLCCallback)
+        return FALSE;
+
+    webView->priv->isWaitingForPLCCallback = true;
+    GRefPtr<GTask> task = adoptGRef(g_task_new(webView, NULL, callback, userData));
+    getPage(webView).resume([task = WTFMove(task)](bool success) {
+        WebKitWebView* webView = WEBKIT_WEB_VIEW(g_task_get_source_object(task.get()));
+        webView->priv->isWaitingForPLCCallback = false;
+        g_task_return_boolean(task.get(), success);
+    });
+
+    return TRUE;
+}
+
+gboolean webkit_web_view_resume_plc_finish(WebKitWebView* webView, GAsyncResult* result, GError** error)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), FALSE);
+    g_return_val_if_fail(g_task_is_valid(result, webView), FALSE);
+
+    return g_task_propagate_boolean(G_TASK(result), error);
 }

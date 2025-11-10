@@ -10326,6 +10326,7 @@ void WebPageProxy::resetStateAfterProcessExited(ProcessTerminationReason termina
 
     m_hasRunningProcess = false;
     m_areActiveDOMObjectsAndAnimationsSuspended = false;
+    m_isSuspended = false;
     m_isServiceWorkerPage = false;
 
     m_userScriptsNotified = false;

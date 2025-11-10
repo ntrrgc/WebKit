@@ -1087,6 +1087,66 @@ webkit_web_view_hide                                 (WebKitWebView             
 WEBKIT_API void
 webkit_web_view_show                                 (WebKitWebView             *web_view);
 
+WEBKIT_API gboolean
+webkit_web_view_hide_plc                             (WebKitWebView             *web_view,
+                                                      GAsyncReadyCallback       callback,
+                                                      gpointer                  user_data);
+
+WEBKIT_API gboolean
+webkit_web_view_hide_plc_finish                      (WebKitWebView             *web_view,
+                                                      GAsyncResult              *result,
+                                                      GError                    **error);
+
+WEBKIT_API gboolean
+webkit_web_view_show_plc                             (WebKitWebView             *web_view,
+                                                      GAsyncReadyCallback       callback,
+                                                      gpointer                  user_data);
+
+WEBKIT_API gboolean
+webkit_web_view_show_plc_finish                      (WebKitWebView             *web_view,
+                                                      GAsyncResult              *result,
+                                                      GError                    **error);
+
+WEBKIT_API gboolean
+webkit_web_view_focus_plc                            (WebKitWebView             *web_view,
+                                                      GAsyncReadyCallback       callback,
+                                                      gpointer                  user_data);
+
+WEBKIT_API gboolean
+webkit_web_view_focus_plc_finish                     (WebKitWebView             *web_view,
+                                                      GAsyncResult              *result,
+                                                      GError                    **error);
+
+WEBKIT_API gboolean
+webkit_web_view_blur_plc                             (WebKitWebView             *web_view,
+                                                      GAsyncReadyCallback       callback,
+                                                      gpointer                  user_data);
+
+WEBKIT_API gboolean
+webkit_web_view_blur_plc_finish                      (WebKitWebView             *web_view,
+                                                      GAsyncResult              *result,
+                                                      GError                    **error);
+
+WEBKIT_API gboolean
+webkit_web_view_freeze_plc                           (WebKitWebView             *web_view,
+                                                      GAsyncReadyCallback       callback,
+                                                      gpointer                  user_data);
+
+WEBKIT_API gboolean
+webkit_web_view_freeze_plc_finish                    (WebKitWebView             *web_view,
+                                                      GAsyncResult              *result,
+                                                      GError                    **error);
+
+WEBKIT_API gboolean
+webkit_web_view_resume_plc                           (WebKitWebView             *web_view,
+                                                      GAsyncReadyCallback       callback,
+                                                      gpointer                  user_data);
+
+WEBKIT_API gboolean
+webkit_web_view_resume_plc_finish                    (WebKitWebView             *web_view,
+                                                      GAsyncResult              *result,
+                                                      GError                    **error);
+
 G_END_DECLS
 
 #endif
