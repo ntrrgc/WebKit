@@ -275,11 +275,14 @@ void LayerTreeHost::sizeDidChange(const IntSize& size)
     didChangeViewport();
 }
 
-void LayerTreeHost::pauseRendering()
+void LayerTreeHost::pauseRendering(bool toTransparent)
 {
     m_isSuspended = true;
     m_surface->visibilityDidChange(false);
-    m_compositor->suspendToTransparent();
+    if (toTransparent)
+        m_compositor->suspendToTransparent();
+    else
+        m_compositor->suspend();
 }
 
 void LayerTreeHost::resumeRendering()

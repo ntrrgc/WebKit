@@ -93,7 +93,7 @@ public:
     void forceRepaintAsync(CompletionHandler<void()>&&);
     void sizeDidChange(const WebCore::IntSize& newSize);
 
-    void pauseRendering();
+    void pauseRendering(bool toTransparent = false);
     void resumeRendering();
 
     WebCore::GraphicsLayerFactory* graphicsLayerFactory();

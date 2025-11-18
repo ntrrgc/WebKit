@@ -633,7 +633,8 @@ void WebGLRenderingContextBase::addActivityStateChangeObserverIfNecessary()
     if (!canvas)
         return;
 
-    if (!canvas->scriptExecutionContext()->settingsValues().nonCompositedWebGLEnabled)
+    const auto& settings = canvas->scriptExecutionContext()->settingsValues();
+    if (!settings.nonCompositedWebGLEnabled || settings.pageLifecycleAPIEnabled)
         return;
 
     RefPtr page = canvas->document().page();

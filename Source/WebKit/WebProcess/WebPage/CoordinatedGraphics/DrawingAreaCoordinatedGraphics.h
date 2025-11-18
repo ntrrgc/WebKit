@@ -155,6 +155,8 @@ private:
     bool m_transientZoom { false };
     WebCore::FloatPoint m_transientZoomInitialOrigin;
 #endif
+
+    bool m_usingPageLifecycle { false };
 };
 
 } // namespace WebKit
