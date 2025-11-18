@@ -183,6 +183,13 @@ void MediaPlayerPrivateGStreamerMSE::pause()
     player->playbackStateChanged();
 }
 
+void MediaPlayerPrivateGStreamerMSE::willSeekToTarget(const MediaTime& time)
+{
+    MediaPlayerPrivateInterface::willSeekToTarget(time);
+    // Don't consider the stream as EOS anymore after a seek.
+    m_isEndReached = false;
+}
+
 void MediaPlayerPrivateGStreamerMSE::checkPlayingConsistency()
 {
     MediaPlayerPrivateGStreamer::checkPlayingConsistency();
