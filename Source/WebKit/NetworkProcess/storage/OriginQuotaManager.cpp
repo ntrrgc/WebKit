@@ -110,6 +110,15 @@ bool OriginQuotaManager::grantWithCurrentQuota(uint64_t spaceRequested)
     }
     m_quotaCountdown = *m_usage < m_quota ? m_quota - *m_usage : 0;
 
+    // As the overhead to store data by the underlying storage backend may be significant, the quota countdown may not
+    // be accurate enough. Depending on the data size persisted, we may run out of disk space on constraint devices even
+    // when quota is in theory available (when a lot of data is written without checking the real usage).
+    // To mitigate this, we force the read of the real usage after consuming 25% of the theoretically available space.
+    // If the remaining available space is too small that the overhead becomes insignificant (100 KB), we just take all
+    // remaining space is available from that point on
+    if (m_quotaCountdown > (100*1024))
+        m_quotaCountdown /= 4;
+
     return grantFastPath(spaceRequested);
 }
 
