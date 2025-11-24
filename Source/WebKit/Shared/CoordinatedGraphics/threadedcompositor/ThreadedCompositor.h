@@ -98,6 +98,7 @@ public:
     void suspend();
     void suspendToTransparent();
     void resume();
+    void renderSingleFrame();
 
     RunLoop& compositingRunLoop() const { return m_compositingRunLoop->runLoop(); }
 

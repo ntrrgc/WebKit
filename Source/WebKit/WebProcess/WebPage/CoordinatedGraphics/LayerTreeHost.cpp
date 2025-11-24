@@ -72,6 +72,7 @@ LayerTreeHost::LayerTreeHost(WebPage& webPage, WebCore::PlatformDisplayID displa
 #if !HAVE(DISPLAY_LINK)
     , m_displayID(displayID)
 #endif
+    , m_usingPageLifecycle(webPage.corePage()->settings().pageLifecycleAPIEnabled())
 {
 #if USE(GLIB_EVENT_LOOP)
     m_layerFlushTimer.setPriority(RunLoopSourcePriority::LayerFlushTimer);
@@ -291,6 +292,22 @@ void LayerTreeHost::resumeRendering()
     m_surface->visibilityDidChange(true);
     renderNextFrame(true);
     m_compositor->resume();
+}
+
+void LayerTreeHost::renderSingleFrameWhilePaused()
+{
+    // This allows painting a single frame while the rendering has been paused without
+    // actually resuming it. This is only used on 2 cases when page lifecycle is enabled:
+    // - When launching the application on hidden state.
+    // - When resuming from suspension into hidden state.
+
+    if (!m_isSuspended || !m_usingPageLifecycle)
+        return;
+
+    m_isSuspended = false;
+    renderNextFrame(true);
+    m_isSuspended = true;
+    m_compositor->renderSingleFrame();
 }
 
 GraphicsLayerFactory* LayerTreeHost::graphicsLayerFactory()

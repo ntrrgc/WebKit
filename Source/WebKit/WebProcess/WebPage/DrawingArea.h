@@ -186,6 +186,8 @@ public:
 
     virtual uint64_t nativeWindowID() const = 0;
 
+    virtual void renderSingleFrameIfRenderingPaused() { };
+
 protected:
     DrawingArea(DrawingAreaType, DrawingAreaIdentifier, WebPage&);
 

@@ -2353,6 +2353,8 @@ private:
 
     void frameNameWasChangedInAnotherProcess(WebCore::FrameIdentifier, const String& frameName);
 
+    void renderSingleFrameIfRenderingPausedTimerFired();
+
     const WebCore::PageIdentifier m_identifier;
 
     RefPtr<WebCore::Page> m_page;
@@ -2889,6 +2891,8 @@ private:
     std::unique_ptr<WebCore::NowPlayingMetadataObserver> m_nowPlayingMetadataObserver;
 
     mutable RefPtr<Logger> m_logger;
+
+    WebCore::Timer m_renderSingleFrameIfRenderingPausedTimer;
 };
 
 #if !PLATFORM(IOS_FAMILY)

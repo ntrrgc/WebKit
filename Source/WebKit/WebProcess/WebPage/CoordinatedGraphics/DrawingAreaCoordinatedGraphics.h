@@ -111,6 +111,8 @@ private:
 
     uint64_t nativeWindowID() const final;
 
+    void renderSingleFrameIfRenderingPaused() final;
+
     // Whether we're currently processing an UpdateGeometry message.
     bool m_inUpdateGeometry { false };
 

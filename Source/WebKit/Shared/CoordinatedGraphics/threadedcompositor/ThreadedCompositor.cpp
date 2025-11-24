@@ -232,6 +232,19 @@ void ThreadedCompositor::resume()
     m_compositingRunLoop->scheduleUpdate();
 }
 
+void ThreadedCompositor::renderSingleFrame()
+{
+    m_compositingRunLoop->performTaskSync([this, protectedThis = Ref { *this }] {
+        // This must be called with the RunLoop suspended.
+        if (m_suspendedCount <= 0)
+            return;
+
+        m_scene->setActive(true);
+        renderLayerTree();
+        m_scene->setActive(false);
+    });
+}
+
 void ThreadedCompositor::setScrollPosition(const IntPoint& scrollPosition, float scale)
 {
     Locker locker { m_attributes.lock };

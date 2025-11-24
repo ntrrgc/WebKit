@@ -860,4 +860,12 @@ uint64_t DrawingAreaCoordinatedGraphics::nativeWindowID() const
     return m_layerTreeHost ? m_layerTreeHost->nativeWindowID() : 0;
 }
 
+void DrawingAreaCoordinatedGraphics::renderSingleFrameIfRenderingPaused()
+{
+    if (!m_isPaintingSuspended || !m_usingPageLifecycle || !m_layerTreeHost)
+        return;
+
+    m_layerTreeHost->renderSingleFrameWhilePaused();
+}
+
 } // namespace WebKit

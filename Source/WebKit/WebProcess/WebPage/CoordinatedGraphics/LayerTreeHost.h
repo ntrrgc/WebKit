@@ -95,6 +95,7 @@ public:
 
     void pauseRendering(bool toTransparent = false);
     void resumeRendering();
+    void renderSingleFrameWhilePaused();
 
     WebCore::GraphicsLayerFactory* graphicsLayerFactory();
 
@@ -198,6 +199,8 @@ private:
 
     uint32_t m_compositionRequestID { 0 };
     uint32_t m_compositionResponseID { 0 };
+
+    bool m_usingPageLifecycle { false };
 };
 
 #if !USE(COORDINATED_GRAPHICS)
