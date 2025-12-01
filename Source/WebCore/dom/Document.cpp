@@ -10930,6 +10930,29 @@ void Document::securityOriginDidChange()
     m_permissionsPolicy = nullptr;
 }
 
+// https://wicg.github.io/page-lifecycle/spec.html#freeze-steps
+void Document::freeze()
+{
+    if (m_frozen)
+        return;
+
+    m_frozen = true;
+    dispatchEvent(Event::create(eventNames().freezeEvent, Event::CanBubble::No, Event::IsCancelable::No));
+}
+
+// https://wicg.github.io/page-lifecycle/spec.html#resume-steps
+void Document::resume(CompletionHandler<void(Document&)>&& completionHandler)
+{
+    if (!m_frozen)
+        return;
+
+    eventLoop().queueTask(TaskSource::UserInteraction, [document = Ref { *this }, this, completionHandler = WTFMove(completionHandler)] () mutable {
+        dispatchEvent(Event::create(eventNames().resumeEvent, Event::CanBubble::No, Event::IsCancelable::No));
+        m_frozen = false;
+        completionHandler(document);
+    });
+}
+
 } // namespace WebCore
 
 #undef DOCUMENT_RELEASE_LOG

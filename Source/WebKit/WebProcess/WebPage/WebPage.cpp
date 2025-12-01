@@ -4271,14 +4271,41 @@ void WebPage::suspend(CompletionHandler<void(bool)>&& completionHandler)
     if (!m_page)
         return completionHandler(false);
 
+    m_isLifecycleSuspended = true;
+
+    // Suspend all the documents, so they can send the freeze event to the apps.
+    m_page->forEachDocument([] (Document& document) {
+        document.freeze();
+    });
+
     freezeLayerTree(LayerTreeFreezeReason::PageSuspended);
 
+    BackForwardCache::singleton().setUsePageLifecycleEvents(true);
     m_cachedPage = BackForwardCache::singleton().suspendPage(*m_page);
+    BackForwardCache::singleton().setUsePageLifecycleEvents(false);
     ASSERT(m_cachedPage);
     if (RefPtr mainFrame = m_mainFrame->coreLocalFrame())
         mainFrame->detachFromAllOpenedFrames();
     completionHandler(true);
 }
+
+class ResumeEventNotifier : public RefCounted<ResumeEventNotifier> {
+public:
+    ResumeEventNotifier() = default;
+    virtual ~ResumeEventNotifier() = default;
+
+    void setCompletionHandler(CompletionHandler<void()>&& completionHandler) { m_completionHandler = WTFMove(completionHandler); };
+    void addDocument(Ref<Document> document) { m_documents.add(document); };
+    void removeDocument(Ref<Document> document) {
+        m_documents.remove(document);
+        if (m_documents.isEmpty())
+            m_completionHandler();
+    }
+
+private:
+    CompletionHandler<void()> m_completionHandler;
+    HashSet<Ref<Document>> m_documents;
+};
 
 void WebPage::resume(CompletionHandler<void(bool)>&& completionHandler)
 {
@@ -4293,7 +4320,22 @@ void WebPage::resume(CompletionHandler<void(bool)>&& completionHandler)
 
     cachedPage->restore(*m_page);
     unfreezeLayerTree(LayerTreeFreezeReason::PageSuspended);
-    completionHandler(true);
+
+    // Create a notifier that will call the completionHandler once all the documents
+    // have dispatched their resume event.
+    Ref<ResumeEventNotifier> notifier = adoptRef(*new ResumeEventNotifier());
+    notifier->setCompletionHandler([this, completionHandler = std::exchange(completionHandler, { })] () mutable {
+        m_isLifecycleSuspended = false;
+        completionHandler(true);
+    });
+
+    // Resume all the documents.
+    m_page->forEachDocument([notifier] (Document& document) {
+        notifier->addDocument(document);
+        document.resume([protectedNotifier = Ref { notifier }] (Document& document) {
+            protectedNotifier->removeDocument(document);
+        });
+    });
 }
 
 IntPoint WebPage::screenToRootView(const IntPoint& point)

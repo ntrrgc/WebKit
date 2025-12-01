@@ -1976,6 +1976,9 @@ public:
 
     unsigned unloadCounter() const { return m_unloadCounter; }
 
+    void freeze();
+    void resume(CompletionHandler<void(Document&)>&&);
+
 protected:
     enum class ConstructionFlag : uint8_t {
         Synthesized = 1 << 0,
@@ -2681,6 +2684,8 @@ private:
 
     mutable std::unique_ptr<CSSParserContext> m_cachedCSSParserContext;
     mutable std::unique_ptr<PermissionsPolicy> m_permissionsPolicy;
+
+    bool m_frozen { false };
 };
 
 Element* eventTargetElementForDocument(Document*);
