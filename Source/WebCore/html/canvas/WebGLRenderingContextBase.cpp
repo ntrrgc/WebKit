@@ -4711,14 +4711,44 @@ void WebGLRenderingContextBase::stop()
     }
 }
 
-void WebGLRenderingContextBase::suspend(ReasonForSuspension)
+void WebGLRenderingContextBase::suspend(ReasonForSuspension reason)
 {
+    if (reason != ReasonForSuspension::BackForwardCache)
+        return;
+
+    // forceLostContext() will queue a task to dispatch the contextLost event. This task won't
+    // be executed until resume, when the events are enabled again.
+    forceLostContext(WebGLRenderingContextBase::SyntheticLostContext);
+    destroyGraphicsContextGL();
     m_isSuspended = true;
 }
 
 void WebGLRenderingContextBase::resume()
 {
     m_isSuspended = false;
+
+    // The composition requirements update for the page, which will set the appropriate proxy to the
+    // GraphicsLayer created for this WebGL context, will be updated after this function, but before
+    // any task that we may schedule. Due to this, we need to create the GCGLContext now, we cannot
+    // call forceRestoreContext() that will use a timer to call maybeRestoreContext(), we
+    // need to call maybeRestoreContext() directly.
+
+    // At some point after this function ends, the task to dispatch the contextLost event that was scheduled
+    // on suspend will run. The problem is that maybeRestoreContext() later in this function will create a new
+    // GCGLContext now, so when the task runs, context is not lost anymore and the event won't be sent. Set
+    // m_forceDispatchContextLostEvent so the task sends the event even if the context was already restored.
+    m_forceDispatchContextLostEvent =  true;
+
+    // Set restoreRequested to true so maybeRestoreContext() really performs the restore.
+    m_contextLostState->restoreRequested = true;
+
+    // Set m_queueContextRestoredEvent so maybeRestoreContext() doesn't send the contextRestored
+    // event immediately, but queues it. We need to do this because the contextRestored event that was
+    // queued on suspension hasn't run yet, and needs ro run before the contextRestored event is
+    // dispatched.
+    m_queueContextRestoredEvent = true;
+
+    maybeRestoreContext();
 }
 
 bool WebGLRenderingContextBase::getBooleanParameter(GCGLenum pname)
@@ -5219,10 +5249,14 @@ void WebGLRenderingContextBase::scheduleTaskToDispatchContextLostEvent()
 {
     // It is safe to capture |this| because we keep the canvas element alive and it owns |this|.
     canvasBase().queueTaskKeepingObjectAlive(TaskSource::WebGL, [this] {
-        if (isContextStopped())
-            return;
-        if (!isContextLost())
-            return;
+        if (m_forceDispatchContextLostEvent)
+            m_forceDispatchContextLostEvent = false;
+        else {
+            if (isContextStopped())
+                return;
+            if (!isContextLost())
+                return;
+        }
         auto event = WebGLContextEvent::create(eventNames().webglcontextlostEvent, Event::CanBubble::No, Event::IsCancelable::Yes, emptyString());
         canvasBase().dispatchEvent(event);
         m_contextLostState->restoreRequested = event->defaultPrevented();
@@ -5272,7 +5306,18 @@ void WebGLRenderingContextBase::maybeRestoreContext()
             // that initialization itself cannot use any public function code
             // path that checks for !isContextLost().
             m_contextLostState = { };
-            canvasBase().dispatchEvent(WebGLContextEvent::create(eventNames().webglcontextrestoredEvent, Event::CanBubble::No, Event::IsCancelable::Yes, emptyString()));
+            if (m_queueContextRestoredEvent) {
+                m_queueContextRestoredEvent = false;
+                canvasBase().queueTaskKeepingObjectAlive(TaskSource::WebGL, [this] {
+                    if (isContextStopped())
+                        return;
+                    if (isContextLost())
+                        return;
+                    canvasBase().dispatchEvent(WebGLContextEvent::create(eventNames().webglcontextrestoredEvent, Event::CanBubble::No, Event::IsCancelable::Yes, emptyString()));
+                });
+            } else {
+                canvasBase().dispatchEvent(WebGLContextEvent::create(eventNames().webglcontextrestoredEvent, Event::CanBubble::No, Event::IsCancelable::Yes, emptyString()));
+            }
             // Notify the render layer to reconfigure the structure of the backing. This causes the backing to
             // start using the new layer contents display delegate from the new context.
             if (auto* htmlCanvas = this->htmlCanvas()) {

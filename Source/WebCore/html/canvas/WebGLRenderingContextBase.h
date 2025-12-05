@@ -1059,6 +1059,8 @@ private:
     // The ordinal number of when the context was last active (drew, read pixels).
     uint64_t m_activeOrdinal { 0 };
     WeakPtrFactory<WebGLRenderingContextBase> m_contextObjectWeakPtrFactory;
+    bool m_queueContextRestoredEvent { false };
+    bool m_forceDispatchContextLostEvent { false };
 };
 
 template<typename T>
