@@ -38,6 +38,7 @@
 #include "GStreamerQuirkWesteros.h"
 #include <wtf/NeverDestroyed.h>
 #include <wtf/OptionSet.h>
+#include <wtf/RuntimeApplicationChecks.h>
 #include <wtf/text/StringView.h>
 
 namespace WebCore {
@@ -56,6 +57,12 @@ GStreamerQuirksManager::GStreamerQuirksManager(bool isForTesting, bool loadQuirk
 {
     static std::once_flag debugRegisteredFlag;
     std::call_once(debugRegisteredFlag, [] {
+        if (isInWebProcess())
+            ensureGStreamerInitialized();
+        else
+            // This is needed, e.g. when running in NetworkProcess to determine MIME type support
+            ensureGStreamerInitializedNonWebProcess();
+
         GST_DEBUG_CATEGORY_INIT(webkit_quirks_debug, "webkitquirks", 0, "WebKit Quirks");
     });
 

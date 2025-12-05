@@ -347,6 +347,22 @@ Vector<String> extractGStreamerOptionsFromCommandLine()
     return options;
 }
 
+bool ensureGStreamerInitializedNonWebProcess()
+{
+    RELEASE_ASSERT(!isInWebProcess());
+
+    static std::once_flag onceFlag;
+    static bool isGStreamerInitialized;
+    std::call_once(onceFlag, [] {
+        GUniqueOutPtr<GError> error;
+        isGStreamerInitialized = gst_init_check(nullptr, nullptr, &error.outPtr());
+        ASSERT_WITH_MESSAGE(isGStreamerInitialized, "GStreamer initialization failed: %s", error ? error->message : "unknown error occurred");
+        GST_DEBUG_CATEGORY_INIT(webkit_gst_common_debug, "webkitcommon", 0, "WebKit Common utilities");
+    });
+
+    return isGStreamerInitialized;
+}
+
 bool ensureGStreamerInitialized()
 {
     // WARNING: Please note this function can be called from any thread, for instance when creating
