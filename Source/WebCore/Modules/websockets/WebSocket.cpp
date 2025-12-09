@@ -503,7 +503,7 @@ void WebSocket::contextDestroyed()
 
 void WebSocket::suspend(ReasonForSuspension reason)
 {
-    if (!m_channel)
+    if (!m_channel || m_state == CLOSING || m_state == CLOSED)
         return;
 
     if (reason == ReasonForSuspension::BackForwardCache) {
