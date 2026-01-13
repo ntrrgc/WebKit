@@ -50,6 +50,7 @@
 #include <pal/SessionID.h>
 #include <wtf/Assertions.h>
 #include <wtf/CheckedPtr.h>
+#include <wtf/CompletionHandler.h>
 #include <wtf/Forward.h>
 #include <wtf/Function.h>
 #include <wtf/HashSet.h>
@@ -1198,6 +1199,8 @@ public:
     bool canShowWhileLocked() const { return m_canShowWhileLocked; }
 #endif
 
+    void setVisibilityChangeCompletionHandler(CompletionHandler<void()>&& completionHandler) { m_visibilityChangeCompletionHandler = WTFMove(completionHandler); }
+
 private:
     explicit Page(PageConfiguration&&);
 
@@ -1586,6 +1589,8 @@ private:
 #endif
 
     ContentSecurityPolicyModeForExtension m_contentSecurityPolicyModeForExtension { ContentSecurityPolicyModeForExtension::None };
+
+    CompletionHandler<void()> m_visibilityChangeCompletionHandler;
 
     Ref<BadgeClient> m_badgeClient;
     Ref<HistoryItemClient> m_historyItemClient;

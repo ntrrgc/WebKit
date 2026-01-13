@@ -3000,6 +3000,24 @@ void Page::setIsVisible(bool isVisible)
     setActivityState(state);
 }
 
+class VisibilityChangeEventNotifier : public RefCounted<VisibilityChangeEventNotifier> {
+public:
+    VisibilityChangeEventNotifier() = default;
+    virtual ~VisibilityChangeEventNotifier() = default;
+
+    void setCompletionHandler(CompletionHandler<void()>&& completionHandler) { m_completionHandler = WTFMove(completionHandler); };
+    void addDocument(Ref<Document> document) { m_documents.add(document); };
+    void removeDocument(Ref<Document> document) {
+        m_documents.remove(document);
+        if (m_documents.isEmpty())
+            m_completionHandler();
+    }
+
+private:
+    CompletionHandler<void()> m_completionHandler;
+    HashSet<Ref<Document>> m_documents;
+};
+
 void Page::setIsVisibleInternal(bool isVisible)
 {
     // FIXME: The visibility state should be stored on the top-level document.
@@ -3065,9 +3083,21 @@ void Page::setIsVisibleInternal(bool isVisible)
             view->hide();
     }
 
-    forEachDocument([] (Document& document) {
-        document.visibilityStateChanged();
-    });
+    if (m_visibilityChangeCompletionHandler) {
+        Ref<VisibilityChangeEventNotifier> notifier = adoptRef(*new VisibilityChangeEventNotifier());
+        notifier->setCompletionHandler(std::exchange(m_visibilityChangeCompletionHandler, { }));
+
+        forEachDocument([notifier] (Document& document) {
+            notifier->addDocument(document);
+            document.visibilityStateChanged([protectedNotifier = Ref { notifier }] (Document& document) {
+                protectedNotifier->removeDocument(document);
+            });
+        });
+    } else {
+        forEachDocument([] (Document& document) {
+            document.visibilityStateChanged({ });
+        });
+    }
 }
 
 void Page::setIsPrerender()

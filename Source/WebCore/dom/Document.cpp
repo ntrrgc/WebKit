@@ -2336,10 +2336,15 @@ void Document::unregisterForVisibilityStateChangedCallbacks(VisibilityChangeClie
     m_visibilityStateCallbackClients.remove(client);
 }
 
-void Document::visibilityStateChanged()
+void Document::visibilityStateChanged(CompletionHandler<void(Document&)>&& completionHandler)
 {
     // https://w3c.github.io/page-visibility/#reacting-to-visibilitychange-changes
-    queueTaskToDispatchEvent(TaskSource::UserInteraction, Event::create(eventNames().visibilitychangeEvent, Event::CanBubble::Yes, Event::IsCancelable::No));
+    eventLoop().queueTask(TaskSource::UserInteraction, [document = Ref { *this }, completionHandler = WTFMove(completionHandler)] () mutable {
+        document->dispatchEvent(Event::create(eventNames().visibilitychangeEvent, Event::CanBubble::Yes, Event::IsCancelable::No));
+        if (completionHandler)
+            completionHandler(document);
+    });
+
     for (auto& client : m_visibilityStateCallbackClients)
         client.visibilityStateChanged();
 

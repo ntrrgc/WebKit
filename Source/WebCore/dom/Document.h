@@ -584,7 +584,7 @@ public:
     WEBCORE_EXPORT void setDocumentURI(const String&);
 
     WEBCORE_EXPORT VisibilityState visibilityState() const;
-    void visibilityStateChanged();
+    void visibilityStateChanged(CompletionHandler<void(Document&)>&&);
     WEBCORE_EXPORT bool hidden() const;
 
     void setTimerThrottlingEnabled(bool);

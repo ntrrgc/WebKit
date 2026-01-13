@@ -406,7 +406,8 @@ void DrawingAreaCoordinatedGraphics::activityStateDidChange(OptionSet<ActivitySt
         }
     }
 
-    completionHandler();
+    if (completionHandler)
+        completionHandler();
 }
 
 void DrawingAreaCoordinatedGraphics::attachViewOverlayGraphicsLayer(WebCore::FrameIdentifier, GraphicsLayer* viewOverlayRootLayer)

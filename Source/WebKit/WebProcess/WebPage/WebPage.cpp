@@ -4136,6 +4136,15 @@ void WebPage::setActivityState(OptionSet<ActivityState> activityState, ActivityS
 
     ASSERT_WITH_MESSAGE(m_page, "setActivityState called on %" PRIu64 " but WebCore page was null", identifier().toUInt64());
     if (m_page) {
+        if (changed & ActivityState::IsVisible) {
+            // VisibilityChange events are queued, not emitted directly. Due to that, in order to ensure that the
+            // UIProcess will be notified after the event was dispatched and not before, we need to execute the callback
+            // after the event is dispatched to the page and the different documents, and not just after the drawingArea is
+            // done, which is the usual case.
+            // So, in this case, pass an empty callback to the drawingArea and pass the real callback to the page.
+            m_page->setVisibilityChangeCompletionHandler(std::exchange(callback, { }));
+        }
+
         SetForScope currentlyChangingActivityState { m_lastActivityStateChanges, changed };
         m_page->setActivityState(activityState);
     }
