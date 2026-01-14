@@ -309,7 +309,19 @@ void MemoryPressureHandler::setMemoryUsagePolicyBasedOnFootprints(size_t footpri
 
     RELEASE_LOG(MemoryPressure, "Memory usage policy changed (PID=%d): %s -> %s", getpid(), toString(m_memoryUsagePolicy).characters(), toString(newPolicy).characters());
     m_memoryUsagePolicy = newPolicy;
-    memoryPressureStatusChanged();
+
+    switch (m_memoryUsagePolicy) {
+    case MemoryUsagePolicy::Unrestricted:
+        setMemoryPressureStatus(SystemMemoryPressureStatus::Normal);
+        break;
+    case MemoryUsagePolicy::Conservative:
+        setMemoryPressureStatus(SystemMemoryPressureStatus::Warning);
+        break;
+    case MemoryUsagePolicy::Strict:
+    case MemoryUsagePolicy::StrictSynchronous:
+        setMemoryPressureStatus(SystemMemoryPressureStatus::Critical);
+        break;
+    }
 }
 
 void MemoryPressureHandler::setMemoryFootprintNotificationThresholds(Vector<size_t>&& thresholds, WTF::Function<void(size_t)>&& handler)
