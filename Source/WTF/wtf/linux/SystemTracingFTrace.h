@@ -41,7 +41,7 @@ public:
         return instance;
     }
 
-    inline void tracePoint(TracePointCode code, uint64_t cookie) {
+    inline void tracePoint(TracePointCode code, uint64_t data1 = 0, uint64_t data2 = 0, uint64_t data3 = 0, uint64_t data4 = 0) {
         // ftrace disabled in runtime
         if (m_traceMarkerFd < 0) return;
 
@@ -103,7 +103,7 @@ public:
         case LayerFlushStart:
         case UpdateLayerContentBuffersStart:
 #endif
-            beginSyncMark(code);
+            beginSyncMark(code, data1, data2, data3, data4);
             return;
 
         case VMEntryScopeEnd:
@@ -168,12 +168,12 @@ public:
 
         case MainResourceLoadDidStartProvisional:
         case SubresourceLoadWillStart:
-            beginAsyncMark(code, cookie);
+            beginAsyncMark(code, data1);
             return;
 
         case MainResourceLoadDidEnd:
         case SubresourceLoadDidEnd:
-            endAsyncMark(code, cookie);
+            endAsyncMark(code, data1);
             return;
 
         case DisplayRefreshDispatchingToMainThread:
@@ -183,7 +183,7 @@ public:
         case SyntheticMomentumEvent:
         case RemoteLayerTreeScheduleRenderingUpdate:
         case DisplayLinkUpdate:
-            instantMark(code);
+            instantMark(code, data1, data2, data3, data4);
             return;
 
         case WTFRange:
@@ -208,45 +208,57 @@ public:
         }
     }
 
+    static bool isEnabled() {
+        return !(instance().m_traceMarkerFd < 0);
+    }
+
 private:
 
-    inline void beginSyncMark(TracePointCode code) {
-        // "B|<pid>|<name>"
-        std::string message = std::string("B|") + std::to_string(m_pid) + "|" + tracePointCodeName(code).characters();
-        writeFTraceMarker(message.c_str());
+    inline void beginSyncMark(TracePointCode code, uint64_t data1, uint64_t data2, uint64_t data3, uint64_t data4) {
+        // "B|<pid>|<name>|<args>"
+        addMark('B', tracePointCodeName(code).spanIncludingNullTerminator(), "%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64, data1, data2, data3, data4);
     }
 
     inline void endSyncMark(TracePointCode code) {
-        UNUSED_PARAM(code);
-        // "E|<pid>"
-        std::string message = std::string("E|") + std::to_string(m_pid);
-        writeFTraceMarker(message.c_str());
+        // "E|<pid>|<name>"
+        addMark('E', tracePointCodeName(code).spanIncludingNullTerminator());
     }
 
     inline void beginAsyncMark(TracePointCode code, uint64_t cookie) {
         // "S|<pid>|<name>|<cookie>"
-        std::string message = std::string("S|") + std::to_string(m_pid) + "|" + tracePointCodeName(code).characters() + "|" + std::to_string(cookie);
-        writeFTraceMarker(message.c_str());
+        addMark('S', tracePointCodeName(code).spanIncludingNullTerminator(), "%" PRIu64, cookie);
     }
 
     inline void endAsyncMark(TracePointCode code, uint64_t cookie) {
         // "F|<pid>|<name>|<cookie>"
-        std::string message = std::string("F|") + std::to_string(m_pid) + "|" + tracePointCodeName(code).characters() + "|" + std::to_string(cookie);
-        writeFTraceMarker(message.c_str());
+        addMark('F', tracePointCodeName(code).spanIncludingNullTerminator(),"%" PRIu64, cookie);
     }
 
-    inline void instantMark(TracePointCode code) {
+    inline void instantMark(TracePointCode code, uint64_t data1, uint64_t data2, uint64_t data3, uint64_t data4) {
         // "I|<pid>|<name>"
-        std::string message = std::string("I|") + std::to_string(m_pid) + "|" + tracePointCodeName(code).characters();
-        writeFTraceMarker(message.c_str());
+        addMark('I', tracePointCodeName(code).spanIncludingNullTerminator(),"%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64, data1, data2, data3, data4);
     }
 
-    inline void writeFTraceMarker(const char* message) {
+    inline void writeFTraceMarker(const char* message, size_t len) {
         RELEASE_ASSERT(m_traceMarkerFd >= 0);
+
+        size_t offset = 0;
 
         // make sure no other thread is writing at the same time
         std::lock_guard<std::mutex> lock(m_mutex);
-        write(m_traceMarkerFd, message, strlen(message));
+        while (len > 0) {
+            ssize_t ret;
+
+            do {
+                ret = write(m_traceMarkerFd, message + offset, len);
+            } while (ret < 0 && errno == EINTR);
+
+            if (ret <= 0)
+                break;
+
+            len -= ret;
+            offset += ret;
+        }
     }
 
     SystemTracingFTrace() {
@@ -489,5 +501,7 @@ private:
 };
 
 } // namespace WTF
+
+using WTF::SystemTracingFTrace;
 
 #endif // USE(LINUX_FTRACE)

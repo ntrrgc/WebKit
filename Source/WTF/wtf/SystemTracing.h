@@ -211,7 +211,7 @@ inline void tracePoint(TracePointCode code, uint64_t data1 = 0, uint64_t data2 =
     UNUSED_PARAM(data3);
     UNUSED_PARAM(data4);
 #elif USE(LINUX_FTRACE)
-    SystemTracingFTrace::instance().tracePoint(code, data1);
+    SystemTracingFTrace::instance().tracePoint(code, data1, data2, data3, data4);
     UNUSED_PARAM(data2);
     UNUSED_PARAM(data3);
     UNUSED_PARAM(data4);
@@ -419,6 +419,39 @@ enum WTFOSSignpostType {
 #define WTFEmitSignpostAlwaysWithTimeDelta(pointer, name, timeDelta, ...) WTFEmitSignpostWithTimeDelta((pointer), name, (timeDelta), ##__VA_ARGS__)
 #define WTFBeginSignpostAlwaysWithTimeDelta(pointer, name, timeDelta, ...) WTFBeginSignpostWithTimeDelta((pointer), name, (timeDelta), ##__VA_ARGS__)
 #define WTFEndSignpostAlwaysWithTimeDelta(pointer, name, timeDelta, ...) WTFEndSignpostWithTimeDelta((pointer), name, (timeDelta), ##__VA_ARGS__)
+
+#elif USE(LINUX_FTRACE)
+
+#define WTFEmitSignpostWithPhase(phase, pointer, name, format, ...) \
+    do { \
+        if (SystemTracingFTrace::isEnabled()) \
+            SystemTracingFTrace::instance().addMark( \
+                phase, std::span(_STRINGIFY(name)), \
+                "p=%p" format, \
+                reinterpret_cast<const void*>(pointer) \
+                __VA_OPT__(,) __VA_ARGS__); \
+    } while (0)
+
+#define WTFEmitSignpost(pointer, name, ...) \
+    WTFEmitSignpostWithPhase('I', pointer, name, __VA_OPT__(",") __VA_ARGS__) \
+
+#define WTFBeginSignpost(pointer, name, ...) \
+    WTFEmitSignpostWithPhase('B', pointer, name, __VA_OPT__(",") __VA_ARGS__) \
+
+#define WTFEndSignpost(pointer, name, ...) \
+    WTFEmitSignpostWithPhase('E', pointer, name, __VA_OPT__(",") __VA_ARGS__) \
+
+#define WTFEmitSignpostAlways(pointer, name, ...) WTFEmitSignpost((pointer), name, ##__VA_ARGS__)
+#define WTFBeginSignpostAlways(pointer, name, ...) WTFBeginSignpost((pointer), name, ##__VA_ARGS__)
+#define WTFEndSignpostAlways(pointer, name, ...) WTFEndSignpost((pointer), name, ##__VA_ARGS__)
+
+#define WTFEmitSignpostWithTimeDelta(pointer, name, timeDelta, ...) WTFEmitSignpost((pointer), name, ##__VA_ARGS__)
+#define WTFBeginSignpostWithTimeDelta(pointer, name, timeDelta, ...) WTFBeginSignpost((pointer), name, ##__VA_ARGS__)
+#define WTFEndSignpostWithTimeDelta(pointer, name, timeDelta, ...) WTFEndSignpost((pointer), name, ##__VA_ARGS__)
+
+#define WTFEmitSignpostAlwaysWithTimeDelta(pointer, name, ...) WTFEmitSignpost((pointer), name, ##__VA_ARGS__)
+#define WTFBeginSignpostAlwaysWithTimeDelta(pointer, name, ...) WTFBeginSignpost((pointer), name, ##__VA_ARGS__)
+#define WTFEndSignpostAlwaysWithTimeDelta(pointer, name, ...) WTFEndSignpost((pointer), name, ##__VA_ARGS__)
 
 #else
 
