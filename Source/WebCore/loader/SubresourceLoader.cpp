@@ -768,7 +768,9 @@ void SubresourceLoader::didFinishLoading(const NetworkLoadMetrics& networkLoadMe
         reportResourceTiming(timing ? *timing : NetworkLoadMetrics::emptyMetrics());
     }
 
+#if !USE(LINUX_FTRACE)
     if (resource->type() != CachedResource::Type::MainResource)
+#endif
         tracePoint(SubresourceLoadDidEnd, identifier().toUInt64());
 
     m_state = Finishing;
@@ -816,7 +818,9 @@ void SubresourceLoader::didFail(const ResourceError& error)
     Ref protectedThis { *this };
     m_state = Finishing;
 
+#if !USE(LINUX_FTRACE)
     if (resource->type() != CachedResource::Type::MainResource)
+#endif
         tracePoint(SubresourceLoadDidEnd, identifier().toUInt64());
 
     if (resource->resourceToRevalidate())
@@ -872,7 +876,9 @@ void SubresourceLoader::didCancel(LoadWillContinueInAnotherProcess loadWillConti
     CachedResourceHandle resource = m_resource.get();
     ASSERT(resource);
 
+#if !USE(LINUX_FTRACE)
     if (resource->type() != CachedResource::Type::MainResource)
+#endif
         tracePoint(SubresourceLoadDidEnd, identifier().toUInt64());
 
     resource->cancelLoad(loadWillContinueInAnotherProcess);
