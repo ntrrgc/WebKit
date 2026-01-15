@@ -33,7 +33,7 @@
 namespace WebCore {
 
 #if defined(BITMAP_TEXTURE_POOL_MAX_SIZE_IN_MB) && BITMAP_TEXTURE_POOL_MAX_SIZE_IN_MB > 0
-static constexpr size_t poolSizeLimit = BITMAP_TEXTURE_POOL_MAX_SIZE_IN_MB * MB;
+static constexpr size_t poolSizeLimit = BITMAP_TEXTURE_POOL_MAX_SIZE_IN_MB * MB / 4; // size limit in pixels
 #else
 static constexpr size_t poolSizeLimit = std::numeric_limits<size_t>::max();
 #endif
