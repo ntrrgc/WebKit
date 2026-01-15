@@ -850,12 +850,14 @@ add_library(Skia STATIC
     src/sksl/transform/SkSLEliminateDeadLocalVariables.cpp
     src/sksl/transform/SkSLEliminateEmptyStatements.cpp
     src/sksl/transform/SkSLEliminateUnreachableCode.cpp
+    src/sksl/transform/SkSLEliminateUnnecessaryBraces.cpp
     src/sksl/transform/SkSLFindAndDeclareBuiltinFunctions.cpp
     src/sksl/transform/SkSLFindAndDeclareBuiltinStructs.cpp
     src/sksl/transform/SkSLFindAndDeclareBuiltinVariables.cpp
     src/sksl/transform/SkSLHoistSwitchVarDeclarationsAtTopLevel.cpp
     src/sksl/transform/SkSLRenamePrivateSymbols.cpp
     src/sksl/transform/SkSLReplaceConstVarsWithLiterals.cpp
+    src/sksl/transform/SkSLReplaceSplatCastsWithSwizzles.cpp
     src/sksl/transform/SkSLRewriteIndexedSwizzle.cpp
 
     src/utils/SkCharToGlyphCache.cpp
@@ -871,6 +873,9 @@ add_library(Skia STATIC
     src/utils/SkShaderUtils.cpp
     src/utils/SkShadowTessellator.cpp
     src/utils/SkShadowUtils.cpp
+    src/utils/SkJSON.cpp
+    src/utils/SkParse.cpp
+    src/utils/SkEventTracer.cpp
 
     src/opts/SkOpts_hsw.cpp
     src/opts/SkOpts_skx.cpp
@@ -962,7 +967,6 @@ target_compile_definitions(Skia PUBLIC
     SK_DISABLE_LEGACY_IMAGE_READBUFFER
     SK_DISABLE_LEGACY_INIT_DECODERS
     SK_DISABLE_LEGACY_PNG_WRITEBUFFER
-    SK_DISABLE_TRACING
     SK_DISABLE_WEBGL_INTERFACE
 
     SK_ENABLE_PRECOMPILE
@@ -974,6 +978,12 @@ target_compile_definitions(Skia PUBLIC
     # Skia itself, but not so much for WebKit development.
     SK_RELEASE
 )
+
+if (NOT USE_LINUX_FTRACE)
+   target_compile_definitions(Skia PUBLIC
+       SK_DISABLE_TRACING
+   )
+endif()
 
 #
 # This saves some reference churning and ctor/dtor calls in the

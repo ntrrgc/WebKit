@@ -24,7 +24,11 @@
 #include <wtf/Assertions.h>
 #include <wtf/SystemTracing.h>
 #include <wtf/text/ASCIILiteral.h>
+#include <wtf/text/StringBuilder.h>
+#include <wtf/HexNumber.h>
+#include <wtf/StdLibExtras.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <mutex>
@@ -206,6 +210,117 @@ public:
         if (m_traceMarkerFd >= 0) {
             close(m_traceMarkerFd);
         }
+    }
+
+    void addMark(const char phase, std::span<const char> name, const char* format, va_list args) WTF_ATTRIBUTE_PRINTF(4, 0) {
+        // "<phase>|<pid>|<name>[|<args>]"
+        Vector<char> buffer(1024);
+
+        size_t len = 0;
+        int ret;
+
+        ret = snprintf(buffer.data(), buffer.size(), "%c|%u|%.*s", phase, m_pid, name.size(), name.data());
+        if (ret < 0) {
+            return;
+        }
+        len += ret;
+
+        if (format && format[0] != '\0' && len < buffer.size()) {
+            buffer[len++] = (phase == 'I' ? ',' : '|'); // add args to the name so it is easier to see data in timeline
+            ret = vsnprintf(buffer.data() + len, buffer.size() - len, format, args);
+            if (ret < 0) {
+                return;
+            }
+            len += ret;
+        }
+
+        writeFTraceMarker(buffer.data(), std::min(buffer.size() - 1, len));
+    }
+
+    void addMark(const char phase, std::span<const char> name, const char *format, ...) WTF_ATTRIBUTE_PRINTF(4, 5) {
+        va_list args;
+        va_start(args, format);
+        addMark(phase, WTFMove(name), format, args);
+        va_end(args);
+    }
+
+    void addMark(const char phase, std::span<const char> name) {
+        addMark(phase, WTFMove(name), "");
+    }
+
+    void addTraceEvent(char phase,
+                       const unsigned char* categoryEnabled,
+                       const char* name,
+                       unsigned long long id,
+                       int numArgs,
+                       const char** argNames,
+                       const unsigned char* argTypes,
+                       const unsigned long long* argValues,
+                       unsigned char flags) {
+        UNUSED_PARAM(id);
+        UNUSED_PARAM(flags);
+
+        // "<phase>|<pid>|<name>[|<argNames0>=<argValues0>,<argNames1>=<argValues1>...]"
+        StringBuilder builder;
+
+        builder.append(phase, '|', String::number(m_pid), '|');
+        builder.append(StringView::fromLatin1(reinterpret_cast<const char*>(categoryEnabled)), ':', StringView::fromLatin1(name));
+
+        for (int i = 0; i < numArgs; ++i) {
+            union TraceArgValueUnion {
+                bool as_bool;
+                unsigned long long as_uint;
+                long long as_int;
+                double as_double;
+                const void* as_pointer;
+                const char* as_string;
+            } arg;
+
+            enum TraceArgValueType : int8_t {
+                Bool = 1,
+                Uint = 2,
+                Int = 3,
+                Double = 4,
+                Pointer = 5,
+                String = 6,
+                CopyString = 7
+            };
+
+            const auto argName = StringView::fromLatin1(argNames[i]);
+            arg.as_uint = argValues[i];
+            if (i == 0)
+                builder.append('|');
+            else
+                builder.append(',');
+            builder.append(argName, '=');
+
+            switch(argTypes[i]) {
+                case TraceArgValueType::String:
+                case TraceArgValueType::CopyString:
+                    builder.append(StringView::fromLatin1(arg.as_string));
+                    break;
+                case TraceArgValueType::Bool:
+                    builder.append(arg.as_bool ? "true"_s : "false"_s);
+                    break;
+                case TraceArgValueType::Uint:
+                    builder.append(String::number(arg.as_uint));
+                    break;
+                case TraceArgValueType::Int:
+                    builder.append(String::number(arg.as_int));
+                    break;
+                case TraceArgValueType::Double:
+                    builder.append(String::number(arg.as_double));
+                    break;
+                case TraceArgValueType::Pointer:
+                    builder.append("0x"_s, hex(reinterpret_cast<uintptr_t>(arg.as_pointer)));
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        const auto buffer = spanReinterpretCast<const char>(builder.span<uint8_t>());
+        writeFTraceMarker(buffer.data(), buffer.size());
     }
 
     static bool isEnabled() {

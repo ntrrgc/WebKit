@@ -25,7 +25,50 @@
 #include "GLContext.h"
 #include "Logging.h"
 
+#if USE(LINUX_FTRACE)
+#include <wtf/SystemTracing.h>
+#include <wtf/MonotonicTime.h>
+#include <wtf/text/MakeString.h>
+ALLOW_UNUSED_PARAMETERS_BEGIN
+#include <ANGLE/platform/PlatformMethods.h>
+ALLOW_UNUSED_PARAMETERS_END
+#endif
+
 namespace WebCore {
+
+#if USE(LINUX_FTRACE)
+static const unsigned char* ANGLE_getTraceCategoryEnabledFlag(angle::PlatformMethods* platform,
+                                                              const char* categoryGroup) {
+    UNUSED_PARAM(platform);
+    return reinterpret_cast<const unsigned char*>(categoryGroup);
+}
+
+static angle::TraceEventHandle ANGLE_addTraceEvent(angle::PlatformMethods* platform,
+                                                   char phase,
+                                                   const unsigned char* categoryGroupEnabled,
+                                                   const char* name,
+                                                   unsigned long long id,
+                                                   double timestamp,
+                                                   int numArgs,
+                                                   const char** argNames,
+                                                   const unsigned char* argTypes,
+                                                   const unsigned long long* argValues,
+                                                   unsigned char flags) {
+    UNUSED_PARAM(platform);
+    UNUSED_PARAM(timestamp);
+
+    SystemTracingFTrace::instance().addTraceEvent(
+        phase, categoryGroupEnabled, name, id,
+        numArgs, argNames, argTypes, argValues, flags);
+
+    return static_cast<angle::TraceEventHandle>(0);
+}
+
+static double ANGLE_monotonicallyIncreasingTime(angle::PlatformMethods* platform) {
+    UNUSED_PARAM(platform);
+    return MonotonicTime::now().secondsSinceEpoch().value();
+}
+#endif
 
 EGLDisplay PlatformDisplay::angleEGLDisplay() const
 {
@@ -54,6 +97,22 @@ EGLDisplay PlatformDisplay::angleEGLDisplay() const
     auto angleDisplay = EGL_GetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, m_angleNativeDisplay ? m_angleNativeDisplay : EGL_DEFAULT_DISPLAY, displayAttributes.data());
     if (angleDisplay == EGL_NO_DISPLAY)
         return EGL_NO_DISPLAY;
+
+#if USE(LINUX_FTRACE)
+    if (SystemTracingFTrace::isEnabled()) {
+        angle::GetDisplayPlatformFunc getPlatform = reinterpret_cast<angle::GetDisplayPlatformFunc>(
+            EGL_GetProcAddress("ANGLEGetDisplayPlatform"));
+        if (getPlatform) {
+            angle::PlatformMethods* platformMethods = nullptr;
+            if (getPlatform(angleDisplay, angle::g_PlatformMethodNames, angle::g_NumPlatformMethods,
+                            nullptr, &platformMethods)) {
+                platformMethods->addTraceEvent               = ANGLE_addTraceEvent;
+                platformMethods->getTraceCategoryEnabledFlag = ANGLE_getTraceCategoryEnabledFlag;
+                platformMethods->monotonicallyIncreasingTime = ANGLE_monotonicallyIncreasingTime;
+            }
+        };
+    }
+#endif
 
     EGLint majorVersion, minorVersion;
     if (EGL_Initialize(angleDisplay, &majorVersion, &minorVersion) == EGL_TRUE) {

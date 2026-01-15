@@ -43,8 +43,11 @@
 #include <skia/core/SkGraphics.h>
 #endif
 
-#if USE(SYSPROF_CAPTURE)
+#if USE(SYSPROF_CAPTURE) || USE(LINUX_FTRACE)
 #include <wtf/SystemTracing.h>
+#if USE(SKIA)
+#include <WebCore/SkiaEventTracer.h>
+#endif
 #endif
 
 namespace WebKit {
@@ -64,6 +67,10 @@ public:
 
 #if USE(SKIA)
         SkGraphics::Init();
+#if USE(LINUX_FTRACE)
+        if (SystemTracingFTrace::isEnabled())
+            SkEventTracer::SetInstance(new SkWebKitTrace(), true);
+#endif
 #endif
 
 #if ENABLE(DEVELOPER_MODE)

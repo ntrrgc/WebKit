@@ -47,6 +47,16 @@ if (ENABLE_WEBGL)
     )
 endif ()
 
+if (USE_LINUX_FTRACE)
+    set(platform_headers ${includes})
+    list(FILTER platform_headers INCLUDE REGEX "platform/PlatformMethods.h")
+
+    WEBKIT_COPY_FILES(ANGLEPlatformHeaders
+        DESTINATION ${ANGLE_FRAMEWORK_HEADERS_DIR}/ANGLE
+        FILES ${platform_headers}
+    )
+endif()
+
 # Cocoa expects headers in an ANGLE directory
 WEBKIT_COPY_FILES(GLSLANGHeaders
     DESTINATION ${ANGLE_FRAMEWORK_HEADERS_DIR}/ANGLE

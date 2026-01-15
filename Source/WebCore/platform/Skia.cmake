@@ -16,6 +16,7 @@ list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/skia/SkiaAcceleratedBufferPool.h
     platform/graphics/skia/SkiaHarfBuzzFont.h
     platform/graphics/skia/SkiaHarfBuzzFontCache.h
+    platform/graphics/skia/SkiaEventTracer.h
 )
 
 list(APPEND WebCore_LIBRARIES
