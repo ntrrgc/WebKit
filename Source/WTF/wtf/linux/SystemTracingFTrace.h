@@ -94,7 +94,6 @@ public:
         case TakeSnapshotStart:
         case SyntheticMomentumStart:
         case CommitLayerTreeStart:
-        case ProcessLaunchStart:
         case InitializeSandboxStart:
         case WebXRCPFrameWaitStart:
         case WebXRCPFrameStartSubmissionStart:
@@ -154,7 +153,6 @@ public:
         case TakeSnapshotEnd:
         case SyntheticMomentumEnd:
         case CommitLayerTreeEnd:
-        case ProcessLaunchEnd:
         case InitializeSandboxEnd:
         case WebXRCPFrameWaitEnd:
         case WebXRCPFrameStartSubmissionEnd:
@@ -167,17 +165,19 @@ public:
         case LayerFlushEnd:
         case UpdateLayerContentBuffersEnd:
 #endif
-            endSyncMark(code);
+            endSyncMark(code, data1, data2, data3, data4);
             return;
 
+        case ProcessLaunchStart:
         case MainResourceLoadDidStartProvisional:
         case SubresourceLoadWillStart:
-            beginAsyncMark(code, data1);
+            beginAsyncMark(code, data1, data2, data3, data4);
             return;
 
+        case ProcessLaunchEnd:
         case MainResourceLoadDidEnd:
         case SubresourceLoadDidEnd:
-            endAsyncMark(code, data1);
+            endAsyncMark(code, data1, data2, data3, data4);
             return;
 
         case DisplayRefreshDispatchingToMainThread:
@@ -334,23 +334,23 @@ private:
         addMark('B', tracePointCodeName(code).spanIncludingNullTerminator(), "%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64, data1, data2, data3, data4);
     }
 
-    inline void endSyncMark(TracePointCode code) {
-        // "E|<pid>|<name>"
-        addMark('E', tracePointCodeName(code).spanIncludingNullTerminator());
+    inline void endSyncMark(TracePointCode code, uint64_t data1, uint64_t data2, uint64_t data3, uint64_t data4) {
+        // "E|<pid>|<name>|<args>"
+        addMark('E', tracePointCodeName(code).spanIncludingNullTerminator(), "%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64, data1, data2, data3, data4);
     }
 
-    inline void beginAsyncMark(TracePointCode code, uint64_t cookie) {
-        // "S|<pid>|<name>|<cookie>"
-        addMark('S', tracePointCodeName(code).spanIncludingNullTerminator(), "%" PRIu64, cookie);
+    inline void beginAsyncMark(TracePointCode code, uint64_t data1, uint64_t data2, uint64_t data3, uint64_t data4) {
+        // "S|<pid>|<name>|<cookie>|<args>"
+        addMark('S', tracePointCodeName(code).spanIncludingNullTerminator(), "%" PRIu64 "|%" PRIu64 ",%" PRIu64 ",%" PRIu64, data1, data2, data3, data4);
     }
 
-    inline void endAsyncMark(TracePointCode code, uint64_t cookie) {
-        // "F|<pid>|<name>|<cookie>"
-        addMark('F', tracePointCodeName(code).spanIncludingNullTerminator(),"%" PRIu64, cookie);
+    inline void endAsyncMark(TracePointCode code, uint64_t data1, uint64_t data2, uint64_t data3, uint64_t data4) {
+        // "F|<pid>|<name>|<cookie>|<args>"
+        addMark('F', tracePointCodeName(code).spanIncludingNullTerminator(), "%" PRIu64 "|%" PRIu64 ",%" PRIu64 ",%" PRIu64, data1, data2, data3, data4);
     }
 
     inline void instantMark(TracePointCode code, uint64_t data1, uint64_t data2, uint64_t data3, uint64_t data4) {
-        // "I|<pid>|<name>"
+        // "I|<pid>|<name>,<args>"
         addMark('I', tracePointCodeName(code).spanIncludingNullTerminator(),"%" PRIu64 ",%" PRIu64 ",%" PRIu64 ",%" PRIu64, data1, data2, data3, data4);
     }
 
