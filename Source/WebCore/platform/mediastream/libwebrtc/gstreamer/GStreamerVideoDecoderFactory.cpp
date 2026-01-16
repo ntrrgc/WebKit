@@ -86,7 +86,7 @@ public:
     bool Configure(const webrtc::VideoDecoder::Settings& codecSettings) override
     {
         m_src = makeElement("appsrc");
-        g_object_set(m_src, "is-live", TRUE, "do-timestamp", TRUE, "max-buffers", 2, "max-bytes", 0, nullptr);
+        g_object_set(m_src, "is-live", TRUE, "do-timestamp", TRUE, "max-buffers", static_cast<gint64>(2), "max-bytes", static_cast<guint64>(0), nullptr);
 
         GRefPtr<GstCaps> caps = nullptr;
         auto capsfilter = CreateFilter();
