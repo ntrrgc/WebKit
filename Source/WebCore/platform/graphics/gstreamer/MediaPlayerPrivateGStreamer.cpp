@@ -2166,7 +2166,7 @@ void MediaPlayerPrivateGStreamer::handleMessage(GstMessage* message)
             }
         }
 
-        if (quirksManager.isEnabled() && quirksManager.needsBufferingPercentageCorrection())
+        if (quirksManager.isEnabled() && quirksManager.needsBufferingPercentageCorrection() && !isMediaSource() && !isMediaStreamPlayer())
             quirksManager.setupBufferingPercentageCorrection(this, currentState, newState, GRefPtr<GstElement>(GST_ELEMENT(GST_MESSAGE_SRC(message))));
 
         if (!messageSourceIsPlaybin || m_isDelayingLoad)
