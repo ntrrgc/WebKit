@@ -104,6 +104,14 @@ endif ()
 if (LD_USAGE MATCHES "--gc-sections")
     set(LD_SUPPORTS_GC_SECTIONS TRUE)
 endif ()
+
+if (LD_SUPPORTS_DISABLE_NEW_DTAGS)
+    set(DISABLE_NEW_DTAGS_DEFAULT ON)
+else ()
+    set(DISABLE_NEW_DTAGS_DEFAULT OFF)
+endif ()
+
+option(DISABLE_NEW_DTAGS "Disable new dtags" ${DISABLE_NEW_DTAGS_DEFAULT})
 unset(LD_USAGE)
 
 message(STATUS "Linker variant in use: ${LD_VARIANT} ")
@@ -155,10 +163,14 @@ endif ()
 # passing the option DT_RUNPATH is used, which can be overriden by the value
 # of LD_LIBRARY_PATH set in the environment, resulting in unexpected behaviour
 # for developers.
-if (LD_SUPPORTS_DISABLE_NEW_DTAGS)
+if (DISABLE_NEW_DTAGS)
     string(APPEND CMAKE_EXE_LINKER_FLAGS " -Wl,--disable-new-dtags")
     string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--disable-new-dtags")
     string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--disable-new-dtags")
+else ()
+    string(APPEND CMAKE_EXE_LINKER_FLAGS " -Wl,--enable-new-dtags")
+    string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--enable-new-dtags")
+    string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--enable-new-dtags")
 endif ()
 
 # Prefer thin archives by default if they can be both created by the
