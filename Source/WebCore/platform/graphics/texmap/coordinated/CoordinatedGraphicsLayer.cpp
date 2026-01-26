@@ -1245,13 +1245,13 @@ void CoordinatedGraphicsLayer::updateContentBuffers()
         auto dirtyTilesCount = dirtyTiles.size();
         bool didUpdateTiles = false;
 
-        WTFBeginSignpost(this, UpdateTiles, "dirty tiles: %lu", dirtyTilesCount);
+        WTFBeginSignpost(this, UpdateTiles, "dirty tiles: %zu", dirtyTilesCount);
 
         for (unsigned dirtyTileIndex = 0; dirtyTileIndex < dirtyTilesCount; ++dirtyTileIndex) {
             auto& tile = dirtyTiles[dirtyTileIndex].get();
             tile.ensureTileID();
 
-            WTFBeginSignpost(this, UpdateTile, "%u/%lu, id: %d", dirtyTileIndex + 1, dirtyTilesCount, tile.tileID());
+            WTFBeginSignpost(this, UpdateTile, "%u/%zu, id: %d", dirtyTileIndex + 1, dirtyTilesCount, tile.tileID());
 
             auto& tileRect = tile.rect();
             auto& dirtyRect = tile.dirtyRect();

@@ -51,14 +51,17 @@ ALLOW_COMMA_BEGIN
 #include <webrtc/p2p/client/basic_port_allocator.h>
 #include <webrtc/pc/peer_connection_factory.h>
 #include <webrtc/pc/peer_connection_factory_proxy.h>
+#include <webrtc/rtc_base/event_tracer.h>
 #include <webrtc/rtc_base/physical_socket_server.h>
 #include <webrtc/rtc_base/task_queue_gcd.h>
+#include <webrtc/rtc_base/trace_event.h>
 
 ALLOW_UNUSED_PARAMETERS_END
 ALLOW_COMMA_END
 
 #include <wtf/Function.h>
 #include <wtf/NeverDestroyed.h>
+#include <wtf/SystemTracing.h>
 
 #if PLATFORM(COCOA)
 #include "VP9UtilitiesCocoa.h"
@@ -66,8 +69,39 @@ ALLOW_COMMA_END
 
 namespace WebCore {
 
+#if USE(LINUX_FTRACE)
+static const unsigned char* getCategoryEnabled(const char* name) {
+    const char* prefixPtr = TRACE_DISABLED_BY_DEFAULT("");
+    const char* namePtr = name;
+    // Check whether name contains the default-disabled prefix.
+    while (*prefixPtr == *namePtr && *prefixPtr != '\0') {
+        ++prefixPtr;
+        ++namePtr;
+    }
+    return reinterpret_cast<const unsigned char*>(*prefixPtr == '\0' ? "" : name);
+}
+
+static void addTraceEvent(char phase,
+                          const unsigned char* categoryEnabled,
+                          const char* name,
+                          unsigned long long id,
+                          int numArgs,
+                          const char** argNames,
+                          const unsigned char* argTypes,
+                          const unsigned long long* argValues,
+                          unsigned char flags) {
+    SystemTracingFTrace::instance().addTraceEvent(
+        phase, categoryEnabled, name, id,
+        numArgs, argNames, argTypes, argValues, flags);
+}
+#endif
+
 LibWebRTCProvider::LibWebRTCProvider()
 {
+#if USE(LINUX_FTRACE)
+    if (SystemTracingFTrace::isEnabled())
+        webrtc::SetupEventTracer(getCategoryEnabled, addTraceEvent);
+#endif
 }
 
 LibWebRTCProvider::~LibWebRTCProvider()

@@ -90,6 +90,12 @@ set(ANGLE_SOURCES
     src/libANGLE/capture/serialize_mock.cpp
 )
 
+if (USE_LINUX_FTRACE)
+   list(APPEND ANGLE_DEFINITIONS
+       ANGLE_ENABLE_DEBUG_TRACE=1
+   )
+endif()
+
 if (WIN32)
     # FIXME: DX11 support will not compile if this preprocessor definition is set
     # DirectX Documentation is setting that version to 0x700 but there is no
@@ -120,8 +126,8 @@ set(zlib_wrapper_sources
 )
 
 set(angle_gl_enum_utils
-    "src/libANGLE/gl_enum_utils.cpp"
-    "src/libANGLE/gl_enum_utils_autogen.cpp"
+    "src/common/gl_enum_utils.cpp"
+    "src/common/gl_enum_utils_autogen.cpp"
 )
 
 WEBKIT_INCLUDE_CONFIG_FILES_IF_EXISTS()
@@ -140,6 +146,7 @@ if (USE_ANGLE_EGL OR ENABLE_WEBGL)
         ${libangle_image_util_headers}
         ${xxhash_sources}
         ${zlib_wrapper_sources}
+        ${angle_gl_enum_utils}
     )
     target_include_directories(ANGLE PRIVATE ${ANGLE_PRIVATE_INCLUDE_DIRECTORIES})
     target_compile_definitions(ANGLE PRIVATE
