@@ -154,6 +154,8 @@ private:
 
     // ActiveDOMObject.
     bool virtualHasPendingActivity() const final;
+    void suspend(ReasonForSuspension) final;
+
 
     // EventTarget.
     void eventListenersDidChange() final;
