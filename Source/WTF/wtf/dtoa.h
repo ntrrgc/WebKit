@@ -46,8 +46,8 @@ WTF_EXPORT_PRIVATE const char* numberToStringWithTrailingPoint(double, NumberToS
 WTF_EXPORT_PRIVATE const char* numberToFixedPrecisionString(double, unsigned significantFigures, NumberToStringBuffer&, bool truncateTrailingZeros = false);
 WTF_EXPORT_PRIVATE const char* numberToFixedWidthString(double, unsigned decimalPlaces, NumberToStringBuffer&);
 
-WTF_EXPORT_PRIVATE NumberToStringSpan numberToStringAndSize(float, NumberToStringBuffer& LIFETIME_BOUND);
-WTF_EXPORT_PRIVATE NumberToStringSpan numberToStringAndSize(double, NumberToStringBuffer& LIFETIME_BOUND);
+WTF_EXPORT_PRIVATE NumberToStringSpan numberToStringAndSize(float, NumberToStringBuffer& buffer LIFETIME_BOUND);
+WTF_EXPORT_PRIVATE NumberToStringSpan numberToStringAndSize(double, NumberToStringBuffer& buffer LIFETIME_BOUND);
 
 // Fixed width with up to 6 decimal places, trailing zeros truncated.
 WTF_EXPORT_PRIVATE const char* numberToCSSString(double, NumberToCSSStringBuffer&);
