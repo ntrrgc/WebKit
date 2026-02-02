@@ -27,6 +27,7 @@
 
 #include "APIObject.h"
 #include "CacheModel.h"
+#include "MemoryPressureMonitor.h"
 #include "WebsiteDataStore.h"
 #include <wtf/MemoryPressureHandler.h>
 #include <wtf/ProcessID.h>
@@ -156,6 +157,9 @@ public:
 
     void setServiceWorkerMemoryPressureHandlerConfiguration(const MemoryPressureHandler::Configuration& configuration) { m_serviceWorkerMemoryPressureHandlerConfiguration = configuration; }
     const std::optional<MemoryPressureHandler::Configuration>& serviceWorkerMemoryPressureHandlerConfiguration() const { return m_serviceWorkerMemoryPressureHandlerConfiguration; }
+
+    void setMemoryPressureMonitorMode(WebKit::MemoryPressureMonitor::Mode mode) { m_memoryPressureMonitorMode = mode; }
+    WebKit::MemoryPressureMonitor::Mode memoryPressureMonitorMode() { return m_memoryPressureMonitorMode; }
 #endif
 
     void setTimeZoneOverride(const WTF::String& timeZoneOverride) { m_timeZoneOverride = timeZoneOverride; }
@@ -203,6 +207,7 @@ private:
     std::optional<MemoryPressureHandler::Configuration> m_memoryPressureHandlerConfiguration;
     bool m_disableFontHintingForTesting { false };
     std::optional<MemoryPressureHandler::Configuration> m_serviceWorkerMemoryPressureHandlerConfiguration;
+    WebKit::MemoryPressureMonitor::Mode m_memoryPressureMonitorMode { WebKit::MemoryPressureMonitor::Mode::Higher };
 #endif
 #if HAVE(AUDIT_TOKEN)
     std::optional<audit_token_t> m_presentingApplicationProcessToken;

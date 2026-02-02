@@ -37,9 +37,16 @@ class MemoryPressureMonitor {
     WTF_MAKE_NONCOPYABLE(MemoryPressureMonitor);
     friend NeverDestroyed<MemoryPressureMonitor>;
 public:
+    enum class Mode : uint8_t {
+        System,
+        Container,
+        Higher
+    };
+
     static MemoryPressureMonitor& singleton();
     void start();
     static bool disabled();
+    void setMode(Mode mode) { m_mode = mode; }
 
     ~MemoryPressureMonitor();
 
@@ -47,6 +54,7 @@ private:
     MemoryPressureMonitor() = default;
     bool m_started { false };
     static bool s_disabled;
+    Mode m_mode { Mode::Higher };
 };
 
 class CGroupMemoryController {

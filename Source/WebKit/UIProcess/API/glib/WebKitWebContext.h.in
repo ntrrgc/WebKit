@@ -121,6 +121,26 @@ typedef enum {
 #endif
 
 /**
+ * WebKitMemoryPressureMonitorMode:
+ * @WEBKIT_MEMORY_PRESSURE_MONITOR_MODE_SYSTEM: calculate
+ * the percentage of used memory based only on system memory polling.
+ * @WEBKIT_MEMORY_PRESSURE_MONITOR_MODE_CONTAINER: calculate
+ * the percentage of used memory based on the usage reported by the container.
+ * @WEBKIT_MEMORY_PRESSURE_MONITOR_MODE_HIGHER: calculate
+ * the percentage of used memory as the higher of the values reported by the
+ * the system memory and the container.
+ *
+ * Enum values used for determining the MemoryPressureMonitor source of data.
+ *
+ * Since: 2.38
+ */
+typedef enum {
+    WEBKIT_MEMORY_PRESSURE_MONITOR_MODE_SYSTEM,
+    WEBKIT_MEMORY_PRESSURE_MONITOR_MODE_CONTAINER,
+    WEBKIT_MEMORY_PRESSURE_MONITOR_MODE_HIGHER,
+} WebKitMemoryPressureMonitorMode;
+
+/**
  * WebKitURISchemeRequestCallback:
  * @request: the #WebKitURISchemeRequest
  * @user_data: user data passed to the callback

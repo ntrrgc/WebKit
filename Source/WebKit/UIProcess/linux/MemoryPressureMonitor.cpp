@@ -245,7 +245,7 @@ static CString getCgroupControllerPath(FILE* cgroupControllerFile, const char* c
 }
 
 
-static int systemMemoryUsedAsPercentage(FILE* memInfoFile, FILE* zoneInfoFile, CGroupMemoryController* memoryController)
+static int systemMemoryUsedAsPercentage(FILE* memInfoFile, FILE* zoneInfoFile)
 {
     if (!memInfoFile || fseek(memInfoFile, 0, SEEK_SET))
         return -1;
@@ -288,20 +288,28 @@ static int systemMemoryUsedAsPercentage(FILE* memInfoFile, FILE* zoneInfoFile, C
         return -1;
 
     int memoryUsagePercentage = ((memoryTotal - memoryAvailable) * 100) / memoryTotal;
-    LOG(MemoryPressure, "MemoryPressureMonitor::memory: real (total: %zu kB) (available: %zu kB) (usage: %d%%)", memoryTotal, memoryAvailable, memoryUsagePercentage);
-    if (memoryController->isActive()) {
-        memoryTotal = memoryController->getMemoryTotalWithCgroup();
-        size_t memoryUsage = memoryController->getMemoryUsageWithCgroup();
-        if (memoryTotal != notSet && memoryUsage != notSet) {
-            int memoryUsagePercentageWithCgroup = 100 * ((float) memoryUsage / (float) memoryTotal);
-            LOG(MemoryPressure, "MemoryPressureMonitor::memory: cgroup (total: %zu bytes) (in use: %zu bytes) (usage: %d%%)", memoryTotal, memoryUsage, memoryUsagePercentageWithCgroup);
-            if (memoryUsagePercentageWithCgroup > memoryUsagePercentage)
-                memoryUsagePercentage = memoryUsagePercentageWithCgroup;
-        }
-    }
-    LOG(MemoryPressure, "MemoryPressureMonitor::memory: (memoryUsagePercentage: %d%%)", memoryUsagePercentage);
+    LOG(MemoryPressure, "MemoryPressureMonitor: memory real (memory total=%zu kB) (memory available=%zu kB) (memory usage percentage=%d )", memoryTotal, memoryAvailable, memoryUsagePercentage);
+
     return memoryUsagePercentage;
 }
+
+static int containerMemoryUsedAsPercentage(CGroupMemoryController* memoryController)
+{
+    if (!memoryController->isActive())
+        return -1;
+
+    size_t memoryTotal = memoryController->getMemoryTotalWithCgroup();
+    size_t memoryUsage = memoryController->getMemoryUsageWithCgroup();
+
+    if (memoryTotal == notSet || memoryUsage == notSet)
+        return -1;
+
+    int memoryUsagePercentageWithCgroup = 100 * ((float) memoryUsage / (float) memoryTotal);
+    LOG(MemoryPressure, "MemoryPressureMonitor: memory cgroup (memory total=%zu bytes) (memory usage=%zu bytes) (memory usage percentage=%d bytes)", memoryTotal, memoryUsage, memoryUsagePercentageWithCgroup);
+
+    return memoryUsagePercentageWithCgroup;
+}
+
 
 static inline Seconds pollIntervalForUsedMemoryPercentage(int usedPercentage)
 {
@@ -353,30 +361,50 @@ void MemoryPressureMonitor::start()
 
     m_started = true;
 
-    Thread::create("MemoryPressureMonitor"_s, [] {
+    Thread::create("MemoryPressureMonitor"_s, [mode = m_mode] {
         FileHandle memInfoFile, zoneInfoFile, cgroupControllerFile;
         CGroupMemoryController memoryController = CGroupMemoryController();
         Seconds pollInterval = s_maxPollingInterval;
         while (true) {
             sleep(pollInterval);
 
-            // Cannot operate without this one, retry opening on the next iteration after sleeping.
-            if (!tryOpeningForUnbufferedReading(memInfoFile, s_procMeminfo))
-                continue;
+            int usedPercentage = -1;
+            if (mode == Mode::Container || mode == Mode::Higher) {
+                tryOpeningForUnbufferedReading(cgroupControllerFile, s_procSelfCgroup);
 
-            // The monitor can work without these two, but it will be more precise if thy are eventually opened: keep trying.
-            tryOpeningForUnbufferedReading(zoneInfoFile, s_procZoneinfo);
-            tryOpeningForUnbufferedReading(cgroupControllerFile, s_procSelfCgroup);
+                CString cgroupMemoryControllerPath = getCgroupControllerPath(cgroupControllerFile.get(), "memory");
+                memoryController.setMemoryControllerPath(cgroupMemoryControllerPath);
 
-            CString cgroupMemoryControllerPath = getCgroupControllerPath(cgroupControllerFile.get(), "memory");
-            memoryController.setMemoryControllerPath(cgroupMemoryControllerPath);
-            int usedPercentage = systemMemoryUsedAsPercentage(memInfoFile.get(), zoneInfoFile.get(), &memoryController);
+                usedPercentage = containerMemoryUsedAsPercentage(&memoryController);
+
+                // Warn only if we weren't able to get the data and we're in container mode, where it's
+                // expected to work.
+                if (usedPercentage == -1 && mode == Mode::Container)
+                    WTFLogAlways("MemoryPressureMonitor: failed to get the memory usage using cgroup");
+            }
+
+            if (mode == Mode::System || mode == Mode::Higher) {
+                // Cannot operate without this one, retry opening on the next iteration after sleeping.
+                if (!tryOpeningForUnbufferedReading(memInfoFile, s_procMeminfo))
+                    continue;
+
+                tryOpeningForUnbufferedReading(zoneInfoFile, s_procZoneinfo);
+
+                int systemUsedPercentage = systemMemoryUsedAsPercentage(memInfoFile.get(), zoneInfoFile.get());
+
+                if (systemUsedPercentage == -1)
+                    WTFLogAlways("MemoryPressureMonitor: failed to get the memory usage using real memory");
+
+                usedPercentage = std::max(usedPercentage, systemUsedPercentage);
+            }
+
             if (usedPercentage == -1) {
-                WTFLogAlways("Failed to get the memory usage");
+                WTFLogAlways("MemoryPressureMonitor: failed to get the memory usage using any method");
                 pollInterval = s_maxPollingInterval;
                 continue;
             }
 
+            LOG(MemoryPressure, "MemoryPressureMonitor: memoryUsagePercentage (%d)", usedPercentage);
             if (usedPercentage >= s_memoryPresurePercentageThreshold) {
                 bool isCritical = (usedPercentage >= s_memoryPresurePercentageThresholdCritical);
                 RunLoop::main().dispatch([isCritical] {

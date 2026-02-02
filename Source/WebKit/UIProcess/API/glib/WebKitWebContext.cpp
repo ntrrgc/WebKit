@@ -25,12 +25,14 @@
 #include "APIProcessPoolConfiguration.h"
 #include "APIString.h"
 #include "LegacyGlobalSettings.h"
+#include "MemoryPressureMonitor.h"
 #include "NetworkProcessMessages.h"
 #include "TextChecker.h"
 #include "TextCheckerState.h"
 #include "WebAutomationSession.h"
 #include "WebKitAutomationSessionPrivate.h"
 #include "WebKitDownloadPrivate.h"
+#include "WebKitEnumTypes.h"
 #include "WebKitGeolocationManagerPrivate.h"
 #include "WebKitInitialize.h"
 #include "WebKitInjectedBundleClient.h"
@@ -134,6 +136,7 @@ enum {
     PROP_MEMORY_PRESSURE_SETTINGS,
     PROP_TIME_ZONE_OVERRIDE,
     PROP_SERVICE_WORKER_MEMORY_PRESSURE_SETTINGS,
+    PROP_MEMORY_PRESSURE_MONITOR_MODE,
     N_PROPERTIES,
 };
 
@@ -288,6 +291,7 @@ struct _WebKitWebContextPrivate {
 
     WebKitMemoryPressureSettings* memoryPressureSettings;
     WebKitMemoryPressureSettings* serviceWorkerMemoryPressureSettings;
+    WebKitMemoryPressureMonitorMode memoryPressureMonitorMode;
 
     CString timeZoneOverride;
 };
@@ -423,6 +427,9 @@ static void webkitWebContextSetProperty(GObject* object, guint propID, const GVa
             context->priv->timeZoneOverride = timeZone;
         break;
     }
+    case PROP_MEMORY_PRESSURE_MONITOR_MODE:
+        context->priv->memoryPressureMonitorMode = static_cast<WebKitMemoryPressureMonitorMode>(g_value_get_enum(value));
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, propID, paramSpec);
     }
@@ -462,6 +469,20 @@ static void webkitWebContextConstructed(GObject* object)
         configuration.setServiceWorkerMemoryPressureHandlerConfiguration(webkitMemoryPressureSettingsGetMemoryPressureHandlerConfiguration(priv->serviceWorkerMemoryPressureSettings));
         // Once the settings have been passed to the ProcessPoolConfiguration, we don't need them anymore so we can free them.
         g_clear_pointer(&priv->serviceWorkerMemoryPressureSettings, webkit_memory_pressure_settings_free);
+    }
+
+    switch(priv->memoryPressureMonitorMode) {
+    case WEBKIT_MEMORY_PRESSURE_MONITOR_MODE_SYSTEM:
+        configuration.setMemoryPressureMonitorMode(MemoryPressureMonitor::Mode::System);
+        break;
+    case WEBKIT_MEMORY_PRESSURE_MONITOR_MODE_CONTAINER:
+        configuration.setMemoryPressureMonitorMode(MemoryPressureMonitor::Mode::Container);
+        break;
+    case WEBKIT_MEMORY_PRESSURE_MONITOR_MODE_HIGHER:
+        configuration.setMemoryPressureMonitorMode(MemoryPressureMonitor::Mode::Higher);
+        break;
+    default:
+        g_assert_not_reached();
     }
 
 #if !ENABLE(2022_GLIB_API)
@@ -639,6 +660,22 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
             _("Service Worker Memory Pressure Settings"),
             _("The WebKitMemoryPressureSettings applied to the service worker web processes created by this context"),
             WEBKIT_TYPE_MEMORY_PRESSURE_SETTINGS,
+            static_cast<GParamFlags>(WEBKIT_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+
+    /**
+     * WebKitWebContext:memory-pressure-mode:
+     *
+     * Which source of measurements will the MemoryPressureMonitor use to calculate the used memory.
+     *
+     * Since: 2.38
+     */
+    sObjProperties[PROP_MEMORY_PRESSURE_MONITOR_MODE] =
+        g_param_spec_enum(
+            "memory-pressure-monitor-mode",
+            _("MemoryPressureMonitor mode"),
+            _("Whether the MemoryPressureMonitor will take measures from the system memory, the container or both"),
+            WEBKIT_TYPE_MEMORY_PRESSURE_MONITOR_MODE,
+            WEBKIT_MEMORY_PRESSURE_MONITOR_MODE_HIGHER,
             static_cast<GParamFlags>(WEBKIT_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
 
     /**
