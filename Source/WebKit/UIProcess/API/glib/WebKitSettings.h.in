@@ -643,6 +643,12 @@ WEBKIT_API void
 webkit_settings_set_screen_supports_hdr                        (WebKitSettings* settings,
                                                                 gboolean        screenSupportsHDR);
 
+WEBKIT_API gboolean
+webkit_settings_get_opportunistic_sweeping_and_gc              (WebKitSettings* settings);
+WEBKIT_API void
+webkit_settings_set_opportunistic_sweeping_and_gc              (WebKitSettings* settings,
+                                                                gboolean        enabled);
+
 G_END_DECLS
 
 #endif /* WebKitSettings_h */
