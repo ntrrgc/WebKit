@@ -43,7 +43,14 @@ GRefPtr<GBytes> backendCommands()
     static bool moduleLoaded = false;
 
     if (!moduleLoaded) {
-        GModule* resourcesModule = g_module_open(PKGLIBDIR G_DIR_SEPARATOR_S "libWPEWebInspectorResources.so", G_MODULE_BIND_LAZY);
+        const char* libDir = PKGLIBDIR;
+        GUniquePtr<char> tmp;
+        if (const char* path = g_getenv("WEBKIT_INJECTED_BUNDLE_PATH"); path && g_file_test(path, G_FILE_TEST_IS_DIR)) {
+            tmp.reset(g_build_filename(path, "..", nullptr));
+            libDir = tmp.get();
+        }
+        GUniquePtr<char> bundleFilename(g_build_filename(libDir, "libWPEWebInspectorResources.so", nullptr));
+        GModule* resourcesModule = g_module_open(bundleFilename.get(), G_MODULE_BIND_LAZY);
         if (!resourcesModule) {
             WTFLogAlways("Error loading libWPEWebInspectorResources.so: %s", g_module_error());
             return nullptr;
