@@ -198,6 +198,7 @@ enum {
     PROP_WEBRTC_UDP_PORTS_RANGE,
     PROP_ENABLE_NON_COMPOSITED_WEBGL,
     PROP_SCREEN_SUPPORTS_HDR,
+    PROP_OPPORTUNISTIC_SWEEPING_AND_GC,
     N_PROPERTIES,
 };
 
@@ -459,6 +460,9 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     case PROP_SCREEN_SUPPORTS_HDR:
         webkit_settings_set_screen_supports_hdr(settings, g_value_get_boolean(value));
         break;
+    case PROP_OPPORTUNISTIC_SWEEPING_AND_GC:
+        webkit_settings_set_opportunistic_sweeping_and_gc(settings, g_value_get_boolean(value));
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, propId, paramSpec);
         break;
@@ -699,6 +703,9 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         break;
     case PROP_SCREEN_SUPPORTS_HDR:
         g_value_set_boolean(value, webkit_settings_get_screen_supports_hdr(settings));
+        break;
+    case PROP_OPPORTUNISTIC_SWEEPING_AND_GC:
+        g_value_set_boolean(value, webkit_settings_get_opportunistic_sweeping_and_gc(settings));
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, propId, paramSpec);
@@ -1893,6 +1900,20 @@ static void webkit_settings_class_init(WebKitSettingsClass* klass)
         _("Screen supports HDR"),
         _("Does screen support HDR."),
         FALSE,
+        readWriteConstructParamFlags);
+
+    /**
+     * WebKitSettings:opportunistic-sweeping-and-gc:
+     *
+     * Enable or disable opportunistic sweeping and garbage collection.
+     * GC timers will be postponed if any critical tasks are pending.
+     *
+     */
+    sObjProperties[PROP_OPPORTUNISTIC_SWEEPING_AND_GC] = g_param_spec_boolean(
+        "opportunistic-sweeping-and-gc",
+        _("Enable opportunistic sweeping and garbage collection"),
+        _("Whether opportunistic sweeping and garbage collection should be enabled"),
+        FEATURE_DEFAULT(OpportunisticSweepingAndGarbageCollectionEnabled),
         readWriteConstructParamFlags);
 
     g_object_class_install_properties(gObjectClass, N_PROPERTIES, sObjProperties);
@@ -4957,4 +4978,39 @@ webkit_settings_set_screen_supports_hdr(WebKitSettings* settings, gboolean scree
 
     priv->preferences->setScreenSupportsHDR(screenSupportsHDR);
     g_object_notify_by_pspec(G_OBJECT(settings), sObjProperties[PROP_SCREEN_SUPPORTS_HDR]);
+}
+
+/**
+ * webkit_settings_get_opportunistic_sweeping_and_gc:
+ * @settings: a #WebKitSettings
+ *
+ * Get the #WebKitSettings:opportunistic-sweeping-and-gc property.
+ *
+ * Returns: %TRUE if opportunistic sweeping and garbage collection is enabled or %FALSE otherwise.
+ */
+gboolean
+webkit_settings_get_opportunistic_sweeping_and_gc(WebKitSettings* settings)
+{
+    g_return_val_if_fail(WEBKIT_IS_SETTINGS(settings), FALSE);
+    return settings->priv->preferences->opportunisticSweepingAndGarbageCollectionEnabled();
+}
+
+/**
+ * webkit_settings_set_opportunistic_sweeping_and_gc:
+ * @settings: a #WebKitSettings
+ * @enabled: Value to be set
+ *
+ * Set the #WebKitSettings:opportunistic-sweeping-and-gc property.
+ */
+void
+webkit_settings_set_opportunistic_sweeping_and_gc(WebKitSettings* settings, gboolean enabled)
+{
+    g_return_if_fail(WEBKIT_IS_SETTINGS(settings));
+    WebKitSettingsPrivate* priv = settings->priv;
+    bool currentValue = priv->preferences->opportunisticSweepingAndGarbageCollectionEnabled();
+    if (currentValue == enabled)
+        return;
+
+    priv->preferences->setOpportunisticSweepingAndGarbageCollectionEnabled(enabled);
+    g_object_notify_by_pspec(G_OBJECT(settings), sObjProperties[PROP_OPPORTUNISTIC_SWEEPING_AND_GC]);
 }
