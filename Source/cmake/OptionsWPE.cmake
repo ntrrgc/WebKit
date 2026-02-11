@@ -382,6 +382,10 @@ if (USER_AGENT_BRANDING)
     add_definitions(-DUSER_AGENT_BRANDING=${USER_AGENT_BRANDING})
 endif ()
 
+if (GL_TEXTURE_MAX_SIZE)
+    add_definitions(-DGL_TEXTURE_MAX_SIZE=${GL_TEXTURE_MAX_SIZE})
+endif ()
+
 if (NOT EXISTS "${TOOLS_DIR}/glib/apply-build-revision-to-files.py")
     set(BUILD_REVISION "tarball")
 endif ()

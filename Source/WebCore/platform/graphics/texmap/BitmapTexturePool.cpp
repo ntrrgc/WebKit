@@ -70,6 +70,9 @@ RefPtr<BitmapTexture> BitmapTexturePool::acquireTexture(const IntSize& size, Opt
         m_textures.append(Entry(BitmapTexture::create(size, flags)));
         selectedEntry = &m_textures.last();
         m_poolSize += size.unclampedArea();
+
+        if (flags.contains(BitmapTexture::Flags::DepthBuffer))
+            m_poolSize += size.unclampedArea();
     } else
         selectedEntry->m_texture->reset(size, flags);
 
@@ -100,6 +103,10 @@ void BitmapTexturePool::releaseUnusedTexturesTimerFired()
     m_textures.removeAllMatching([this, &minUsedTime](const Entry& entry) {
         if (entry.canBeReleased(minUsedTime)) {
             m_poolSize -= entry.m_texture->size().unclampedArea();
+
+            if (entry.m_texture->flags().contains(BitmapTexture::Flags::DepthBuffer))
+                m_poolSize -= entry.m_texture->size().unclampedArea();
+
             return true;
         }
         return false;
