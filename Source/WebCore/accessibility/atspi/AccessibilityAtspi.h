@@ -132,6 +132,7 @@ private:
     String m_busName;
     bool m_isConnecting { false };
     GRefPtr<GDBusConnection> m_connection;
+    GRefPtr<GDBusConnection> m_pendingConnection;
     GRefPtr<GDBusProxy> m_registry;
     Vector<PendingRootRegistration> m_pendingRootRegistrations;
     HashMap<CString, Vector<GUniquePtr<char*>>> m_eventListeners;

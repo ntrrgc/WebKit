@@ -75,14 +75,14 @@ void AccessibilityAtspi::connect(const String& busAddress, const String& busName
 
 void AccessibilityAtspi::didConnect(GRefPtr<GDBusConnection>&& connection)
 {
-    m_connection = WTFMove(connection);
-    if (!m_connection) {
+    m_pendingConnection = WTFMove(connection);
+    if (!m_pendingConnection) {
         m_isConnecting = false;
         return;
     }
 
     RELEASE_ASSERT(g_dbus_is_name(m_busName.utf8().data()));
-    g_bus_own_name_on_connection(m_connection.get(), m_busName.utf8().data(), G_BUS_NAME_OWNER_FLAGS_DO_NOT_QUEUE,
+    g_bus_own_name_on_connection(m_pendingConnection.get(), m_busName.utf8().data(), G_BUS_NAME_OWNER_FLAGS_DO_NOT_QUEUE,
         [](GDBusConnection*, const char*, gpointer userData) {
             auto& atspi = *static_cast<AccessibilityAtspi*>(userData);
             atspi.didOwnName();
@@ -93,6 +93,7 @@ void AccessibilityAtspi::didConnect(GRefPtr<GDBusConnection>&& connection)
 void AccessibilityAtspi::didOwnName()
 {
     m_isConnecting = false;
+    m_connection = WTFMove(m_pendingConnection);
 
     for (auto& pendingRegistration : m_pendingRootRegistrations)
         registerRoot(pendingRegistration.root, WTFMove(pendingRegistration.interfaces), WTFMove(pendingRegistration.completionHandler));
