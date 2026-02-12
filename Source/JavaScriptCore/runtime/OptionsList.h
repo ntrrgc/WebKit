@@ -499,8 +499,8 @@ bool hasCapacityToUseLargeGigacage();
     \
     v(Bool, useSuperSampler, false, Normal, nullptr) \
     \
-    v(Bool, useSourceProviderCache, is64Bit(), Normal, "If false, the parser will not use the source provider cache. It's good to verify everything works when this is false. Because the cache is so successful, it can mask bugs."_s) \
-    v(Bool, useCodeCache, is64Bit(), Normal, "If false, the unlinked byte code cache will not be used."_s) \
+    v(Bool, useSourceProviderCache, true, Normal, "If false, the parser will not use the source provider cache. It's good to verify everything works when this is false. Because the cache is so successful, it can mask bugs."_s) \
+    v(Bool, useCodeCache, true, Normal, "If false, the unlinked byte code cache will not be used."_s) \
     \
     v(Bool, useWasm, true, Normal, "Expose the Wasm global object."_s) \
     \
