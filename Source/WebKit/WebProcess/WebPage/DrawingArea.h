@@ -188,6 +188,9 @@ public:
 
     virtual void renderSingleFrameIfRenderingPaused() { };
 
+    virtual void destroyGLResourcesAfterSuspend() { };
+    virtual void recreateGLResourcesBeforeResume() { };
+
 protected:
     DrawingArea(DrawingAreaType, DrawingAreaIdentifier, WebPage&);
 

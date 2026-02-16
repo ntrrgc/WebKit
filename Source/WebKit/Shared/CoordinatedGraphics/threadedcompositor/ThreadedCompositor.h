@@ -102,6 +102,9 @@ public:
 
     RunLoop& compositingRunLoop() const { return m_compositingRunLoop->runLoop(); }
 
+    void destroyGLResourcesAfterSuspend(bool);
+    void recreateGLResourcesBeforeResume(bool);
+
 private:
 #if HAVE(DISPLAY_LINK)
     ThreadedCompositor(Client&, WebCore::PlatformDisplayID, const WebCore::IntSize&, float scaleFactor, bool flipY, DamagePropagation, bool);

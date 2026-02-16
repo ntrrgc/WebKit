@@ -116,6 +116,9 @@ private:
     // Whether we're currently processing an UpdateGeometry message.
     bool m_inUpdateGeometry { false };
 
+    void destroyGLResourcesAfterSuspend() final;
+    void recreateGLResourcesBeforeResume() final;
+
     // True between sending the 'enter compositing' messages, and the 'exit compositing' message.
     bool m_compositingAccordingToProxyMessages { false };
 

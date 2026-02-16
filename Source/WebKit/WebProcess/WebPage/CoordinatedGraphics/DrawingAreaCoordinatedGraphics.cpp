@@ -868,4 +868,21 @@ void DrawingAreaCoordinatedGraphics::renderSingleFrameIfRenderingPaused()
     m_layerTreeHost->renderSingleFrameWhilePaused();
 }
 
+
+void DrawingAreaCoordinatedGraphics::destroyGLResourcesAfterSuspend()
+{
+    if (!m_isPaintingSuspended || !m_usingPageLifecycle || !m_layerTreeHost)
+        return;
+
+    m_layerTreeHost->destroyGLResourcesAfterSuspend();
+}
+
+void DrawingAreaCoordinatedGraphics::recreateGLResourcesBeforeResume()
+{
+    if (!m_isPaintingSuspended || !m_usingPageLifecycle || !m_layerTreeHost)
+        return;
+
+    m_layerTreeHost->recreateGLResourcesBeforeResume();
+}
+
 } // namespace WebKit

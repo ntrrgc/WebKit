@@ -73,6 +73,7 @@ LayerTreeHost::LayerTreeHost(WebPage& webPage, WebCore::PlatformDisplayID displa
     , m_displayID(displayID)
 #endif
     , m_usingPageLifecycle(webPage.corePage()->settings().pageLifecycleAPIEnabled())
+    , m_destroyNativeWindowOnSuspend(webPage.corePage()->settings().pageLifecycleAPIDestroyWindowOnFreeze())
 {
 #if USE(GLIB_EVENT_LOOP)
     m_layerFlushTimer.setPriority(RunLoopSourcePriority::LayerFlushTimer);
@@ -639,6 +640,29 @@ void LayerTreeHost::preferredBufferFormatsDidChange()
     m_surface->preferredBufferFormatsDidChange();
 }
 #endif
+
+void LayerTreeHost::destroyGLResourcesAfterSuspend()
+{
+    if (!m_isSuspended || !m_usingPageLifecycle)
+        return;
+
+    // Tell the ThreadedCompositor to release its OpenGL resources.
+    m_compositor->destroyGLResourcesAfterSuspend(m_destroyNativeWindowOnSuspend);
+
+    // Destroy the sharingContext.
+    PlatformDisplay::sharedDisplay().clearSharingGLContext();
+}
+
+void LayerTreeHost::recreateGLResourcesBeforeResume()
+{
+    if (!m_isSuspended || !m_usingPageLifecycle)
+        return;
+
+    // The sharingContext will be automatically recreated when any GLContext is created.
+
+    // Tell the ThreadedCompositor to recreate its OpenGL resources.
+    m_compositor->recreateGLResourcesBeforeResume(m_destroyNativeWindowOnSuspend);
+}
 
 } // namespace WebKit
 

@@ -482,5 +482,54 @@ void ThreadedCompositor::displayUpdateFired()
 }
 #endif
 
+void ThreadedCompositor::destroyGLResourcesAfterSuspend(bool destroyNativeWindow)
+{
+    // This must be called with the RunLoop suspended.
+    if (m_suspendedCount <= 0)
+        return;
+
+    m_scene->detach();
+    m_compositingRunLoop->performTaskSync([this, protectedThis = Ref { *this }, destroyNativeWindow] {
+        if (m_context) {
+            if (!m_context->makeContextCurrent())
+                return;
+
+            updateSceneWithoutRendering();
+            m_scene->purgeGLResources();
+            m_context = nullptr;
+        }
+
+        if (destroyNativeWindow) {
+            m_client.didDestroyGLContext();
+            m_nativeSurfaceHandle = 0;
+        }
+
+        m_scene = nullptr;
+    });
+}
+
+void ThreadedCompositor::recreateGLResourcesBeforeResume(bool nativeWindowWasDestroyed)
+{
+    // This must be called with the RunLoop suspended.
+    if (m_suspendedCount <= 0)
+        return;
+
+    m_compositingRunLoop->performTaskSync([this, protectedThis = Ref { *this }, nativeWindowWasDestroyed] {
+        const auto propagateDamage = (m_damagePropagation == DamagePropagation::None)
+            ? WebCore::Damage::ShouldPropagate::No : WebCore::Damage::ShouldPropagate::Yes;
+        m_scene = adoptRef(new CoordinatedGraphicsScene(this, propagateDamage));
+
+        if (nativeWindowWasDestroyed)
+            m_nativeSurfaceHandle = m_client.nativeSurfaceHandleForCompositing();
+
+        createGLContext();
+        if (m_context) {
+            if (!m_nativeSurfaceHandle)
+                m_flipY = !m_flipY;
+        }
+    });
+}
+
+
 }
 #endif // USE(COORDINATED_GRAPHICS)
