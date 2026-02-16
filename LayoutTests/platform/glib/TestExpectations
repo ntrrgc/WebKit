@@ -1613,7 +1613,7 @@ webkit.org/b/254525 http/tests/media/video-throttled-load-metadata.html [ Pass F
 media/video-seek-to-current-time.html [ Pass Failure ]
 webkit.org/b/264680 media/video-seek-past-end-playing.html [ Timeout Pass ]
 webkit.org/b/285595 media/video-seek-after-end-play.html [ Skip ]
-webkit.org/b/307295 media/video-frame-accurate-seek.html [ Failure ImageOnlyFailure ]
+webkit.org/b/307295 media/video-frame-accurate-seek.html [ Failure ImageOnlyFailure Pass ]
 
 webkit.org/b/296928 http/wpt/mediarecorder/mute-tracks.html [ Timeout Failure Pass ]
 webkit.org/b/213699 http/wpt/mediarecorder/video-rotation.html [ Pass Failure ]
@@ -2802,7 +2802,7 @@ webkit.org/b/235885 webrtc/video-maxFramerate.html [ Failure ]
 webkit.org/b/235885 webrtc/video-replace-muted-track.html [ Skip ]
 # webkit.org/b/235885 webrtc/video-stats.html [ Failure ]
 webkit.org/b/303673 webrtc/video-stats.html [ Timeout ]
-webkit.org/b/235885 webrtc/video-unmute.html [ Pass Timeout ]
+webkit.org/b/235885 webrtc/video-unmute.html [ Pass Failure Timeout ]
 http/tests/webrtc/muted-video-mediastream-invisible-autoplay.html [ Failure Timeout Pass ]
 
 webkit.org/b/187064 webrtc/video-addTrack.html [ Failure Pass Timeout ]
@@ -4347,8 +4347,6 @@ imported/w3c/web-platform-tests/html/canvas/offscreen/path-objects/2d.path.isPoi
 imported/w3c/web-platform-tests/html/canvas/offscreen/path-objects/2d.path.isPointInStroke.scaleddashes.worker.html [ Failure ]
 
 # Flakies Aug2023
-webkit.org/b/261024 imported/w3c/web-platform-tests/WebCryptoAPI/generateKey/successes_Ed25519.https.any.html [ Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/WebCryptoAPI/generateKey/successes_Ed25519.https.any.worker.html [ Failure Pass ]
 webkit.org/b/261024 media/video-playsinline.html [ Failure Timeout Pass ]
 
 # Initial css/compositing test import
@@ -5195,6 +5193,13 @@ webkit.org/b/122508 compositing/video/video-reflection.html [ Pass Timeout ]
 webkit.org/b/307087 http/tests/workers/service/postmessage-after-terminate.https.html [ Pass Timeout ]
 
 webkit.org/b/307095 imported/w3c/web-platform-tests/WebCryptoAPI/generateKey/failures_X25519.https.any.html [ Pass Failure ]
+webkit.org/b/307095 imported/w3c/web-platform-tests/WebCryptoAPI/generateKey/failures_X25519.https.any.worker.html [ Pass Failure ]
+webkit.org/b/307095 imported/w3c/web-platform-tests/WebCryptoAPI/generateKey/successes_X25519.https.any.html [ Pass Failure ]
+webkit.org/b/307095 imported/w3c/web-platform-tests/WebCryptoAPI/generateKey/successes_X25519.https.any.worker.html [ Pass Failure ]
+webkit.org/b/307095 imported/w3c/web-platform-tests/WebCryptoAPI/generateKey/successes_Ed25519.https.any.html [ Pass Failure ]
+webkit.org/b/307095 imported/w3c/web-platform-tests/WebCryptoAPI/generateKey/successes_Ed25519.https.any.worker.html [ Pass Failure ]
+webkit.org/b/307095 imported/w3c/web-platform-tests/WebCryptoAPI/generateKey/failures_Ed25519.https.any.html [ Pass Failure ]
+webkit.org/b/307095 imported/w3c/web-platform-tests/WebCryptoAPI/generateKey/failures_Ed25519.https.any.worker.html [ Pass Failure ]
 
 webkit.org/b/307100 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-scroll-position-try-015.tentative.html [ ImageOnlyFailure Pass ]
 
@@ -5228,6 +5233,8 @@ webkit.org/b/307597 imported/w3c/web-platform-tests/service-workers/service-work
 webkit.org/b/307657 imported/w3c/web-platform-tests/resource-timing/status-codes-create-entry.html [ Pass Failure ]
 
 webkit.org/b/307666 media/modern-media-controls/status-support/status-support-playing.html [ Pass Timeout ]
+
+webkit.org/b/307989 imported/w3c/web-platform-tests/cookies/path/default.html [ Pass Failure ]
 
 # End: Common failures between GTK and WPE.
 

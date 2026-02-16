@@ -8333,4 +8333,7 @@ webkit.org/b/307602 imported/w3c/web-platform-tests/svg/text/reftests/rtl-text-p
 webkit.org/b/307602 imported/w3c/web-platform-tests/svg/text/reftests/textpath-path-attr-precedence-over-href.svg [ ImageOnlyFailure ]
 webkit.org/b/307602 imported/w3c/web-platform-tests/svg/text/reftests/textpath-path-attr.svg [ ImageOnlyFailure ]
 
+# VNE testing is flaky.
+webkit.org/b/211221 http/tests/performance/paint-timing/performance-paint-timing-fcp-after-visually-non-empty-for-num-chars.html [ Pass Failure ]
+
 imported/w3c/web-platform-tests/html/semantics/scripting-1/the-script-element/module/dynamic-import/microtasks/worklet.https.html [ ImageOnlyFailure ]
