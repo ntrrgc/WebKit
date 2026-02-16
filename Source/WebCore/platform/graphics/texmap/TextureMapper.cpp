@@ -112,6 +112,12 @@ private:
         SharedGLData()
         {
             glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_maxTextureSize);
+
+#ifdef GL_TEXTURE_MAX_SIZE
+            // Limit the max texture size to allow textures reuse and reduce GPU mem spikes
+            if (m_maxTextureSize > GL_TEXTURE_MAX_SIZE)
+                m_maxTextureSize = GL_TEXTURE_MAX_SIZE;
+#endif
         }
 
         HashMap<unsigned, RefPtr<TextureMapperShaderProgram>> m_programs;
