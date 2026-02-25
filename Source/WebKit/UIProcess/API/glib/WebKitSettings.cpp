@@ -1940,7 +1940,7 @@ static void webkit_settings_class_init(WebKitSettingsClass* klass)
         "enable-page-lifecycle",
         _("Enable Page Lifecycle"),
         _("Whether to enable the Page Lifecycle API."),
-        TRUE,
+        FEATURE_DEFAULT(PageLifecycleAPIEnabled),
         readWriteConstructParamFlags);
 
     /**
@@ -1953,7 +1953,7 @@ static void webkit_settings_class_init(WebKitSettingsClass* klass)
         "destroy-window-on-freeze",
         _("Destroy window on freeze"),
         _("Whether to destroy the native window on freeze."),
-        FALSE,
+        FEATURE_DEFAULT(PageLifecycleAPIDestroyWindowOnFreeze),
         readWriteConstructParamFlags);
 
     g_object_class_install_properties(gObjectClass, N_PROPERTIES, sObjProperties);
