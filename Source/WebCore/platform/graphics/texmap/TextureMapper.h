@@ -82,7 +82,6 @@ public:
     IntRect clipBounds();
     IntSize maxTextureSize() const;
     void setDepthRange(double zNear, double zFar);
-    std::pair<double, double> depthRange() const;
     void setMaskMode(bool m) { m_isMaskMode = m; }
     void setWrapMode(WrapMode m) { m_wrapMode = m; }
     void setPatternTransform(const TransformationMatrix& p) { m_patternTransform = p; }
