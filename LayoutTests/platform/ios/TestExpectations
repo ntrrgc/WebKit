@@ -5781,6 +5781,8 @@ webkit.org/b/153029 fast/css-generated-content/details-summary-before-after.html
 
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/iframe_sandbox_anchor_download_block_downloads.tentative.html [ Pass Failure ]
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/sandbox_004.htm [ Pass Failure ]
+imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/move-node-local-root-events-still-fire.html [ Skip ]
+imported/w3c/web-platform-tests/html/semantics/embedded-content/the-object-element/object-image-click.sub.html [ Skip ]
 webkit.org/b/165815 imported/w3c/web-platform-tests/html/browsers/browsing-the-web/scroll-to-fragid/scroll-frag-percent-encoded.html [ Pass Failure ]
 webkit.org/b/165814 imported/w3c/web-platform-tests/html/browsers/browsing-the-web/scroll-to-fragid/scroll-to-anchor-name.html [ Pass Failure ]
 webkit.org/b/161359 imported/w3c/web-platform-tests/html/browsers/browsing-the-web/scroll-to-fragid/scroll-to-top.html [ Pass Failure ]
@@ -7109,9 +7111,6 @@ webkit.org/b/257182 imported/w3c/web-platform-tests/css/css-text/white-space/tra
 imported/w3c/web-platform-tests/css/css-highlight-api/painting/custom-highlight-painting-iframe-003.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-highlight-api/painting/custom-highlight-painting-iframe-004.html [ ImageOnlyFailure ]
 
-# Test has been flaky since it import.
-imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/sandbox-top-navigation-escalate-privileges.tentative.sub.window.html [ Failure Pass ]
-
 webkit.org/b/264063 platform/ios/mediastream/video-muted-in-background-tab.html [ Skip ]
 
 webkit.org/b/259524 media/audioSession/audioSessionState.html [ Pass Failure ]
@@ -7321,8 +7320,6 @@ webkit.org/b/195466 imported/w3c/web-platform-tests/html/semantics/embedded-cont
 webkit.org/b/195466 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/error-codes/error.html [ Pass Failure ]
 
 imported/w3c/web-platform-tests/wasm [ Skip ]
-
-webkit.org/b/201509 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-video-element/video_timeupdate_on_seek.html [ Failure ]
 
 # ANGLE Metal backend failing tests with shared texture memory on the simulator
 webkit.org/b/222685 webgl/1.0.x/conformance/textures/misc/tex-image-and-sub-image-2d-with-array-buffer-view.html [ Pass Failure ]

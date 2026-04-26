@@ -3296,7 +3296,6 @@ webkit.org/b/212807 imported/w3c/web-platform-tests/fetch/api/basic/error-after-
 # As of r263626, the imported baseline based on Mojave fails for glib. Added custom baseline for it.
 
 webkit.org/b/214029 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-video-element/resize-during-playback.html [ Failure Crash ]
-webkit.org/b/262391 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/sandbox-top-navigation-escalate-privileges.tentative.sub.window.html [ Failure ]
 
 webkit.org/b/214125 imported/w3c/web-platform-tests/html/rendering/widgets/select-wrap-no-spill.optional.html [ Failure ]
 imported/w3c/web-platform-tests/html/rendering/widgets/button-layout/propagate-text-decoration.html [ ImageOnlyFailure ]
@@ -5449,6 +5448,8 @@ webkit.org/b/312985 svg/transforms/svg-transform-scale-with-and-without-layer.ht
 
 # Anchor mouse-focusability quirk is Cocoa-only.
 webkit.org/b/312692 fast/events/anchor-mouse-focusable-quirk.html [ Skip ]
+
+imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/iframe_sandbox_allow_top_navigation_by_user_activation_without_user_gesture.html [ Skip ]
 
 # End: Common failures between GTK and WPE.
 
