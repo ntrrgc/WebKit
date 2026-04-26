@@ -14797,6 +14797,12 @@ void WebPageProxy::setViewportSizeForCSSViewportUnits(const FloatSize& viewportS
 
 #if USE(AUTOMATIC_TEXT_REPLACEMENT)
 
+static void textCheckerStateChanged()
+{
+    for (auto& processPool : WebProcessPool::allProcessPools())
+        processPool->textCheckerStateChanged();
+}
+
 void WebPageProxy::toggleSmartInsertDelete()
 {
     if (TextChecker::isTestingMode())
@@ -14805,32 +14811,42 @@ void WebPageProxy::toggleSmartInsertDelete()
 
 void WebPageProxy::toggleAutomaticQuoteSubstitution()
 {
-    if (TextChecker::isTestingMode())
+    if (TextChecker::isTestingMode()) {
         TextChecker::setAutomaticQuoteSubstitutionEnabled(!TextChecker::state().contains(TextCheckerState::AutomaticQuoteSubstitutionEnabled));
+        textCheckerStateChanged();
+    }
 }
 
 void WebPageProxy::toggleAutomaticLinkDetection()
 {
-    if (TextChecker::isTestingMode())
+    if (TextChecker::isTestingMode()) {
         TextChecker::setAutomaticLinkDetectionEnabled(!TextChecker::state().contains(TextCheckerState::AutomaticLinkDetectionEnabled));
+        textCheckerStateChanged();
+    }
 }
 
 void WebPageProxy::toggleAutomaticDashSubstitution()
 {
-    if (TextChecker::isTestingMode())
+    if (TextChecker::isTestingMode()) {
         TextChecker::setAutomaticDashSubstitutionEnabled(!TextChecker::state().contains(TextCheckerState::AutomaticDashSubstitutionEnabled));
+        textCheckerStateChanged();
+    }
 }
 
 void WebPageProxy::toggleSmartLists()
 {
-    if (TextChecker::isTestingMode())
+    if (TextChecker::isTestingMode()) {
         TextChecker::setSmartListsEnabled(!TextChecker::state().contains(TextCheckerState::SmartListsEnabled));
+        textCheckerStateChanged();
+    }
 }
 
 void WebPageProxy::toggleAutomaticTextReplacement()
 {
-    if (TextChecker::isTestingMode())
+    if (TextChecker::isTestingMode()) {
         TextChecker::setAutomaticTextReplacementEnabled(!TextChecker::state().contains(TextCheckerState::AutomaticTextReplacementEnabled));
+        textCheckerStateChanged();
+    }
 }
 
 #endif
