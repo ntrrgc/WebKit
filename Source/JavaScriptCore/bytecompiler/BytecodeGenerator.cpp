@@ -4740,7 +4740,7 @@ void BytecodeGenerator::emitUsingBodyScope(unsigned usingCount, bool hasAwaitUsi
         // Shared temporaries for the catch handler (one pair is enough across all slots).
         RefPtr<RegisterID> caughtException = newTemporary();
         RefPtr<RegisterID> caughtValue = newTemporary();
-        RefPtr<RegisterID> createSuppressedErrorFunc = newTemporary();
+        RefPtr<RegisterID> suppressedErrorCtor = newTemporary();
 
         auto emitSuppressedErrorCatch = [&](TryData* trySlotData, Label& catchLabel) {
             emitLabel(catchLabel);
@@ -4750,12 +4750,11 @@ void BytecodeGenerator::emitUsingBodyScope(unsigned usingCount, bool hasAwaitUsi
             Ref<Label> firstError = newLabel();
             emitJumpIfFalse(hasError.get(), firstError.get());
 
-            moveLinkTimeConstant(createSuppressedErrorFunc.get(), LinkTimeConstant::createSuppressedError);
+            moveLinkTimeConstant(suppressedErrorCtor.get(), LinkTimeConstant::SuppressedError);
             CallArguments seArgs(*this, nullptr, 2);
-            emitLoad(seArgs.thisRegister(), jsUndefined());
             move(seArgs.argumentRegister(0), caughtValue.get());
             move(seArgs.argumentRegister(1), pendingError.get());
-            emitCall(pendingError.get(), createSuppressedErrorFunc.get(), NoExpectedFunction, seArgs, divot, divot, divot, DebuggableCall::No);
+            emitConstruct(pendingError.get(), suppressedErrorCtor.get(), suppressedErrorCtor.get(), NoExpectedFunction, seArgs, divot, divot, divot);
             emitJump(afterCatch.get());
 
             emitLabel(firstError.get());
