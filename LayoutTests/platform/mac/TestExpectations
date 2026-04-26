@@ -1828,6 +1828,16 @@ imported/w3c/web-platform-tests/webcodecs/videoFrame-drawImage.any.worker.html [
 
 webkit.org/b/230327 imported/w3c/web-platform-tests/css/css-transforms/crashtests/transform-marquee-resize-div-image-001.html [ Pass Failure ]
 
+# Tests that use "finger" events
+imported/w3c/web-platform-tests/css/css-scroll-snap/snap-fling-in-large-area.html [ Skip ]
+
+imported/w3c/web-platform-tests/css/css-scroll-snap/snap-after-relayout/multiple-aligned-targets/common-to-both-axes-supercedes-first-in-tree-order.html [ Pass Failure ]
+imported/w3c/web-platform-tests/css/css-scroll-snap/snap-after-relayout/multiple-aligned-targets/prefer-focused-nested-containers.html [ Pass Failure ]
+imported/w3c/web-platform-tests/css/css-scroll-snap/snap-after-relayout/resnap-on-reconstructing-frame.html [ Failure ]
+imported/w3c/web-platform-tests/css/css-scroll-snap/snap-after-relayout/multiple-aligned-targets/prefer-targeted-element.html [ Skip ]
+imported/w3c/web-platform-tests/css/css-scroll-snap/scroll-margin-focus.html [ Pass Failure ]
+imported/w3c/web-platform-tests/css/css-scroll-snap/scroll-margin-editable.html [ Pass Failure ]
+
 webkit.org/b/170629  memory/memory-pressure-simulation.html [ Pass Failure Crash ]
 
 webkit.org/b/239091 http/tests/media/modern-media-controls/macos-fullscreen-media-controls/macos-fullscreen-media-controls-live-broadcast.html [ Pass Failure ]
