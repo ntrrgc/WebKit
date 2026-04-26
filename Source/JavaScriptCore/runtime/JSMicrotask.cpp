@@ -982,16 +982,17 @@ static void moduleLoadTopSettled(JSGlobalObject* globalObject, VM& vm, ThrowScop
         JSPromise* statePromise = JSPromise::create(vm, globalObject->promiseStructure());
         statePromise->markAsHandled();
         AbstractModuleRecord::ModuleRequest request { specifier, ScriptFetchParameters::create(type) };
-        ModuleLoaderPayload* modulePayload;
+        // combinedCell is the host-defined payload AND the AND-join state for loadPromise+statePromise.
+        // For dynamic import we wrap statePromise; for graph load we use the ModuleGraphLoadingState directly.
+        JSCell* combinedCell;
         JSPromise* loadPromise;
 
         if (context->dynamic()) {
-            modulePayload = ModuleLoaderPayload::create(vm, statePromise);
-            loadPromise = globalObject->moduleLoader()->loadModule(globalObject, globalObject, request, modulePayload, scriptFetcher, false, context->useImportMap());
+            combinedCell = ModuleLoaderPayload::create(vm, statePromise);
+            loadPromise = globalObject->moduleLoader()->loadModule(globalObject, globalObject, request, combinedCell, scriptFetcher, false, context->useImportMap());
         } else {
-            auto graphLoadingState = ModuleGraphLoadingState::create(vm, statePromise, scriptFetcher);
-            modulePayload = ModuleLoaderPayload::create(vm, graphLoadingState);
-            loadPromise = globalObject->moduleLoader()->loadModule(globalObject, globalObject, request, modulePayload, scriptFetcher, context->evaluate(), context->useImportMap());
+            combinedCell = ModuleGraphLoadingState::create(vm, statePromise, scriptFetcher);
+            loadPromise = globalObject->moduleLoader()->loadModule(globalObject, globalObject, request, combinedCell, scriptFetcher, context->evaluate(), context->useImportMap());
             if (scope.exception()) {
                 intermediatePromise->rejectWithCaughtException(globalObject, scope);
                 return;
@@ -1011,8 +1012,8 @@ static void moduleLoadTopSettled(JSGlobalObject* globalObject, VM& vm, ThrowScop
         JSPromise* combinedPromise = JSPromise::create(vm, globalObject->promiseStructure());
         combinedPromise->markAsHandled();
 
-        loadPromise->performPromiseThenWithInternalMicrotask(vm, globalObject, InternalMicrotask::ModuleLoadCombinedLoadSettled, combinedPromise, modulePayload);
-        statePromise->performPromiseThenWithInternalMicrotask(vm, globalObject, InternalMicrotask::ModuleLoadCombinedStateSettled, combinedPromise, modulePayload);
+        loadPromise->performPromiseThenWithInternalMicrotask(vm, globalObject, InternalMicrotask::ModuleLoadCombinedLoadSettled, combinedPromise, combinedCell);
+        statePromise->performPromiseThenWithInternalMicrotask(vm, globalObject, InternalMicrotask::ModuleLoadCombinedStateSettled, combinedPromise, combinedCell);
 
         intermediatePromise->pipeFrom(vm, combinedPromise);
     } else {
@@ -1094,21 +1095,35 @@ static void moduleLoadCombinedLoadSettled(JSGlobalObject* globalObject, VM& vm, 
     // Combined promise: load side settled
     // arguments[0] = combinedPromise
     // arguments[1] = resolution or error
-    // arguments[2] = ModuleLoaderPayload*
+    // arguments[2] = ModuleGraphLoadingState* (graph load) or ModuleLoaderPayload* (dynamic import)
     auto* combinedPromise = uncheckedDowncast<JSPromise>(arguments[0]);
-    auto* modulePayload = uncheckedDowncast<ModuleLoaderPayload>(arguments[2]);
+    auto* combinedCell = arguments[2].asCell();
+    ASSERT(isModuleLoaderHostDefinedPayload(combinedCell));
     auto status = static_cast<JSPromise::Status>(payload);
     scope.release();
-    if (status == JSPromise::Status::Fulfilled) {
-        if (modulePayload->decrementRemaining() && combinedPromise->status() == JSPromise::Status::Pending) {
-            JSValue fulfillmentValue = modulePayload->fulfillment();
+    bool fullySettled;
+    if (auto* state = dynamicDowncast<ModuleGraphLoadingState>(combinedCell))
+        fullySettled = state->decrementRemaining();
+    else
+        fullySettled = uncheckedDowncast<ModuleLoaderPayload>(combinedCell)->decrementRemaining();
+    switch (combinedPromise->status()) {
+    case JSPromise::Status::Pending: {
+        if (status == JSPromise::Status::Fulfilled) {
+            if (!fullySettled)
+                return;
+            JSValue fulfillmentValue;
+            if (auto* state = dynamicDowncast<ModuleGraphLoadingState>(combinedCell))
+                fulfillmentValue = state->fulfillment();
+            else
+                fulfillmentValue = uncheckedDowncast<ModuleLoaderPayload>(combinedCell)->fulfillment();
             ASSERT(fulfillmentValue);
             combinedPromise->fulfill(vm, globalObject, fulfillmentValue);
-        }
-    } else {
-        modulePayload->decrementRemaining();
-        if (combinedPromise->status() == JSPromise::Status::Pending)
+        } else
             combinedPromise->reject(vm, globalObject, arguments[1]);
+        return;
+    }
+    default:
+        return;
     }
 }
 
@@ -1117,21 +1132,33 @@ static void moduleLoadCombinedStateSettled(JSGlobalObject* globalObject, VM& vm,
     // Combined promise: state side settled
     // arguments[0] = combinedPromise
     // arguments[1] = resolution or error
-    // arguments[2] = ModuleLoaderPayload*
+    // arguments[2] = ModuleGraphLoadingState* (graph load) or ModuleLoaderPayload* (dynamic import)
     auto* combinedPromise = uncheckedDowncast<JSPromise>(arguments[0]);
-    auto* modulePayload = uncheckedDowncast<ModuleLoaderPayload>(arguments[2]);
+    auto* combinedCell = arguments[2].asCell();
+    ASSERT(isModuleLoaderHostDefinedPayload(combinedCell));
     auto status = static_cast<JSPromise::Status>(payload);
     scope.release();
-    if (status == JSPromise::Status::Fulfilled) {
-        if (modulePayload->decrementRemaining()) {
-            if (combinedPromise->status() == JSPromise::Status::Pending)
+    bool fullySettled;
+    if (auto* state = dynamicDowncast<ModuleGraphLoadingState>(combinedCell)) {
+        fullySettled = state->decrementRemaining();
+        if (status == JSPromise::Status::Fulfilled && !fullySettled)
+            state->setFulfillment(vm, arguments[1]);
+    } else {
+        auto* p = uncheckedDowncast<ModuleLoaderPayload>(combinedCell);
+        fullySettled = p->decrementRemaining();
+        if (status == JSPromise::Status::Fulfilled && !fullySettled)
+            p->setFulfillment(vm, arguments[1]);
+    }
+    switch (combinedPromise->status()) {
+    case JSPromise::Status::Pending:
+        if (status == JSPromise::Status::Fulfilled) {
+            if (fullySettled)
                 combinedPromise->fulfill(vm, globalObject, arguments[1]);
         } else
-            modulePayload->fulfillment(vm, arguments[1]);
-    } else {
-        modulePayload->decrementRemaining();
-        if (combinedPromise->status() == JSPromise::Status::Pending)
             combinedPromise->reject(vm, globalObject, arguments[1]);
+        return;
+    default:
+        return;
     }
 }
 

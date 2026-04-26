@@ -577,10 +577,12 @@ AbstractModuleRecord* JSModuleLoader::maybeGetImportedModule(AbstractModuleRecor
     return nullptr;
 }
 
-JSPromise* JSModuleLoader::hostLoadImportedModule(JSGlobalObject* globalObject, const ModuleReferrer& referrer, const ModuleRequest& moduleRequest, ModuleLoaderPayload* payload, RefPtr<ScriptFetcher> scriptFetcher, bool useImportMap)
+JSPromise* JSModuleLoader::hostLoadImportedModule(JSGlobalObject* globalObject, const ModuleReferrer& referrer, const ModuleRequest& moduleRequest, JSCell* payload, RefPtr<ScriptFetcher> scriptFetcher, bool useImportMap)
 {
     // HostLoadImportedModule(referrer, moduleRequest, loadState, payload)
     // https://html.spec.whatwg.org/multipage/webappapis.html#hostloadimportedmodule
+
+    ASSERT(isModuleLoaderHostDefinedPayload(payload));
 
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -703,8 +705,10 @@ JSPromise* JSModuleLoader::hostLoadImportedModule(JSGlobalObject* globalObject, 
     return loadPromise;
 }
 
-JSPromise* JSModuleLoader::loadModule(JSGlobalObject* globalObject, const ModuleReferrer& referrer, const ModuleRequest& moduleRequest, ModuleLoaderPayload* payload, RefPtr<ScriptFetcher> scriptFetcher, bool evaluate, bool useImportMap)
+JSPromise* JSModuleLoader::loadModule(JSGlobalObject* globalObject, const ModuleReferrer& referrer, const ModuleRequest& moduleRequest, JSCell* payload, RefPtr<ScriptFetcher> scriptFetcher, bool evaluate, bool useImportMap)
 {
+    ASSERT(isModuleLoaderHostDefinedPayload(payload));
+
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
@@ -761,7 +765,7 @@ void JSModuleLoader::innerModuleLoading(JSGlobalObject* globalObject, ModuleGrap
                 // 2.d.iii. Else,
             } else {
                 // 2.d.iii.1. Perform HostLoadImportedModule(module, request, state.[[HostDefined]], state).
-                JSPromise* promise = hostLoadImportedModule(globalObject, cyclic, request, ModuleLoaderPayload::create(vm, state), state->scriptFetcher(), true);
+                JSPromise* promise = hostLoadImportedModule(globalObject, cyclic, request, state, state->scriptFetcher(), true);
                 RETURN_IF_EXCEPTION(scope, void());
                 promise->performPromiseThenWithInternalMicrotask(vm, globalObject, InternalMicrotask::ModuleGraphLoadingError, jsUndefined(), state);
                 // 2.d.iii.2. NOTE: HostLoadImportedModule will call FinishLoadingImportedModule, which re-enters the graph loading process through ContinueModuleLoading.
@@ -792,10 +796,12 @@ void JSModuleLoader::innerModuleLoading(JSGlobalObject* globalObject, ModuleGrap
     scope.release();
 }
 
-void JSModuleLoader::finishLoadingImportedModule(JSGlobalObject* globalObject, const ModuleReferrer& referrer, const ModuleRequest& moduleRequest, ModuleLoaderPayload* payload, ModuleCompletion result, RefPtr<ScriptFetcher> scriptFetcher)
+void JSModuleLoader::finishLoadingImportedModule(JSGlobalObject* globalObject, const ModuleReferrer& referrer, const ModuleRequest& moduleRequest, JSCell* payload, ModuleCompletion result, RefPtr<ScriptFetcher> scriptFetcher)
 {
     // FinishLoadingImportedModule(referrer, moduleRequest, payload, result)
     // https://tc39.es/ecma262/#sec-FinishLoadingImportedModule
+
+    ASSERT(isModuleLoaderHostDefinedPayload(payload));
 
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -831,15 +837,15 @@ void JSModuleLoader::finishLoadingImportedModule(JSGlobalObject* globalObject, c
     }
 
     // 2. If payload is a GraphLoadingState Record, then
-    if (ModuleGraphLoadingState* state = payload->getState()) {
+    if (auto* state = dynamicDowncast<ModuleGraphLoadingState>(payload)) {
         // 2.a. Perform ContinueModuleLoading(payload, result).
         continueModuleLoading(globalObject, state, result);
         RETURN_IF_EXCEPTION(scope, void());
     // 3. Else,
     } else {
-        ASSERT(payload->isPromise());
         // 3.a. Perform ContinueDynamicImport(payload, result).
-        continueDynamicImport(globalObject, payload->getPromise(), result, WTF::move(scriptFetcher));
+        auto* dynamicPayload = uncheckedDowncast<ModuleLoaderPayload>(payload);
+        continueDynamicImport(globalObject, dynamicPayload->promise(), result, WTF::move(scriptFetcher));
         RETURN_IF_EXCEPTION(scope, void());
     }
 

@@ -234,7 +234,7 @@ JSPromise* loadAndEvaluateModule(JSGlobalObject* globalObject, SourceCode&& sour
 
     AbstractModuleRecord::ModuleRequest request { WTF::move(key), ScriptFetchParameters::create(type) };
 
-    JSPromise* promise = globalObject->moduleLoader()->loadModule(globalObject, globalObject, request, ModuleLoaderPayload::create(vm, graphLoadingState), WTF::move(scriptFetcher), true, false);
+    JSPromise* promise = globalObject->moduleLoader()->loadModule(globalObject, globalObject, request, graphLoadingState, WTF::move(scriptFetcher), true, false);
     RETURN_IF_EXCEPTION(scope, rejectPromise(scope, globalObject));
 
     JSPromise* resultPromise = JSPromise::create(vm, globalObject->promiseStructure());
