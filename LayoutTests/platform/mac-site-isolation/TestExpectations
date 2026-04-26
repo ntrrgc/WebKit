@@ -124,7 +124,6 @@ webrtc/peerconnection-page-cache.html [ Timeout ]
 # Tests that Text fail #
 ########################
 accessibility/youtube-embed-accessibility-hierarchy.html [ Failure Timeout ]
-animations/animation-multiple-callbacks-timestamp.html [ Failure ]
 editing/execCommand/delete-no-scroll.html [ Failure ]
 editing/inserting/insert-list-then-edit-command-crash.html [ Failure ]
 editing/pasteboard/copy-text-from-uneditable-element.html [ Failure ]
