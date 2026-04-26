@@ -2331,8 +2331,6 @@ fast/mediastream/multi-microphone.html [ Skip ]
 
 fast/mediastream/getUserMedia-and-getVideoPlaybackQuality.html [ Skip ]
 
-webkit.org/b/208182 fast/repaint/backgroundSizeRepaint.html [ ImageOnlyFailure Pass ]
-
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Skia-related bugs
 #////////////////////////////////////////////////////////////////////////////////////////
