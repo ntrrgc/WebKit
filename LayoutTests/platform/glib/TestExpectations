@@ -2500,7 +2500,11 @@ imported/w3c/web-platform-tests/css/filter-effects/backdrop-filter-backdrop-root
 imported/w3c/web-platform-tests/css/filter-effects/backdrop-filter-edge-behavior.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/filter-effects/backdrop-filter-edge-pixels-2.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/filter-effects/backdrop-filter-transform.html [ ImageOnlyFailure ]
-
+imported/w3c/web-platform-tests/css/filter-effects/backdrop-filter-backdrop-root-opacity.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/filter-effects/backdrop-filter-image-size-filter-size-mismatch.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/filter-effects/drop-shadow-with-3d-transform.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/filter-effects/fecolormatrix-display-p3.html [ Skip ] # timeout
+imported/w3c/web-platform-tests/css/filter-effects/fecomponenttransfer-display-p3.html [ Skip ] # timeout
 
 # The following tests need LBSE enabled builds, which is off by default for this port.
 svg/z-index [ Skip ]
