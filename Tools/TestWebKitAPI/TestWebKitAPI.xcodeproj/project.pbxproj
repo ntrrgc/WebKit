@@ -178,6 +178,7 @@
 				"\"${SCRIPT_INPUT_FILE_0}\"",
 				"",
 				"",
+				"",
 			);
 		};
 /* End PBXBuildRule section */

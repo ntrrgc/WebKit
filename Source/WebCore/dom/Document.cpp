@@ -3629,6 +3629,11 @@ void Document::willBeRemovedFromFrame()
     if (!m_wheelEventTargets.isEmptyIgnoringNullReferences() && parentDocument())
         protect(parentDocument())->didRemoveEventTargetNode(*this);
 
+#if ENABLE(DBLCLICK_EVENT_REGIONS)
+    if (!m_doubleClickEventTargets.isEmptyIgnoringNullReferences() && parentDocument())
+        protect(parentDocument())->didRemoveEventTargetNode(*this);
+#endif
+
     if (RefPtr mediaQueryMatcher = m_mediaQueryMatcher)
         mediaQueryMatcher->documentDestroyed();
 
@@ -6461,6 +6466,8 @@ void Document::invalidateEventListenerRegions()
         scheduleFullStyleRebuild();
     else
         protect(documentElement())->invalidateStyleInternal();
+
+    scheduleRenderingUpdate(RenderingUpdateStep::EventRegionUpdate);
 }
 
 void Document::invalidateRenderingDependentRegions()
@@ -9152,7 +9159,7 @@ HttpEquivPolicy Document::httpEquivPolicy() const
     return HttpEquivPolicy::Enabled;
 }
 
-void Document::wheelOrTouchEventHandlersChanged(Node* node)
+void Document::eventHandlersIncludedInEventRegionsChanged(Node* node)
 {
 #if ENABLE(WHEEL_EVENT_REGIONS) || ENABLE(TOUCH_EVENT_REGIONS)
     if (RefPtr element = dynamicDowncast<Element>(node)) {
@@ -9179,7 +9186,7 @@ void Document::wheelEventHandlersChanged(Node* node)
     }
 
 #if ENABLE(WHEEL_EVENT_REGIONS)
-    wheelOrTouchEventHandlersChanged(node);
+    eventHandlersIncludedInEventRegionsChanged(node);
 #else
     UNUSED_PARAM(node);
 #endif
@@ -9232,13 +9239,13 @@ void Document::didAddTouchEventHandler(Node& handler)
 #if ENABLE(TOUCH_EVENTS)
     m_touchEventTargets.add(handler);
 
-    if (auto* parent = parentDocument()) {
+    if (RefPtr parent = parentDocument()) {
         parent->didAddTouchEventHandler(*this);
         return;
     }
 
 #if ENABLE(TOUCH_EVENT_REGIONS)
-    wheelOrTouchEventHandlersChanged(&handler);
+    eventHandlersIncludedInEventRegionsChanged(&handler);
     invalidateEventListenerRegions();
 #endif
 
@@ -9252,11 +9259,11 @@ void Document::didRemoveTouchEventHandler(Node& handler, EventHandlerRemoval rem
 #if ENABLE(TOUCH_EVENTS)
     removeHandlerFromSet(m_touchEventTargets, handler, removalMode);
 
-    if (auto* parent = parentDocument())
+    if (RefPtr parent = parentDocument())
         parent->didRemoveTouchEventHandler(*this, removalMode);
 
 #if ENABLE(TOUCH_EVENT_REGIONS)
-    wheelOrTouchEventHandlersChanged(&handler);
+    eventHandlersIncludedInEventRegionsChanged(&handler);
 #endif
 
 #else
@@ -9264,6 +9271,33 @@ void Document::didRemoveTouchEventHandler(Node& handler, EventHandlerRemoval rem
     UNUSED_PARAM(removalMode);
 #endif
 }
+
+#if ENABLE(DBLCLICK_EVENT_REGIONS)
+
+void Document::didAddDoubleClickEventHandler(Node& handler)
+{
+    m_doubleClickEventTargets.add(handler);
+
+    if (RefPtr parent = parentDocument()) {
+        parent->didAddDoubleClickEventHandler(*this);
+        return;
+    }
+
+    eventHandlersIncludedInEventRegionsChanged(&handler);
+    invalidateEventListenerRegions();
+}
+
+void Document::didRemoveDoubleClickEventHandler(Node& handler, EventHandlerRemoval removal)
+{
+    removeHandlerFromSet(m_doubleClickEventTargets, handler, removal);
+
+    if (RefPtr parent = parentDocument())
+        parent->didRemoveDoubleClickEventHandler(*this, removal);
+
+    eventHandlersIncludedInEventRegionsChanged(&handler);
+}
+
+#endif
 
 void Document::didRemoveEventTargetNode(Node& handler)
 {
@@ -9278,6 +9312,13 @@ void Document::didRemoveEventTargetNode(Node& handler)
         if ((&handler == this || m_wheelEventTargets.isEmptyIgnoringNullReferences()) && parentDocument())
             protect(parentDocument())->didRemoveEventTargetNode(*this);
     }
+
+#if ENABLE(DBLCLICK_EVENT_REGIONS)
+    if (m_doubleClickEventTargets.removeAll(handler)) {
+        if ((&handler == this || m_doubleClickEventTargets.isEmptyIgnoringNullReferences()) && parentDocument())
+            protect(parentDocument())->didRemoveEventTargetNode(*this);
+    }
+#endif
 }
 
 unsigned Document::touchEventHandlerCount() const
@@ -9285,6 +9326,18 @@ unsigned Document::touchEventHandlerCount() const
 #if ENABLE(TOUCH_EVENTS)
     unsigned count = 0;
     for (auto handler : m_touchEventTargets)
+        count += handler.value;
+    return count;
+#else
+    return 0;
+#endif
+}
+
+unsigned Document::doubleClickEventHandlerCount() const
+{
+#if ENABLE(DBLCLICK_EVENT_REGIONS)
+    unsigned count = 0;
+    for (auto handler : m_doubleClickEventTargets)
         count += handler.value;
     return count;
 #else
@@ -9432,6 +9485,13 @@ bool Document::hasTouchEventHandlers() const
 #else
     return !m_touchEventTargets.isEmptyIgnoringNullReferences();
 #endif
+}
+#endif
+
+#if ENABLE(DBLCLICK_EVENT_REGIONS)
+bool Document::hasDoubleClickEventHandlers() const
+{
+    return !m_doubleClickEventTargets.isEmptyIgnoringNullReferences();
 }
 #endif
 

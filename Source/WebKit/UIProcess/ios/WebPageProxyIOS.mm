@@ -52,6 +52,7 @@
 #import "PrintInfo.h"
 #import "ProvisionalPageProxy.h"
 #import "RemoteLayerTreeCommitBundle.h"
+#import "RemoteLayerTreeDrawingAreaProxy.h"
 #import "RemoteLayerTreeHost.h"
 #import "RemoteLayerTreeNode.h"
 #import "RemoteLayerTreeTransaction.h"
@@ -819,9 +820,26 @@ void WebPageProxy::didRecognizeLongPress()
     protect(legacyMainFrameProcess())->send(Messages::WebPage::DidRecognizeLongPress(), webPageIDInMainFrameProcess());
 }
 
-void WebPageProxy::handleDoubleTapForDoubleClickAtPoint(const WebCore::IntPoint& point, OptionSet<WebEventModifier> modifiers, TransactionID layerTreeTransactionIdAtLastTouchStart)
+void WebPageProxy::handleDoubleTapForDoubleClickAtPoint(const WebCore::IntPoint& point, OptionSet<WebEventModifier> modifiers, const HashMap<WebCore::ProcessIdentifier, TransactionID>& layerTreeTransactionIdsAtLastTouchStart)
 {
-    protect(legacyMainFrameProcess())->send(Messages::WebPage::HandleDoubleTapForDoubleClickAtPoint(point, modifiers, layerTreeTransactionIdAtLastTouchStart), webPageIDInMainFrameProcess());
+    RefPtr remoteLayerTreeDrawingAreaProxy = dynamicDowncast<RemoteLayerTreeDrawingAreaProxy>(drawingArea());
+    if (!remoteLayerTreeDrawingAreaProxy)
+        return;
+
+    auto hitResult = remoteLayerTreeDrawingAreaProxy->eventRegionHitTestResultForDoubleClickAtPoint(point);
+    if (!hitResult)
+        return;
+
+    auto layerTreeTransactionIdsIterator = layerTreeTransactionIdsAtLastTouchStart.find(processContainingFrame(hitResult->frameIdentifier)->coreProcessIdentifier());
+    if (layerTreeTransactionIdsIterator  == layerTreeTransactionIdsAtLastTouchStart.end()) {
+        ASSERT_NOT_REACHED();
+        return;
+    }
+
+    auto pointInTargetFrame = flooredIntPoint(hitResult->pointInTargetFrameContents);
+    auto layerTreeTransactionIdAtLastTouchStart = layerTreeTransactionIdsIterator->value;
+
+    sendToProcessContainingFrame(hitResult->frameIdentifier, Messages::WebPage::HandleDoubleTapForDoubleClickAtPoint(hitResult->frameIdentifier, point, pointInTargetFrame, modifiers, layerTreeTransactionIdAtLastTouchStart));
 }
 
 void WebPageProxy::inspectorNodeSearchMovedToPosition(const WebCore::FloatPoint& position)
