@@ -5948,7 +5948,6 @@ imported/w3c/web-platform-tests/css/filter-effects/visibility-hidden-element-wit
 imported/w3c/web-platform-tests/css/filter-effects/backdrop-filter-backdrop-root-animation-in-effect.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/filter-effects/backdrop-filter-backdrop-root-mask.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/filter-effects/fecolormatrix-display-p3.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/filter-effects/backdrop-filter-plus-filter-2.html [ ImageOnlyFailure ]
 
 # CSS motion path URL support.
 imported/w3c/web-platform-tests/css/motion/offset-path-url-002.html [ ImageOnlyFailure ]
@@ -8066,7 +8065,7 @@ imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-track-settings.tentative.h
 
 media/wireless-playback-media-player/ [ Skip ]
 
-webkit.org/b/295810 [ Debug ] fast/dynamic/disappearing-content-on-size-change-crash.html [ Timeout ]
+webkit.org/b/295810 [ Debug ] fast/dynamic/disappearing-content-on-size-change-crash.html [ Timeout Pass ]
 
 [ Debug ] fast/inline/continuation-with-anon-wrappers.html [ Slow ]
 
@@ -8181,3 +8180,5 @@ svg/compositing/foreground-layer-composited-html-in-foreignobject-between-rects.
 svg/compositing/foreground-layer-composited-svg-rect-and-foreignobject-interleaved.html [ ImageOnlyFailure ]
 svg/compositing/foreground-layer-mixed-svg-and-foreignobject-composited.html [ ImageOnlyFailure ]
 svg/compositing/foreground-layer-multiple-foreignobjects-composited.html [ ImageOnlyFailure ]
+
+webkit.org/b/310217 imported/w3c/web-platform-tests/pointerevents/pointerevent_pointer_boundary_events_after_removing_last_over_element.html [ Pass Failure ]

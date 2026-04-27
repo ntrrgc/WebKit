@@ -750,7 +750,7 @@ webkit.org/b/252878 imported/w3c/web-platform-tests/wasm/jsapi/instance/construc
 webkit.org/b/252878 inspector/css/modify-css-property.html [ Failure Pass ]
 webkit.org/b/252878 inspector/debugger/breakpoints/resolved-dump-all-pause-locations.html [ Failure Timeout Pass ]
 webkit.org/b/252878 inspector/debugger/breakpoints/resolved-dump-each-line.html [ Failure Timeout Pass ]
-webkit.org/b/252878 webaudio/audioworket-out-of-memory.html [ Pass Timeout ]
+webkit.org/b/252878 webaudio/audioworket-out-of-memory.html [ Pass Failure ]
 
 imported/w3c/web-platform-tests/cors/remote-origin.htm [ Pass Failure ]
 
@@ -1468,10 +1468,11 @@ webkit.org/b/309267 inspector/unit-tests/array-utilities.html [ Pass Failure ]
 
 [ Release ] http/tests/security/video-cross-origin-accessfailure.html [ Pass Failure ]
 [ Release ] imported/w3c/web-platform-tests/permissions/permissions-garbage-collect.https.html [ Pass Failure ]
-[ Release ] platform/gtk/fast/frames/scrolling-iframe-out-of-viewport.html [ Pass Failure ]
 [ Release ] imported/w3c/web-platform-tests/preload/prefetch-document.html [ Failure Pass ]
 [ Release ] imported/w3c/web-platform-tests/content-security-policy/frame-ancestors/frame-ancestors-none-block.html [ Failure Pass ]
 [ Release ] fast/dom/Window/window-resize-update-scrollbars.html [ Failure Pass ]
+
+platform/gtk/fast/frames/scrolling-iframe-out-of-viewport.html [ Pass Failure ]
 
 webkit.org/b/309892 accessibility/aria-role-on-label.html [ Pass Crash ]
 webkit.org/b/309894 http/tests/inspector/target/pause-on-inline-debugger-statement.html [ Pass Timeout ]
@@ -1505,3 +1506,5 @@ webkit.org/b/312889 media/video-seek-past-end-paused.html [ Pass Timeout ]
 webkit.org/b/312892 imported/w3c/web-platform-tests/html/browsers/browsing-the-web/navigating-across-documents/replace-before-load/window-open-self.html [ Pass Failure ]
 
 webkit.org/b/313043 transitions/remove-transition-style.html [ Pass Failure ]
+
+imported/w3c/web-platform-tests/css/css-scroll-snap/scroll-target-margin-005.html [ Pass Failure ]

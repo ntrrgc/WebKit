@@ -1325,3 +1325,5 @@ webkit.org/b/313054 [ arm64 ] compositing/backing/animate-into-view-with-descend
 webkit.org/b/160119 [ arm64 ] editing/selection/caret-at-bidi-boundary.html [ Pass Timeout ]
 webkit.org/b/313055 [ arm64 ] fast/canvas/image-buffer-backend-variants.html [ Pass Failure Timeout ]
 webkit.org/b/313112 [ arm64 ] webrtc/video-mute.html [ Pass Failure Timeout ]
+
+imported/w3c/web-platform-tests/css/css-scroll-snap/scroll-target-margin-005.html [ Failure ]
