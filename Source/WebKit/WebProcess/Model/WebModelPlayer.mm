@@ -34,6 +34,7 @@
 #import "ModelProcessModelPlayerTransformState.h"
 #import "ModelTypes.h"
 #import "RemoteGPUProxy.h"
+#import "RemoteMeshProxy.h"
 #import "WKStageModeOrbitSimulator.h"
 #import <WebCore/Document.h>
 #import <WebCore/DocumentEventLoop.h>
@@ -605,10 +606,7 @@ bool WebModelPlayer::supportsTransform(WebCore::TransformationMatrix transformat
     if (m_stageMode != WebCore::StageModeOperation::None)
         return false;
 
-    if (RefPtr currentModel = m_currentModel)
-        return currentModel->supportsTransform(transformationMatrix);
-
-    return false;
+    return RemoteMeshProxy::supportsTransform(transformationMatrix);
 }
 
 void WebModelPlayer::play(bool playing)

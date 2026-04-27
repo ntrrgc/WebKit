@@ -78,7 +78,6 @@ public:
     virtual bool isRemoteMeshProxy() const { return false; }
     virtual bool isMeshImpl() const { return false; }
     virtual void setEntityTransform(const WebModel::Float4x4&) = 0;
-    virtual bool supportsTransform(const WebCore::TransformationMatrix&) const { return false; }
     virtual void setScale(float) { }
     virtual void setFOV(float) { }
     virtual void setBackgroundColor(const WebModel::Float3&) { }
