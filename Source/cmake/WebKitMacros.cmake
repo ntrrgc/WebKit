@@ -617,10 +617,18 @@ macro(WEBKIT_SETUP_SWIFT_AND_GENERATE_SWIFT_CPP_INTEROP_HEADER _target _module_n
         GET_WEBKIT_CONFIG_VARIABLES(_swift_definitions)
         list(TRANSFORM _swift_definitions PREPEND "-D")
         set(_swift_options ${_swift_definitions})
+        set(_swift_xcc_options "")
+        foreach (item IN LISTS _swift_options)
+            list(APPEND _swift_xcc_options "-Xcc" ${item})
+        endforeach ()
+        get_directory_property(_dir_defs COMPILE_DEFINITIONS)
+        foreach (_def IN LISTS _dir_defs)
+            list(APPEND _swift_xcc_options "-Xcc" "-D${_def}")
+        endforeach ()
         # Other options needed by Swift for C++ interop, including the location
         # of the modulemap and hader for WebKit's internal "APIs" which we
         # make available from C++ to Swift.
-        list(APPEND _swift_options "-cxx-interoperability-mode=default" "-Xcc" "-std=c++2b" "-explicit-module-build" "-enable-upcoming-feature" "InternalImportsByDefault" "-Xcc" "-I${_interop_module_path}")
+        list(APPEND _swift_options "-cxx-interoperability-mode=default" "-Xcc" "-std=c++2b" "-enable-upcoming-feature" "InternalImportsByDefault" "-Xcc" "-I${_interop_module_path}")
         # swiftc spawns swift-plugin-server under sandbox-exec to expand macros
         # (e.g. SwiftUI @State). When the cmake build itself runs inside an
         # outer sandbox that disallows nested sandbox_apply, macro expansion
@@ -628,6 +636,10 @@ macro(WEBKIT_SETUP_SWIFT_AND_GENERATE_SWIFT_CPP_INTEROP_HEADER _target _module_n
         # found". -disable-sandbox skips the inner sandbox; the macros are
         # WebKit's own, so the isolation it provides isn't load-bearing here.
         list(APPEND _swift_options "-disable-sandbox")
+        if (NOT (PORT STREQUAL GTK OR PORT STREQUAL WPE))
+            # This does not yet work on non-Apple platforms for reasons yet to be determined.
+            list(APPEND _swift_options "-explicit-module-build")
+        endif ()
         # We'll use these options both for mainstream cmake invocations of swiftc (here)
         # and for our own invocation to output an interoperability .h file (later)
         list(TRANSFORM _swift_options PREPEND "$<$<COMPILE_LANGUAGE:Swift>:" OUTPUT_VARIABLE _swift_only_options)
@@ -683,6 +695,7 @@ macro(WEBKIT_SETUP_SWIFT_AND_GENERATE_SWIFT_CPP_INTEROP_HEADER _target _module_n
                 ${${_target}_SWIFT_EXTRA_OPTIONS}
                 ${_swift_sdk_flag}
                 ${_swift_include_dirs}
+                ${_swift_xcc_options}
                 ${_swift_sources}
                 -module-name ${_module_name}
                 -emit-clang-header-path ${_header_tmp_path}

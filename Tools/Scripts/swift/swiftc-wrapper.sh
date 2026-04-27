@@ -33,6 +33,9 @@ for arg in "$@"; do
         "--original-swift-compiler="*)
             REAL_SWIFTC="${arg#--original-swift-compiler=}"
             ;;
+        "-D"*)
+            args+=("$arg" "-Xcc" "$arg")
+            ;;
         *)
             if [[ -n "$skip_next" ]]; then
                 skip_next=

@@ -84,7 +84,7 @@ set(PAL_INTERFACE_DEPENDENCIES PAL_CopyHeaders)
 WEBKIT_FRAMEWORK_DECLARE(PAL)
 WEBKIT_INCLUDE_CONFIG_FILES_IF_EXISTS()
 
-if (SWIFT_REQUIRED)
+if (SWIFT_REQUIRED AND NOT (PORT STREQUAL GTK OR PORT STREQUAL WPE))
     target_sources(PAL PRIVATE
         ${PAL_DIR}/pal/crypto/CryptoKit+UnsafeOverlays.swift
         ${PAL_DIR}/pal/crypto/CryptoTypes.swift
@@ -143,6 +143,6 @@ WEBKIT_FRAMEWORK(PAL)
 # before compilation (they import the underlying pal module). The CopyHeaders
 # target is an interface dependency for downstream targets, but PAL itself
 # also needs it.
-if (SWIFT_REQUIRED)
+if (SWIFT_REQUIRED AND NOT (PORT STREQUAL GTK OR PORT STREQUAL WPE))
     add_dependencies(PAL PAL_CopyHeaders WTF_CopyHeaders bmalloc_CopyHeaders)
 endif ()
