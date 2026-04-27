@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Apple, Inc. All rights reserved.
+ * Copyright (C) 2026 Igalia S.L. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,25 +23,33 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-typedef (WebGLRenderingContext or WebGL2RenderingContext) WebXRWebGLRenderingContext;
+#pragma once
 
-// https://immersive-web.github.io/layers/#XRWebGLBindingtype
-[
-    Conditional=WEBXR_LAYERS,
-    EnabledBySetting=WebXRLayersAPIEnabled,
-    Exposed=Window
-] interface XRWebGLBinding {
-    constructor(WebXRSession session, WebXRWebGLRenderingContext context);
+#if ENABLE(WEBXR_LAYERS)
 
-    readonly attribute double nativeProjectionScaleFactor;
-    readonly attribute boolean usesDepthValues;
+#include "XREquirectLayerInit.h"
+#include "XRWebGLLayerBacking.h"
+#include <wtf/Ref.h>
+#include <wtf/RefPtr.h>
+#include <wtf/TZoneMalloc.h>
 
-    [CallWith=CurrentScriptExecutionContext] XRProjectionLayer createProjectionLayer(optional XRProjectionLayerInit init = {});
-    [CallWith=CurrentScriptExecutionContext] XRQuadLayer createQuadLayer(optional XRQuadLayerInit init = {});
-    XRCylinderLayer createCylinderLayer(optional XRCylinderLayerInit init = {});
-    [CallWith=CurrentScriptExecutionContext] XREquirectLayer createEquirectLayer(optional XREquirectLayerInit init = {});
-    XRCubeLayer createCubeLayer(optional XRCubeLayerInit init = {});
+namespace WebCore {
 
-    XRWebGLSubImage getSubImage(XRCompositionLayer layer, WebXRFrame frame, optional XREye eye = "none");
-    XRWebGLSubImage getViewSubImage(XRProjectionLayer layer, WebXRView view);
+class WebGLRenderingContextBase;
+class WebXRWebGLSwapchain;
+class WebXRSession;
+
+class XRWebGLEquirectLayerBacking : public XRWebGLLayerBacking {
+    WTF_MAKE_TZONE_ALLOCATED(XRWebGLEquirectLayerBacking);
+public:
+    static ExceptionOr<Ref<XRWebGLEquirectLayerBacking>> create(WebXRSession&, WebGLRenderingContextBase&, const XREquirectLayerInit&);
+
+private:
+    XRWebGLEquirectLayerBacking(PlatformXR::LayerHandle, std::unique_ptr<WebXRWebGLSwapchain>&& colorSwapchain, std::unique_ptr<WebXRWebGLSwapchain>&& depthSwapchain, const XREquirectLayerInit&);
+
+    XREquirectLayerInit m_init;
 };
+
+} // namespace WebCore
+
+#endif // ENABLE(WEBXR_LAYERS)

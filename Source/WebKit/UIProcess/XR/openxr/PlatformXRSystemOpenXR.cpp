@@ -70,6 +70,21 @@ void PlatformXRSystem::createQuadLayer(IPC::Connection&, WebCore::IntSize size, 
     else
         reply(std::nullopt);
 }
+
+void PlatformXRSystem::createEquirectLayer(IPC::Connection&, WebCore::IntSize size, PlatformXR::LayerLayout layout, CompletionHandler<void(std::optional<PlatformXR::LayerInfo>)>&& reply)
+{
+    ASSERT(RunLoop::isMain());
+
+    RefPtr page = m_page.get();
+    if (!page) {
+        reply(std::nullopt);
+        return;
+    }
+    if (auto* xrCoordinator = PlatformXRSystem::xrCoordinator())
+        xrCoordinator->createEquirectLayer(size, layout, WTF::move(reply));
+    else
+        reply(std::nullopt);
+}
 #endif
 
 } // namespace WebKit

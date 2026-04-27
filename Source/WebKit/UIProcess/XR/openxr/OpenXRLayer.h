@@ -115,6 +115,23 @@ private:
     PlatformXR::LayerLayout m_layout;
 };
 
+#if defined(XR_KHR_composition_layer_equirect2)
+class OpenXREquirectLayer final: public OpenXRLayer  {
+    WTF_MAKE_TZONE_ALLOCATED(OpenXREquirectLayer);
+    WTF_MAKE_NONCOPYABLE(OpenXREquirectLayer);
+public:
+    static std::unique_ptr<OpenXREquirectLayer> create(std::unique_ptr<OpenXRSwapchain>&&, PlatformXR::LayerLayout);
+private:
+    explicit OpenXREquirectLayer(UniqueRef<OpenXRSwapchain>&&, PlatformXR::LayerLayout);
+
+    std::optional<PlatformXR::FrameData::LayerData> startFrame() final;
+    Vector<XrCompositionLayerBaseHeader*> endFrame(const PlatformXR::DeviceLayer&, XrSpace, const Vector<XrView>&) final;
+
+    Vector<XrCompositionLayerEquirect2KHR> m_layers;
+    PlatformXR::LayerLayout m_layout;
+};
+#endif
+
 #endif
 
 } // namespace WebKit

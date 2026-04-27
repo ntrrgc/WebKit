@@ -68,6 +68,7 @@ private:
     std::optional<PlatformXR::LayerInfo> createLayerProjection(uint32_t, uint32_t, bool) final;
 #if ENABLE(WEBXR_LAYERS)
     std::optional<PlatformXR::LayerInfo> createQuadLayer(WebCore::IntSize, PlatformXR::LayerLayout) final;
+    std::optional<PlatformXR::LayerInfo> createEquirectLayer(WebCore::IntSize, PlatformXR::LayerLayout) final;
 #endif
     void deleteLayer(PlatformXR::LayerHandle) override { };
     void submitFrame(Vector<PlatformXR::DeviceLayer>&&) final;

@@ -129,6 +129,15 @@ std::optional<PlatformXR::LayerInfo> PlatformXRSystemProxy::createQuadLayer(WebC
     auto [layerInfo] = result.takeReply();
     return layerInfo;
 }
+
+std::optional<PlatformXR::LayerInfo> PlatformXRSystemProxy::createEquirectLayer(WebCore::IntSize size, PlatformXR::LayerLayout layout)
+{
+    auto result = protect(m_page)->sendSync(Messages::PlatformXRSystem::CreateEquirectLayer(size, layout));
+    if (!result.succeeded())
+        return std::nullopt;
+    auto [layerInfo] = result.takeReply();
+    return layerInfo;
+}
 #endif
 
 #if USE(OPENXR)

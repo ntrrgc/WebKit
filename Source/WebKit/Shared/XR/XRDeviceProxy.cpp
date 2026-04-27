@@ -148,6 +148,12 @@ std::optional<PlatformXR::LayerInfo> XRDeviceProxy::createQuadLayer(WebCore::Int
     RefPtr xrSystem = m_xrSystem.get();
     return xrSystem ? xrSystem->createQuadLayer(size, layout) : std::nullopt;
 }
+
+std::optional<PlatformXR::LayerInfo> XRDeviceProxy::createEquirectLayer(WebCore::IntSize size, PlatformXR::LayerLayout layout)
+{
+    RefPtr xrSystem = m_xrSystem.get();
+    return xrSystem ? xrSystem->createEquirectLayer(size, layout) : std::nullopt;
+}
 #endif
 
 void XRDeviceProxy::submitFrame(Vector<PlatformXR::DeviceLayer>&& layers)

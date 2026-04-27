@@ -512,6 +512,14 @@ struct DeviceLayer {
         FrameData::Pose poseInLocalSpace;
     };
     std::optional<QuadLayerData> quadLayerData;
+    struct EquirectLayerData {
+        float radius;
+        float centralHorizontalAngle;
+        float upperVerticalAngle;
+        float lowerVerticalAngle;
+        FrameData::Pose poseInLocalSpace;
+    };
+    std::optional<EquirectLayerData> equirectLayerData;
 #endif
 };
 
@@ -555,6 +563,7 @@ public:
     virtual std::optional<LayerInfo> createLayerProjection(uint32_t width, uint32_t height, bool alpha) = 0;
 #if ENABLE(WEBXR_LAYERS)
     virtual std::optional<LayerInfo> createQuadLayer(WebCore::IntSize, LayerLayout) = 0;
+    virtual std::optional<LayerInfo> createEquirectLayer(WebCore::IntSize, LayerLayout) = 0;
 #endif
     virtual void deleteLayer(LayerHandle) = 0;
 

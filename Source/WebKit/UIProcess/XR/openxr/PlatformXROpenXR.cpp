@@ -295,6 +295,66 @@ void OpenXRCoordinator::createQuadLayer(WebCore::IntSize size, PlatformXR::Layer
             });
         });
 }
+
+void OpenXRCoordinator::createEquirectLayer(WebCore::IntSize size, PlatformXR::LayerLayout layout, CreateEquirectCallback&& reply)
+{
+#if defined(XR_KHR_composition_layer_equirect2)
+    if (!OpenXRExtensions::singleton().isExtensionSupported(XR_KHR_COMPOSITION_LAYER_EQUIRECT2_EXTENSION_NAME ""_span)) {
+        RELEASE_LOG(XR, "OpenXRCoordinator: equirect layer extension not supported");
+        reply(std::nullopt);
+        return;
+    }
+
+    WTF::switchOn(m_state,
+        [&](Idle&) { reply(std::nullopt); },
+        [&](Active& active) {
+            active.renderQueue->dispatch([this, size, layout, completionHandler = WTF::move(reply)] mutable {
+                if (!collectSwapchainFormatsIfNeeded()) {
+                    RELEASE_LOG(XR, "OpenXRCoordinator: no supported swapchain formats");
+                    callOnMainRunLoop([completion = WTF::move(completionHandler)] mutable {
+                        completion(std::nullopt);
+                    });
+                    return;
+                }
+
+                bool alpha = false;
+                auto swapchain = createSwapchain(size.width(), size.height(), alpha);
+                if (!swapchain) {
+                    RELEASE_LOG(XR, "OpenXRCoordinator: failed to create swapchain");
+                    callOnMainRunLoop([completion = WTF::move(completionHandler)] mutable {
+                        completion(std::nullopt);
+                    });
+                    return;
+                }
+
+                LOG(XR, "Created swapchain for equirect layer with size %dx%d and format %ld", size.width(), size.height(), swapchain->format());
+                auto imageCount = swapchain->imageCount();
+                if (auto layer = OpenXREquirectLayer::create(WTF::move(swapchain), layout)) {
+#if USE(GBM)
+                    if (m_gbmDevice)
+                        layer->setGBMDevice(m_gbmDevice);
+#endif
+                    auto layerHandle = m_nextLayerHandle++;
+                    m_layers.add(layerHandle, WTF::move(layer));
+                    PlatformXR::LayerInfo layerInfo { layerHandle, imageCount };
+                    callOnMainRunLoop([completion = WTF::move(completionHandler), info = layerInfo] mutable {
+                        completion(info);
+                    });
+                } else {
+                    RELEASE_LOG(XR, "OpenXRCoordinator: failed to create equirect layer");
+                    callOnMainRunLoop([completion = WTF::move(completionHandler)] mutable {
+                        completion(std::nullopt);
+                    });
+                }
+            });
+        });
+#else
+    UNUSED_PARAM(size);
+    UNUSED_PARAM(layout);
+    RELEASE_LOG(XR, "OpenXRCoordinator: equirect layer not supported (XR_KHR_composition_layer_equirect2 not defined)");
+    reply(std::nullopt);
+#endif
+}
 #endif // ENABLE(WEBXR_LAYERS)
 
 void OpenXRCoordinator::startSession(WebPageProxy& page, WeakPtr<PlatformXRCoordinatorSessionEventClient>&& sessionEventClient, const WebCore::SecurityOriginData&, PlatformXR::SessionMode sessionMode, const PlatformXR::Device::FeatureList&, std::optional<WebCore::XRCanvasConfiguration>&&)
@@ -630,6 +690,10 @@ void OpenXRCoordinator::createInstance()
         extensions.append(const_cast<char*>(XR_ANDROID_RAYCAST_EXTENSION_NAME));
 #endif
 #endif
+#endif
+#if defined(XR_KHR_composition_layer_equirect2)
+    if (OpenXRExtensions::singleton().isExtensionSupported(XR_KHR_COMPOSITION_LAYER_EQUIRECT2_EXTENSION_NAME ""_span))
+        extensions.append(const_cast<char*>(XR_KHR_COMPOSITION_LAYER_EQUIRECT2_EXTENSION_NAME));
 #endif
 
     XrInstanceCreateInfo createInfo = createOpenXRStruct<XrInstanceCreateInfo, XR_TYPE_INSTANCE_CREATE_INFO >();

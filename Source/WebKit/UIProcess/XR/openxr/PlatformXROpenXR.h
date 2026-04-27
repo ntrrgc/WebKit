@@ -59,6 +59,7 @@ public:
 
 #if ENABLE(WEBXR_LAYERS)
     void createQuadLayer(WebCore::IntSize, PlatformXR::LayerLayout, CreateQuadCallback&&) override;
+    void createEquirectLayer(WebCore::IntSize, PlatformXR::LayerLayout, CreateEquirectCallback&&) override;
 #endif
 
     void startSession(WebPageProxy&, WeakPtr<PlatformXRCoordinatorSessionEventClient>&&, const WebCore::SecurityOriginData&, PlatformXR::SessionMode, const PlatformXR::Device::FeatureList&, std::optional<WebCore::XRCanvasConfiguration>&&) override;

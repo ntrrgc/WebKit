@@ -339,6 +339,7 @@ PlatformXR::DeviceLayer WebXRWebGLLayer::endFrame()
         .blendTextureSourceAlpha = false,
         .forceMonoPresentation = false,
         .quadLayerData = std::nullopt,
+        .equirectLayerData = std::nullopt,
 #endif
 #endif
     };

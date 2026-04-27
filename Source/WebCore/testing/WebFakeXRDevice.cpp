@@ -319,12 +319,22 @@ std::optional<PlatformXR::LayerInfo> SimulatedXRDevice::createLayerProjection(ui
 }
 
 #if ENABLE(WEBXR_LAYERS)
-std::optional<PlatformXR::LayerInfo> SimulatedXRDevice::createQuadLayer(IntSize size, PlatformXR::LayerLayout)
+std::optional<PlatformXR::LayerInfo> SimulatedXRDevice::createCompositionLayer(IntSize size)
 {
     auto handle = createLayer(size);
     if (!handle)
         return std::nullopt;
     return PlatformXR::LayerInfo { *handle, 1 };
+}
+
+std::optional<PlatformXR::LayerInfo> SimulatedXRDevice::createQuadLayer(IntSize size, PlatformXR::LayerLayout)
+{
+    return createCompositionLayer(size);
+}
+
+std::optional<PlatformXR::LayerInfo> SimulatedXRDevice::createEquirectLayer(IntSize size, PlatformXR::LayerLayout)
+{
+    return createCompositionLayer(size);
 }
 #endif
 

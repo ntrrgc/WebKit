@@ -72,8 +72,11 @@ public:
 #endif
 
 #if ENABLE(WEBXR_LAYERS)
+    // FIXME: Make these pure virtual once Apple internal implements correctly
     using CreateQuadCallback = CompletionHandler<void(std::optional<PlatformXR::LayerInfo>)>;
-    virtual void createQuadLayer(WebCore::IntSize, PlatformXR::LayerLayout, CreateQuadCallback&&) = 0;
+    virtual void createQuadLayer(WebCore::IntSize, PlatformXR::LayerLayout, CreateQuadCallback&&) { };
+    using CreateEquirectCallback = CompletionHandler<void(std::optional<PlatformXR::LayerInfo>)>;
+    virtual void createEquirectLayer(WebCore::IntSize, PlatformXR::LayerLayout, CreateEquirectCallback&&) { };
 #endif
 
     // Session creation/termination.
