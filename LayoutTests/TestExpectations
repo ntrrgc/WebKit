@@ -5988,10 +5988,6 @@ ipc/removeMediaUsageManagerSession-test.html [ Skip ]
 # Test is crashing since import.
 imported/w3c/web-platform-tests/workers/modules/dedicated-worker-import-csp.html [ Skip ]
 
-# Test is flaky because MessagePort messages may get received in a different order when several MessagePorts are involved,
-# due to how MessagePort::dispatchMessages() is implemented.
-imported/w3c/web-platform-tests/workers/shared-worker-name-via-options.html [ Failure Pass ]
-
 # Tests are flaky since import.
 imported/w3c/web-platform-tests/workers/same-site-cookies/first-party.all.tentative.https.window.html [ Skip ]
 imported/w3c/web-platform-tests/workers/same-site-cookies/first-party.default.tentative.https.window.html [ Skip ]
