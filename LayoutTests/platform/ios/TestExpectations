@@ -239,6 +239,10 @@ imported/w3c/web-platform-tests/requestidlecallback [ Pass ]
 imported/w3c/web-platform-tests/requestidlecallback/deadline-max-rAF.html [ Pass Failure ]
 http/tests/eventloop/idle-callback-not-affected-by-timers-in-cross-origin.html [ Pass ]
 
+fast/events/touch/ios/touch-event-regions-layer-tree [ Pass ]
+fast/events/touch/ios/touch-event-regions-layer-tree/input [ Skip ]
+fast/events/touch/ios/touch-event-regions-layer-tree/scrolling [ Skip ]
+
 #//////////////////////////////////////////////////////////////////////////////////////////
 # End platform-specific directories.
 #//////////////////////////////////////////////////////////////////////////////////////////

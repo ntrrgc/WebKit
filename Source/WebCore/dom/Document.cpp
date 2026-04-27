@@ -3621,7 +3621,7 @@ void Document::willBeRemovedFromFrame()
 
     commonTeardown();
 
-#if ENABLE(TOUCH_EVENTS)
+#if ENABLE(TOUCH_EVENTS) || ENABLE(TOUCH_EVENT_REGIONS)
     if (!m_touchEventTargets.isEmptyIgnoringNullReferences() && parentDocument())
         protect(parentDocument())->didRemoveEventTargetNode(*this);
 #endif
@@ -9236,7 +9236,7 @@ unsigned Document::wheelEventHandlerCount() const
 
 void Document::didAddTouchEventHandler(Node& handler)
 {
-#if ENABLE(TOUCH_EVENTS)
+#if ENABLE(TOUCH_EVENTS) || ENABLE(TOUCH_EVENT_REGIONS)
     m_touchEventTargets.add(handler);
 
     if (RefPtr parent = parentDocument()) {
@@ -9256,7 +9256,7 @@ void Document::didAddTouchEventHandler(Node& handler)
 
 void Document::didRemoveTouchEventHandler(Node& handler, EventHandlerRemoval removalMode)
 {
-#if ENABLE(TOUCH_EVENTS)
+#if ENABLE(TOUCH_EVENTS) || ENABLE(TOUCH_EVENT_REGIONS)
     removeHandlerFromSet(m_touchEventTargets, handler, removalMode);
 
     if (RefPtr parent = parentDocument())
@@ -9301,7 +9301,7 @@ void Document::didRemoveDoubleClickEventHandler(Node& handler, EventHandlerRemov
 
 void Document::didRemoveEventTargetNode(Node& handler)
 {
-#if ENABLE(TOUCH_EVENTS)
+#if ENABLE(TOUCH_EVENTS) || ENABLE(TOUCH_EVENT_REGIONS)
     if (m_touchEventTargets.removeAll(handler)) {
         if ((&handler == this || m_touchEventTargets.isEmptyIgnoringNullReferences()) && parentDocument())
             protect(parentDocument())->didRemoveEventTargetNode(*this);
@@ -9476,10 +9476,10 @@ void Document::startTrackingStyleRecalcs()
     m_styleRecalcCount = 0;
 }
 
-#if ENABLE(TOUCH_EVENTS)
+#if ENABLE(TOUCH_EVENTS) || ENABLE(TOUCH_EVENT_REGIONS)
 bool Document::hasTouchEventHandlers() const
 {
-#if ENABLE(TOUCH_EVENT_REGIONS)
+#if ENABLE(TOUCH_EVENTS) && ENABLE(TOUCH_EVENT_REGIONS)
     return !m_touchEventTargets.isEmptyIgnoringNullReferences()
         || !m_touchEventHandlerCounts.isEmptyIgnoringNullReferences();
 #else

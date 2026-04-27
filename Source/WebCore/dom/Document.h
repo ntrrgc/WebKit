@@ -1557,7 +1557,7 @@ public:
     WEBCORE_EXPORT void NODELETE startTrackingStyleRecalcs();
     unsigned styleRecalcCount() const { return m_styleRecalcCount; }
 
-#if ENABLE(TOUCH_EVENTS)
+#if ENABLE(TOUCH_EVENTS) || ENABLE(TOUCH_EVENT_REGIONS)
     bool hasTouchEventHandlers() const;
     bool touchEventTargetsContain(Node& node) const { return m_touchEventTargets.contains(node); }
 #else
@@ -2501,7 +2501,7 @@ private:
 #if ENABLE(DBLCLICK_EVENT_REGIONS)
     EventTargetSet m_doubleClickEventTargets;
 #endif
-#if ENABLE(TOUCH_EVENTS)
+#if ENABLE(TOUCH_EVENTS) || ENABLE(TOUCH_EVENT_REGIONS)
     EventTargetSet m_touchEventTargets;
 #endif
     EventTargetSet m_wheelEventTargets;

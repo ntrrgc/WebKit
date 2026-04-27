@@ -471,7 +471,8 @@ void RemoteLayerTreeDrawingAreaProxy::commitLayerTree(IPC::Connection& connectio
 WebCore::TrackingType RemoteLayerTreeDrawingAreaProxy::eventTrackingTypeForPoint(WebCore::EventTrackingRegions::EventType eventType, IntPoint location)
 {
     FloatPoint localLocation = location;
-    return eventRegionForPoint(remoteLayerTreeHost().rootLayer(), localLocation).transform([eventType, &localLocation](const WebCore::EventRegion& eventRegion) {
+    RetainPtr rootLayer = remoteLayerTreeHost().rootLayer();
+    return eventRegionForPoint(rootLayer.get(), localLocation).transform([eventType, &localLocation](const WebCore::EventRegion& eventRegion) {
         return eventRegion.eventTrackingTypeForPoint(eventType, roundedIntPoint(localLocation));
     }).value_or(WebCore::TrackingType::NotTracking);
 }
@@ -481,7 +482,8 @@ std::optional<RemoteLayerTreeDrawingAreaProxy::EventRegionHitTestResult> RemoteL
 {
 #if ENABLE(DBLCLICK_EVENT_REGIONS)
     FloatPoint localLocation = location;
-    RefPtr layerTreeNode = hitLayerTreeNodeAtPoint(remoteLayerTreeHost().rootLayer(), localLocation);
+    RetainPtr rootLayer = remoteLayerTreeHost().rootLayer();
+    RefPtr layerTreeNode = hitLayerTreeNodeAtPoint(rootLayer.get(), localLocation);
     if (!layerTreeNode)
         return std::nullopt;
 
