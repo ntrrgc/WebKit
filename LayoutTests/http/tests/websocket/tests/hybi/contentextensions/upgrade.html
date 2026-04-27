@@ -31,9 +31,9 @@ ws.onclose = function() {
     doLog("onclose");
     endTest();
 }
-ws.onerror = function(ev) { 
-    doLog("onerror"); 
-    endTest(); 
+ws.onerror = function(ev) {
+    doLog("onerror");
+    doLog("new url: " + ws.url);
 }
 
 setTimeout(function() { 
