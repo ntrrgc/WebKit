@@ -106,7 +106,6 @@ webrtc/peerconnection-page-cache.html [ Timeout ]
 ########################
 accessibility/link-becomes-visited.html [ Failure ]
 editing/execCommand/delete-no-scroll.html [ Failure ]
-editing/inserting/insert-list-then-edit-command-crash.html [ Failure ]
 fast/canvas/canvas-blending-fill-style.html [ Failure ]
 fast/canvas/webgl/canvas-webgl-page-cache.html [ Failure ]
 fast/css-grid-layout/grid-auto-columns-rows-get-set.html [ Failure ]

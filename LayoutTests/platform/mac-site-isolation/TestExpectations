@@ -125,7 +125,6 @@ webrtc/peerconnection-page-cache.html [ Timeout ]
 ########################
 accessibility/youtube-embed-accessibility-hierarchy.html [ Failure Timeout ]
 editing/execCommand/delete-no-scroll.html [ Failure ]
-editing/inserting/insert-list-then-edit-command-crash.html [ Failure ]
 editing/selection/drag-in-iframe.html [ Failure ]
 fast/canvas/webgl/canvas-webgl-page-cache.html [ Failure ]
 fast/events/event-timing-back-forward-cache-duration.html [ Failure ]
