@@ -85,6 +85,10 @@
                 "PORT": {
                     "type": "STRING",
                     "value": "Mac"
+                },
+                "ENABLE_EXPERIMENTAL_FEATURES": {
+                    "type": "BOOL",
+                    "value": "OFF"
                 }
             },
             "environment": {
@@ -107,13 +111,7 @@
         {
             "name": "mac-dev-release",
             "displayName": "macOS Development (Release, ccache, compile_commands)",
-            "inherits": ["mac-release", "dev"],
-            "cacheVariables": {
-                "ENABLE_EXPERIMENTAL_FEATURES": {
-                    "type": "BOOL",
-                    "value": "OFF"
-                }
-            }
+            "inherits": ["mac-release", "dev"]
         },
         {
             "name": "mac-dev-debug",

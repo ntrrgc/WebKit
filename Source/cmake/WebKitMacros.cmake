@@ -193,7 +193,8 @@ macro(_WEBKIT_TARGET_SETUP _target _logical_name)
 
     if (DEVELOPER_MODE_CXX_FLAGS)
         target_compile_options(${_target} PRIVATE $<$<NOT:$<COMPILE_LANGUAGE:Swift>>:${DEVELOPER_MODE_CXX_FLAGS}>)
-        target_compile_options(${_target} PRIVATE $<$<COMPILE_LANGUAGE:Swift>:-warnings-as-errors>)
+        target_compile_options(${_target} PRIVATE
+            "$<$<COMPILE_LANGUAGE:Swift>:SHELL:-Werror ExistentialAny -Werror StrictMemorySafety -Werror ForeignReferenceType>")
     endif ()
 
     target_compile_definitions(${_target} PRIVATE "BUILDING_${_logical_name}")
@@ -611,6 +612,10 @@ macro(WEBKIT_SETUP_SWIFT_AND_GENERATE_SWIFT_CPP_INTEROP_HEADER _target _module_n
         string(JSON _swift_target_paths GET ${_swift_target_info} "paths")
         string(JSON _swift_runtime_resource_path GET ${_swift_target_paths} "runtimeResourcePath")
         target_include_directories(${_target} SYSTEM AFTER PRIVATE "${_swift_runtime_resource_path}")
+        # Swift C++-interop objects auto-link swiftCxx/swiftCxxStdlib; consumers
+        # linked by clang++ need this search path to satisfy those directives.
+        string(JSON _swift_runtime_library_path GET ${_swift_target_paths} "runtimeLibraryPaths" 0)
+        target_link_directories(${_target} INTERFACE "${_swift_runtime_library_path}")
 
         # Assemble arguments which need to be passed to swiftc.
         # Add WebKit's various feature flags as -D directives to the Swift compiler.
@@ -690,7 +695,7 @@ macro(WEBKIT_SETUP_SWIFT_AND_GENERATE_SWIFT_CPP_INTEROP_HEADER _target _module_n
             DEPENDS ${_swift_sources}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND
-                ${ORIGINAL_Swift_COMPILER} -typecheck
+                ${CMAKE_Swift_COMPILER} --original-swift-compiler=${ORIGINAL_Swift_COMPILER} -typecheck
                 ${_swift_options}
                 ${${_target}_SWIFT_EXTRA_OPTIONS}
                 ${_swift_sdk_flag}

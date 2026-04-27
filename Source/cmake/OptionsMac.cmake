@@ -212,6 +212,22 @@ if (_sdk_version)
     endif ()
 endif ()
 
+# CMake's Swift link rule passes -sdk but not -target, so swiftc falls back to
+# its built-in default deployment target while clang honors
+# CMAKE_OSX_DEPLOYMENT_TARGET. That mismatch produces an ld warning per object.
+# Pass -target explicitly so the Swift driver and clang agree.
+if (CMAKE_OSX_DEPLOYMENT_TARGET)
+    list(LENGTH CMAKE_OSX_ARCHITECTURES _arch_count)
+    if (_arch_count EQUAL 1)
+        set(_swift_arch "${CMAKE_OSX_ARCHITECTURES}")
+    elseif (_arch_count EQUAL 0)
+        set(_swift_arch "${CMAKE_SYSTEM_PROCESSOR}")
+    endif ()
+    if (_swift_arch)
+        string(APPEND CMAKE_Swift_FLAGS " -target ${_swift_arch}-apple-macosx${CMAKE_OSX_DEPLOYMENT_TARGET}")
+    endif ()
+endif ()
+
 # -----------------------------------------------------------------------------
 # SDK additions overlay (AvailabilityProhibitedInternal.h)
 # -----------------------------------------------------------------------------

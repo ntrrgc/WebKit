@@ -3,6 +3,21 @@
 # This script filters out the arguments that swiftc cannot accommodate.
 
 set -e
+set -o pipefail
+
+# Swift's C++ interop changes which imported members are @unsafe between
+# toolchain versions, so an `unsafe` that is required on one toolchain emits
+# "no unsafe operations occur within 'unsafe' expression" on another. The
+# diagnostic has no group, so it can't be suppressed with -Wwarning; filter it
+# (and its multi-line source snippet) from stderr instead.
+filter_benign_warnings() {
+    awk '
+        /: warning: no unsafe operations occur within .unsafe. expression/ { skip = 1; next }
+        skip && /^[[:space:]]*[0-9]*[[:space:]]*\|/ { next }
+        skip && /^[[:space:]]*$/ { skip = 0; next }
+        { skip = 0; print }
+    '
+}
 
 REAL_SWIFTC=swiftc
 args=()
@@ -49,4 +64,4 @@ for arg in "$@"; do
     esac
 done
 
-exec "$REAL_SWIFTC" "${args[@]}"
+{ "$REAL_SWIFTC" "${args[@]}" 2>&1 1>&3 | filter_benign_warnings >&2; } 3>&1
