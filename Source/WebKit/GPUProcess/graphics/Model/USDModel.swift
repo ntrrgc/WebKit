@@ -820,8 +820,8 @@ extension WKBridgeReceiver {
                                 indexCount: meshData.parts[partIndex].indexCount,
                                 primitive: meshData.parts[partIndex].topology,
                                 windingOrder: .counterClockwise,
-                                boundsMin: -.one,
-                                boundsMax: .one
+                                boundsMin: meshData.parts[partIndex].boundsMin,
+                                boundsMax: meshData.parts[partIndex].boundsMax
                             )
 
                             for instanceTransform in meshData.instanceTransforms {
