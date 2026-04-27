@@ -792,6 +792,7 @@ public:
     // Returns the IDs of the objects that relate to the given object with the specified relationship.
     std::optional<ListHashSet<AXID>> relatedObjectIDsFor(const AXCoreObject&, AXRelation, UpdateRelations = UpdateRelations::Yes);
     void updateRelations(Element&, const QualifiedName&);
+    bool hasAriaOwnsRelations() const { return m_relationsNeedUpdate || m_hasAriaOwnsRelations; }
 
 #if PLATFORM(IOS_FAMILY)
     void relayNotification(String&&, RetainPtr<NSData>&&);
@@ -1146,6 +1147,7 @@ private:
     // Relationships between objects.
     HashMap<AXID, AXRelations> m_relations;
     bool m_relationsNeedUpdate { true };
+    bool m_hasAriaOwnsRelations { false };
     HashSet<AXID> m_relationTargets;
     HashMap<AXID, AXRelations> m_recentlyRemovedRelations;
 

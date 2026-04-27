@@ -693,15 +693,17 @@ static bool isTableComponent(AXCoreObject& axObject)
 
 void AccessibilityObject::insertChild(AccessibilityObject& child, unsigned index, DescendIfIgnored descendIfIgnored)
 {
-    auto owners = child.owners();
-    if (owners.size()) {
-        size_t indexOfThis = owners.findIf([this] (const Ref<AXCoreObject>& object) {
-            return object.ptr() == this;
-        });
+    if (child.anyObjectHasAriaOwns()) {
+        auto owners = child.owners();
+        if (owners.size()) {
+            size_t indexOfThis = owners.findIf([this] (const Ref<AXCoreObject>& object) {
+                return object.ptr() == this;
+            });
 
-        if (indexOfThis == notFound) {
-            // The child is aria-owned, and not by us, so we shouldn't insert it.
-            return;
+            if (indexOfThis == notFound) {
+                // The child is aria-owned, and not by us, so we shouldn't insert it.
+                return;
+            }
         }
     }
 

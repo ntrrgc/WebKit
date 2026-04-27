@@ -1091,6 +1091,11 @@ RefPtr<AXIsolatedTree> AXObjectCache::getOrCreateIsolatedTree()
     AXTRACE(makeString("AXObjectCache::getOrCreateIsolatedTree 0x"_s, hex(reinterpret_cast<uintptr_t>(this))));
     AX_ASSERT(isMainThread());
 
+    if (!isIsolatedTreeEnabled()) {
+        AX_ASSERT_NOT_REACHED();
+        return nullptr;
+    }
+
     RefPtr tree = AXIsolatedTree::treeForFrameID(m_frameID);
     if (tree) {
         if (tree->treeID() == treeID())
@@ -6282,6 +6287,7 @@ bool AXObjectCache::addRelation(AccessibilityObject* origin, AccessibilityObject
     m_relationTargets.add(targetID);
 
     if (relation == AXRelation::OwnerFor) {
+        m_hasAriaOwnsRelations = true;
         // First find and clear the old owner.
         for (auto oldOwnerIterator = m_relations.begin(); oldOwnerIterator != m_relations.end(); ++oldOwnerIterator) {
             if (oldOwnerIterator->key == originID)
@@ -6398,6 +6404,7 @@ void AXObjectCache::updateRelationsIfNeeded()
     m_relations.clear();
     m_recentlyRemovedRelations.clear();
     m_relationTargets.clear();
+    m_hasAriaOwnsRelations = false;
     if (m_document)
         updateRelationsForTree(m_document->rootNode());
 }

@@ -239,6 +239,9 @@ AccessibilityObject* AccessibilityNodeObject::nextSibling() const
 
 AccessibilityObject* AccessibilityNodeObject::ownerParentObject() const
 {
+    if (!anyObjectHasAriaOwns())
+        return nullptr;
+
     auto owners = this->owners();
     AX_ASSERT(owners.size() <= 1);
     return owners.size() ? dynamicDowncast<AccessibilityObject>(owners.first().get()) : nullptr;
