@@ -795,7 +795,7 @@ AccessibilityObject* AXObjectCache::focusedObjectForNode(Node* focusedNode)
 
     if (focus->shouldFocusActiveDescendant()) {
         if (RefPtr descendant = focus->activeDescendant())
-            return dynamicDowncast<AccessibilityObject>(descendant.get());
+            return dynamicDowncast<AccessibilityObject>(descendant.unsafeGet());
     }
 
     if (focus->isIgnored())
