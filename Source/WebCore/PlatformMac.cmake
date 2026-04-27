@@ -95,6 +95,12 @@ else ()
     unset(_webm_parser_srcs)
 endif ()
 
+# dav1d provides the AV1 software decoder used by LibWebRTCDav1dDecoder.cpp (gated by ENABLE(AV1)).
+# aom is aggregated into the webrtc target via OBJECT library, so no separate WebCore link is needed.
+if (ENABLE_AV1)
+    list(APPEND WebCore_LIBRARIES dav1d)
+endif ()
+
 # FIXME: wgpu* symbols are undefined until WebGPU builds via CMake. This flag
 # suppresses ALL undefined symbols -- remove when WebGPU is enabled.
 # https://bugs.webkit.org/show_bug.cgi?id=312031
