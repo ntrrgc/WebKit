@@ -80,7 +80,6 @@ struct NetworkResourceLoadParameters {
     uint64_t requiredCookiesVersion { 0 };
 
     Markable<WebCore::ResourceLoaderIdentifier> identifier { };
-    Vector<SandboxExtensionHandle> requestBodySandboxExtensions { };
     std::optional<SandboxExtensionHandle> resourceSandboxExtension { };
     Seconds maximumBufferingTime { };
     WebCore::FetchOptions options { };

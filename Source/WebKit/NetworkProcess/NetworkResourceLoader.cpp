@@ -1832,13 +1832,6 @@ void NetworkResourceLoader::consumeSandboxExtensions()
 {
     ASSERT(!m_didConsumeSandboxExtensions);
 
-    for (auto& handle : std::exchange(m_parameters.requestBodySandboxExtensions, { })) {
-        if (auto extension = SandboxExtension::create(WTF::move(handle))) {
-            extension->consume();
-            m_extensionsToRevoke.append(extension.releaseNonNull());
-        }
-    }
-
     if (auto handle = std::exchange(m_parameters.resourceSandboxExtension, { })) {
         if (auto extension = SandboxExtension::create(WTF::move(*handle))) {
             extension->consume();
