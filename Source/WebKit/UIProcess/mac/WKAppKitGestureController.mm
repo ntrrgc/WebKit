@@ -556,6 +556,9 @@ ALLOW_NEW_API_WITHOUT_GUARDS_END
         return;
     }
 
+    ALLOW_NEW_API_WITHOUT_GUARDS_BEGIN
+    auto modifierFlags = [gesture modifierFlags];
+    ALLOW_NEW_API_WITHOUT_GUARDS_END
     NSPoint locationInWindow = [gesture locationInView:nil];
     auto windowNumber = viewImpl->windowNumber();
     auto timestamp = GetCurrentEventTime();
@@ -565,7 +568,7 @@ ALLOW_NEW_API_WITHOUT_GUARDS_END
         [self _handleClickCancelled];
         _dragGestureHasSentMouseDown = false;
 
-        RetainPtr mouseDown = [NSEvent mouseEventWithType:NSEventTypeLeftMouseDown location:locationInWindow modifierFlags:0 timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:0 clickCount:1 pressure:1.0];
+        RetainPtr mouseDown = [NSEvent mouseEventWithType:NSEventTypeLeftMouseDown location:locationInWindow modifierFlags:modifierFlags timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:0 clickCount:1 pressure:1.0];
         viewImpl->mouseDown(mouseDown.get(), WebKit::WebEventInputSource::Automation, WebCore::PlatformMouseEvent::CanInitiateDrag::Yes);
         _dragGestureHasSentMouseDown = true;
         break;
@@ -576,7 +579,7 @@ ALLOW_NEW_API_WITHOUT_GUARDS_END
         if (_gestureDraggingSession)
             [_gestureDraggingSession updateDragWithGesture:gesture];
         else {
-            RetainPtr mouseDragged = [NSEvent mouseEventWithType:NSEventTypeLeftMouseDragged location:locationInWindow modifierFlags:0 timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:0 clickCount:1 pressure:1.0];
+            RetainPtr mouseDragged = [NSEvent mouseEventWithType:NSEventTypeLeftMouseDragged location:locationInWindow modifierFlags:modifierFlags timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:0 clickCount:1 pressure:1.0];
             viewImpl->mouseDragged(mouseDragged.get(), WebKit::WebEventInputSource::Automation, WebCore::PlatformMouseEvent::CanInitiateDrag::Yes);
         }
         break;
@@ -589,7 +592,7 @@ ALLOW_NEW_API_WITHOUT_GUARDS_END
         if (_gestureDraggingSession)
             [_gestureDraggingSession updateDragWithGesture:gesture];
 
-        RetainPtr mouseUp = [NSEvent mouseEventWithType:NSEventTypeLeftMouseUp location:locationInWindow modifierFlags:0 timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:0 clickCount:1 pressure:0.0];
+        RetainPtr mouseUp = [NSEvent mouseEventWithType:NSEventTypeLeftMouseUp location:locationInWindow modifierFlags:modifierFlags timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:0 clickCount:1 pressure:0.0];
         viewImpl->mouseUp(mouseUp.get(), WebKit::WebEventInputSource::Automation, WebCore::PlatformMouseEvent::CanInitiateDrag::Yes);
 
         // We do not clear gesture drag state here since startDrag() may still be in flight via IPC.
