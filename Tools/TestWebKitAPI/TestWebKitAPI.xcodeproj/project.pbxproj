@@ -572,7 +572,6 @@
 			membershipExceptions = (
 				WebKit/WebPage/AppKitGesturesTests.swift,
 				WebKit/WebPage/EditingFontSizeTests.swift,
-				WebKit/WebPage/JavaScriptExpressionTests.swift,
 				WebKit/WebPage/URLSchemeHandlerTests.swift,
 				WebKit/WebPage/WebPageNavigationTests.swift,
 				WebKit/WebPage/WebPageTests.swift,
@@ -592,8 +591,6 @@
 				"cocoa/Foundation+Extras.swift",
 				cocoa/HTTPServer.mm,
 				cocoa/HTTPServer.swift,
-				cocoa/JavaScriptMessages.swift,
-				cocoa/JavaScriptTypes.swift,
 				cocoa/SmartListsSupport.swift,
 				cocoa/StdLibExtras.swift,
 				"cocoa/SwiftUI+Extras.swift",
@@ -606,7 +603,6 @@
 				cocoa/WebExtensionUtilities.mm,
 				"cocoa/WebPage+Extras.swift",
 				"cocoa/WebPageConfiguration+Extras.swift",
-				"cocoa/WebPage+JavaScriptExpression.swift",
 				cocoa/WebTransportServer.mm,
 				Counters.cpp,
 				GraphicsTestUtilities.cpp,
@@ -1317,7 +1313,6 @@
 			membershipExceptions = (
 				WebKit/WebPage/AppKitGesturesTests.swift,
 				WebKit/WebPage/EditingFontSizeTests.swift,
-				WebKit/WebPage/JavaScriptExpressionTests.swift,
 				WebKit/WebPage/URLSchemeHandlerTests.swift,
 				WebKit/WebPage/WebPageNavigationTests.swift,
 				WebKit/WebPage/WebPageTests.swift,
