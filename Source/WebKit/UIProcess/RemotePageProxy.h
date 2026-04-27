@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "EditorState.h"
 #include "MessageReceiver.h"
 #include "NavigationActionData.h"
 #include "ProcessActivityGroup.h"
@@ -127,6 +128,8 @@ public:
     LayerHostingContextID contextIDForVisibilityPropagationInWebProcess() const { return m_contextIDForVisibilityPropagationInWebProcess; }
 #endif
 
+    EditorState& editorState() { return m_editorState; }
+
 private:
     RemotePageProxy(WebPageProxy&, WebProcessProxy&, const WebCore::Site&, WebPageProxyMessageReceiverRegistration*, std::optional<WebCore::PageIdentifier>);
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) final;
@@ -167,6 +170,7 @@ private:
     LayerHostingContextID m_contextIDForVisibilityPropagationInWebProcess { 0 };
 #endif
 
+    EditorState m_editorState;
 };
 
 }

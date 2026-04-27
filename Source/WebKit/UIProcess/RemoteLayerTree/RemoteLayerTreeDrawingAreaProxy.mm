@@ -394,7 +394,7 @@ void RemoteLayerTreeDrawingAreaProxy::commitLayerTree(IPC::Connection& connectio
         return;
 
     if (bundle.editorState) {
-        if (page->updateEditorState(EditorState { *bundle.editorState }, WebPageProxy::ShouldMergeVisualEditorState::Yes))
+        if (page->updateEditorState(connection, EditorState { *bundle.editorState }, WebPageProxy::ShouldMergeVisualEditorState::Yes))
             page->dispatchDidUpdateEditorState();
     }
 
