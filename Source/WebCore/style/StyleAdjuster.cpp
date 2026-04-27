@@ -1020,6 +1020,15 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
         }
     }
 
+    // yahoo.com rdar://170502516
+    if (documentQuirks.needsYahooVolumeSliderQuirk()) {
+        static MainThreadNeverDestroyed<const AtomString> className("vjs-volume-control"_s);
+        if (is<HTMLDivElement>(*m_element) && m_element->hasClassName(className)) {
+            style.setMinHeight(100_css_percentage);
+            style.setAlignItems(Style::AlignItems { CSS::Keyword::Center { } });
+        }
+    }
+
 #if PLATFORM(IOS_FAMILY)
     if (documentQuirks.needsGoogleMapsScrollingQuirk()) {
         static MainThreadNeverDestroyed<const AtomString> className("PUtLdf"_s);
