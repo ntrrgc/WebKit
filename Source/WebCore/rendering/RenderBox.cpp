@@ -736,8 +736,6 @@ void RenderBox::constrainLogicalMinMaxSizesByAspectRatio(LayoutUnit& computedMin
         if (!shouldCheckTransferredMinSize && minimumSizeType == MinimumSizeIsAutomaticContentBased::No)
             transferredLogicalMaxSize = std::max(transferredLogicalMaxSize, computedMinSize);
         computedMaxSize = std::min(computedMaxSize, transferredLogicalMaxSize);
-        if (minimumSizeType == MinimumSizeIsAutomaticContentBased::Yes)
-            computedMinSize = std::min(computedMinSize, computedMaxSize);
     }
 
     if (shouldCheckTransferredMinSize && transferredLogicalMinSize > LayoutUnit()) {
