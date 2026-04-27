@@ -845,6 +845,7 @@ list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/cocoa/CMUtilities.h
     platform/graphics/cocoa/CVPixelBufferUtilities.h
     platform/graphics/cocoa/ColorCocoa.h
+    platform/graphics/cocoa/CVPixelBufferUtilities.h
     platform/graphics/cocoa/DynamicContentScalingDisplayList.h
     platform/graphics/cocoa/FontCacheCoreText.h
     platform/graphics/cocoa/FontCascadeCocoaInlines.h
