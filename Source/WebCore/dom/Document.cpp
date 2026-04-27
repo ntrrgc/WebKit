@@ -6652,7 +6652,7 @@ bool Document::setFocusedElement(Element* newFocusedElement, const FocusOptions&
         cache->onFocusChange(oldFocusedElement.get(), newFocusedElement);
 
     if (RefPtr page = this->page())
-        page->chrome().focusedElementChanged(protect(focusedElement()).get(), page->focusController().focusedLocalFrame(), options, broadcast);
+        page->chrome().focusedElementChanged(protect(focusedElement()).get(), page->focusController().localFocusedFrame(), options, broadcast);
 
     return true;
 }

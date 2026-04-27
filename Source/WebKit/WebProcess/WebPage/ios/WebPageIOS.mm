@@ -4305,7 +4305,7 @@ void WebPage::hardwareKeyboardAvailabilityChanged(HardwareKeyboardState state)
 
     protect(m_page)->didUpdateHardwareKeyboardAttachment(m_keyboardIsAttached);
 
-    if (RefPtr focusedFrame = m_page->focusController().focusedLocalFrame())
+    if (RefPtr focusedFrame = m_page->focusController().localFocusedFrame())
         focusedFrame->eventHandler().capsLockStateMayHaveChanged();
 }
 
