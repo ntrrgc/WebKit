@@ -1622,8 +1622,6 @@ public:
     String getComputedLabel(Element&) const;
     String getComputedRole(Element&) const;
 
-    bool hasScopeBreakingHasSelectors() const;
-
 
     struct PDFAnnotationRect {
         float x;

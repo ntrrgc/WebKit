@@ -9,8 +9,7 @@
 :has(+ .trigger) with compound peer .c5
   Traversal count: 1
 :has(:is(.trigger + .other)) with compound peer .c6
-  Traversal count: 0
-  FAIL: unexpected color rgb(0, 0, 0)
+  Traversal count: 14
 :has(.trigger) non-subject with scope-bounded traversal .c7
   Traversal count: 7
 :not(:has(.trigger)) inside :not() with compound peer .c8

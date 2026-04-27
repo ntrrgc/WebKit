@@ -8275,12 +8275,6 @@ String Internals::getComputedRole(Element& element) const
     return axObject ? axObject->computedRoleString() : ""_s;
 }
 
-bool Internals::hasScopeBreakingHasSelectors() const
-{
-    contextDocument()->styleScope().flushPendingUpdate();
-    return !!contextDocument()->styleScope().resolver().ruleSets().scopeBreakingHasPseudoClassInvalidationRuleSet();
-}
-
 void Internals::setHistoryTotalStateObjectPayloadLimitOverride(uint32_t limit)
 {
     RefPtr window = contextDocument() ? contextDocument()->window() : nullptr;
