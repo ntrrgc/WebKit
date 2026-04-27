@@ -157,12 +157,8 @@
 
 (allow file-link (subpath "/private/var/folders"))
 
-(allow file-clone (with telemetry))
 (allow file-clone
-    (home-subpath "/Library/Caches")
     (home-subpath "/Library/Containers"))
-(allow file-clone (subpath
-    "/private/var/folders") )
 
 (allow darwin-notification-post
     (notification-name
