@@ -182,11 +182,8 @@ if (COMPILER_IS_GCC_OR_CLANG)
         WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-fdebug-types-section)
     endif ()
 
-    if (COMPILER_IS_CLANG AND NOT COMPILER_IS_CLANG_CL)
-        WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-gsimple-template-names)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mllvm -dwarf-linkage-names=Abstract")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mllvm -dwarf-linkage-names=Abstract")
-    endif ()
+    WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-gsimple-template-names)
+    WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS("-mllvm -dwarf-linkage-names=Abstract")
 
     WEBKIT_APPEND_GLOBAL_COMPILER_FLAGS(-fno-strict-aliasing)
 
