@@ -151,6 +151,8 @@ JSValue BigIntNode::jsValue(BytecodeGenerator& generator) const
 
 // ------------------------------ NumberNode ----------------------------------
 
+JSValue NumberNode::jsValue(BytecodeGenerator&) const { return jsNumber(m_value); }
+
 RegisterID* NumberNode::emitBytecode(BytecodeGenerator& generator, RegisterID* dst)
 {
     if (dst == generator.ignoredResult())

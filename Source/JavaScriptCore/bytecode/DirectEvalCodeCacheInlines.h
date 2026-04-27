@@ -28,14 +28,14 @@
 
 #pragma once
 
-#include "JSLexicalEnvironment.h"
-#include "StructureCreateInlines.h"
+#include <JavaScriptCore/DirectEvalCodeCache.h>
+#include <JavaScriptCore/WriteBarrierInlines.h>
 
 namespace JSC {
 
-inline Structure* JSLexicalEnvironment::createStructure(VM& vm, JSGlobalObject* globalObject)
+inline DirectEvalExecutable* DirectEvalCodeCache::get(const CacheLookupKey& cacheKey)
 {
-    return Structure::create(vm, globalObject, jsNull(), TypeInfo(LexicalEnvironmentType, StructureFlags), info());
+    return m_cacheMap.inlineGet<CacheLookupKeyHashTranslator>(cacheKey).get();
 }
 
 } // namespace JSC

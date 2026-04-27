@@ -42,6 +42,8 @@
 #include "Debugger.h"
 #include "DirectArguments.h"
 #include "DirectEvalCodeCache.h"
+#include "DirectEvalCodeCacheInlines.h"
+#include "DirectEvalExecutable.h"
 #include "EvalCodeBlock.h"
 #include "ExecutableBaseInlines.h"
 #include "FrameTracers.h"

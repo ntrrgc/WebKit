@@ -63,6 +63,7 @@ namespace JSC {
     class JSCellButterfly;
     class Identifier;
     class ForInContext;
+    class UnlinkedEvalCodeBlock;
     class UnlinkedModuleProgramCodeBlock;
     class UnlinkedProgramCodeBlock;
 

@@ -37,6 +37,7 @@
 #include "ObjectConstructor.h"
 #include "ParseInt.h"
 #include "RegExpConstructor.h"
+#include "RegExpConstructorInlines.h"
 #include "RegExpGlobalDataInlines.h"
 #include "RegExpObjectInlines.h"
 #include "StringPrototypeInlines.h"

@@ -333,7 +333,7 @@ namespace JSC {
 
     private:
         bool isNumber() const final { return true; }
-        JSValue jsValue(BytecodeGenerator&) const override { return jsNumber(m_value); }
+        JSValue jsValue(BytecodeGenerator&) const override;
 
         double m_value;
     };
