@@ -513,7 +513,8 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     Config::finalize();
 
-    initializeAvailableTimeZones();
+    if (!isInMiniMode())
+        initializeAvailableTimeZones();
 
     // We must set this at the end only after the VM is fully initialized.
     WTF::storeStoreFence();

@@ -1997,7 +1997,7 @@ static const Vector<String>& intlAvailableTimeZones()
             int32_t length = 0;
             const char* pointer = uenum_next(enumeration.get(), &length, &status);
             ASSERT(U_SUCCESS(status));
-            String timeZone(unsafeMakeSpan(pointer, static_cast<size_t>(length)));
+            StringView timeZone(unsafeMakeSpan(pointer, static_cast<size_t>(length)));
             if (!isValidTimeZoneNameFromICUTimeZone(timeZone))
                 continue;
             // UCAL_ZONE_TYPE_CANONICAL yields CLDR canonical IDs, which lag behind the IANA
@@ -2015,7 +2015,9 @@ static const Vector<String>& intlAvailableTimeZones()
         auto end = std::unique(temporary.begin(), temporary.end());
         availableTimeZones.construct();
 
-        auto createImmortalThreadSafeString = [&](String&& string) {
+        auto createImmortalThreadSafeString = [&](String&& string) -> String {
+            if (string.impl() && string.impl()->isStatic())
+                return WTF::move(string);
             if (string.is8Bit())
                 return StringImpl::createStaticStringImpl(string.span8());
             return StringImpl::createStaticStringImpl(string.span16());
@@ -2035,10 +2037,12 @@ const String& intlTimeZoneIDToString(TimeZoneID id)
 // Index from any accepted time zone string (case-insensitive) to the
 // TimeZoneID of its IANA primary. Multiple input forms (legacy IANA Backward
 // links, UTC-equivalent aliases, the primary itself) collapse onto the same
-// TimeZoneID. Built once on first use; the time zone list is fixed by the
-// linked ICU/CLDR version, so a fixed map is safe. Stored keys must be
-// immortal so the read-only map can be shared across VM threads — same
-// requirement that intlAvailableTimeZones() satisfies via createStaticStringImpl.
+// TimeZoneID. Lazily built on first lookup that does not match a primary via
+// binary search (see intlResolveTimeZoneID / intlAvailableNamedTimeZone). The
+// time zone list is fixed by the linked ICU/CLDR version, so a fixed map is
+// safe. Stored keys must be immortal so the read-only map can be shared across
+// VM threads — same requirement that intlAvailableTimeZones() satisfies via
+// createStaticStringImpl.
 static const HashMap<String, TimeZoneID, ASCIICaseInsensitiveHash>& intlAvailableTimeZoneIndex()
 {
     static LazyNeverDestroyed<HashMap<String, TimeZoneID, ASCIICaseInsensitiveHash>> index;
@@ -2097,6 +2101,11 @@ static const HashMap<String, TimeZoneID, ASCIICaseInsensitiveHash>& intlAvailabl
 
 std::optional<TimeZoneID> intlResolveTimeZoneID(StringView name)
 {
+    const auto& primaries = intlAvailableTimeZones();
+    auto it = std::ranges::lower_bound(primaries, name, WTF::codePointCompareLessThan);
+    if (it != primaries.end() && StringView(*it) == name)
+        return static_cast<TimeZoneID>(it - primaries.begin());
+
     const auto& index = intlAvailableTimeZoneIndex();
     auto entry = index.find<ASCIICaseInsensitiveStringViewHashTranslator>(name);
     if (entry == index.end())
@@ -2106,6 +2115,11 @@ std::optional<TimeZoneID> intlResolveTimeZoneID(StringView name)
 
 std::optional<AvailableNamedTimeZone> intlAvailableNamedTimeZone(StringView name)
 {
+    const auto& primaries = intlAvailableTimeZones();
+    auto it = std::ranges::lower_bound(primaries, name, WTF::codePointCompareLessThan);
+    if (it != primaries.end() && StringView(*it) == name)
+        return AvailableNamedTimeZone { static_cast<TimeZoneID>(it - primaries.begin()), *it };
+
     const auto& index = intlAvailableTimeZoneIndex();
     auto entry = index.find<ASCIICaseInsensitiveStringViewHashTranslator>(name);
     if (entry == index.end())
