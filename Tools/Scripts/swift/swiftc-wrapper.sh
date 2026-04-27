@@ -28,6 +28,9 @@ for arg in "$@"; do
         "-msse") ;;
         "-msse2") ;;
         "-pthread") ;;
+        "-fsanitize="*)
+            args+=("-sanitize=${arg#-fsanitize=}")
+            ;;
         "-include") skip_next=1 ;;
         # CMake leaks clang linker flags into swiftc; translate them.
         "-compatibility_version"|"-current_version")
