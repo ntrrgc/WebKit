@@ -623,15 +623,16 @@ void SkiaCompositingLayer::paintSelfAndChildren(SkCanvas& canvas, PaintContext& 
     bool shouldClip = (m_masksToBounds || m_contentsRectClipsDescendants) && !m_preserves3D;
     SkAutoCanvasRestore autoRestore(&canvas, shouldClip);
     if (shouldClip) {
+        TransformationMatrix clipTransform(context.accumulatedReplicaTransform);
+        clipTransform.multiply(m_transforms.combined);
         if (m_contentsRectClipsDescendants) {
             SkPathBuilder builder;
             if (m_contentsClippingRect.isRounded())
                 builder.addRRect(SkRRect(m_contentsClippingRect));
             else
                 builder.addRect(SkRect(m_contentsClippingRect.rect()));
-            canvas.clipPath(builder.detach().makeTransform(SkM44(m_transforms.combined).asM33()), true);
+            canvas.clipPath(builder.detach().makeTransform(SkM44(clipTransform).asM33()), true);
         } else {
-            auto clipTransform = m_transforms.combined;
             clipTransform.translate(m_boundsOrigin.x(), m_boundsOrigin.y());
             SkPathBuilder builder;
             builder.addRect(SkRect(effectiveLayerRect()));
