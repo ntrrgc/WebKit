@@ -1058,7 +1058,7 @@ ExceptionOr<void> WebGL2RenderingContext::texSubImage2D(GCGLenum target, GCGLint
     if (isContextLost())
         return { };
     if (m_boundPixelUnpackBuffer) {
-        synthesizeGLError(GraphicsContextGL::INVALID_OPERATION, "texImage2D"_s, "a buffer is bound to PIXEL_UNPACK_BUFFER"_s);
+        synthesizeGLError(GraphicsContextGL::INVALID_OPERATION, "texSubImage2D"_s, "a buffer is bound to PIXEL_UNPACK_BUFFER"_s);
         return { };
     }
 
@@ -1070,7 +1070,7 @@ void WebGL2RenderingContext::texSubImage2D(GCGLenum target, GCGLint level, GCGLi
     if (isContextLost())
         return;
     if (m_boundPixelUnpackBuffer) {
-        synthesizeGLError(GraphicsContextGL::INVALID_OPERATION, "texImage2D"_s, "a buffer is bound to PIXEL_UNPACK_BUFFER"_s);
+        synthesizeGLError(GraphicsContextGL::INVALID_OPERATION, "texSubImage2D"_s, "a buffer is bound to PIXEL_UNPACK_BUFFER"_s);
         return;
     }
 
@@ -1237,7 +1237,7 @@ void WebGL2RenderingContext::compressedTexSubImage2D(GCGLenum target, GCGLint le
             "no bound PIXEL_UNPACK_BUFFER"_s);
         return;
     }
-    if (!validateTexture2DBinding("compressedTexImage2D"_s, target))
+    if (!validateTexture2DBinding("compressedTexSubImage2D"_s, target))
         return;
     graphicsContextGL()->compressedTexSubImage2D(target, level, xoffset, yoffset, width, height, format, imageSize, offset);
 }

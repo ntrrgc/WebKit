@@ -3277,7 +3277,7 @@ ExceptionOr<void> WebGLRenderingContextBase::texImageSource(TexImageFunctionID f
             type = GraphicsContextGL::FLOAT;
         }
         if (!context->extractPixelBuffer(source.byteArrayPixelBuffer(), GraphicsContextGL::DataFormat::RGBA8, adjustedSourceImageRect, depth, unpackImageHeight, format, type, m_unpackFlipY, m_unpackPremultiplyAlpha, data)) {
-            synthesizeGLError(GraphicsContextGL::INVALID_VALUE, "texImage2D"_s, "bad image data"_s);
+            synthesizeGLError(GraphicsContextGL::INVALID_VALUE, functionName, "bad image data"_s);
             return { };
         }
         imageData = data.span();
