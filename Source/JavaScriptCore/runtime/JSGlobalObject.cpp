@@ -2082,9 +2082,6 @@ capitalName ## Constructor* lowerName ## Constructor = featureFlag ? capitalName
     m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::repeatCharacter)].initLater([] (const Initializer<JSCell>& init) {
             init.set(JSFunction::create(init.vm, init.owner, 2, "repeatCharacter"_s, stringProtoFuncRepeatCharacter, ImplementationVisibility::Private));
         });
-    m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::isArraySlow)].initLater([] (const Initializer<JSCell>& init) {
-            init.set(JSFunction::create(init.vm, init.owner, 0, "isArraySlow"_s, arrayConstructorPrivateFuncIsArraySlow, ImplementationVisibility::Private));
-        });
     m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::importInRealm)].initLater([] (const Initializer<JSCell>& init) {
             init.set(JSFunction::create(init.vm, init.owner, 0, "importInRealm"_s, importInRealm, ImplementationVisibility::Private));
         });

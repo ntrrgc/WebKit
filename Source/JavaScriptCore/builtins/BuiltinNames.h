@@ -143,7 +143,6 @@ namespace JSC {
     macro(isDetached) \
     macro(typedArrayFromFast) \
     macro(instanceOf) \
-    macro(isArraySlow) \
     macro(isArray) \
     macro(sameValue) \
     macro(regExpCreate) \

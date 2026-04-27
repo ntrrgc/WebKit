@@ -95,7 +95,6 @@ class JSGlobalObject;
     v(defaultPromiseThen, nullptr) \
     v(repeatCharacter, nullptr) \
     v(isArray, nullptr) \
-    v(isArraySlow, nullptr) \
     v(Set, nullptr) \
     v(Map, nullptr) \
     v(importInRealm, nullptr) \
