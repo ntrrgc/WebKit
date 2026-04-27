@@ -84,9 +84,7 @@ class JSGlobalObject;
     v(isResizableOrGrowableSharedTypedArrayView, nullptr) \
     v(typedArrayFromFast, nullptr) \
     v(isDetached, nullptr) \
-    v(isBoundFunction, nullptr) \
     v(isFinite, nullptr) \
-    v(hasInstanceBoundFunction, nullptr) \
     v(instanceOf, nullptr) \
     v(BuiltinLog, nullptr) \
     v(BuiltinDescribe, nullptr) \
