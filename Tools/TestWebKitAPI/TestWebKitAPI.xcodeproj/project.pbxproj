@@ -134,7 +134,6 @@
 		9528E5FD279A0341008ADFEF /* BundleCSSStyleDeclarationHandlePlugIn.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9528E5FC279A0338008ADFEF /* BundleCSSStyleDeclarationHandlePlugIn.mm */; };
 		95C52729275F35E100DA7E40 /* FontShadowTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95C52728275F35E100DA7E40 /* FontShadowTests.cpp */; };
 		97A826852DF8B677004EA039 /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC90964D1255620C00083756 /* JavaScriptCore.framework */; };
-		97A826862DF8B677004EA039 /* JavaScriptCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BC90964D1255620C00083756 /* JavaScriptCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		97DAA8D02DF70B91004B3040 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 97DAA8CF2DF70B91004B3040 /* Metal.framework */; };
 		A13EBBAA1B87428D00097110 /* WebProcessPlugIn.mm in Sources */ = {isa = PBXBuildFile; fileRef = A13EBBA91B87428D00097110 /* WebProcessPlugIn.mm */; };
 		A176D24B2D6D2A4E00C63915 /* GPUExtension.appex in Embed Extensions */ = {isa = PBXBuildFile; fileRef = A176D2472D6D295400C63915 /* GPUExtension.appex */; platformFilters = (ios, xros, ); settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -176,6 +175,7 @@
 			);
 			script = (
 				"\"${SCRIPT_INPUT_FILE_0}\"",
+				"",
 				"",
 				"",
 				"",
@@ -379,15 +379,6 @@
 				7B6FF89728C22D9400CA76B0 /* WebKit.framework in Product Dependencies */,
 			);
 			name = "Product Dependencies";
-		};
-		97A826872DF8B677004EA039 /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			dstPath = "";
-			dstSubfolder = Frameworks;
-			files = (
-				97A826862DF8B677004EA039 /* JavaScriptCore.framework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
 		};
 		97FB42742E1D629F00C63F41 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -2223,7 +2214,6 @@
 				3A15783D28D1505B00142DB1 /* Product Dependencies */,
 				3A15783F28D1505B00142DB1 /* Sources */,
 				3A15784628D1505B00142DB1 /* Frameworks */,
-				97A826872DF8B677004EA039 /* Embed Frameworks */,
 				97FB42742E1D629F00C63F41 /* CopyFiles */,
 			);
 			buildRules = (
