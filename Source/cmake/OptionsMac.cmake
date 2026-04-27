@@ -169,13 +169,13 @@ set(ENABLE_WEBKIT_LEGACY ON)
 set(ENABLE_WEBKIT ON)
 
 set(bmalloc_LIBRARY_TYPE OBJECT)
-# WTF must be SHARED on Mac because the Mac port builds multiple frameworks
-# (JSC, WebCore, WebKit, WebGPU) that all need WTF. OBJECT would duplicate
-# WTF's static state in each framework, causing crashes. Other ports (GTK/WPE)
-# use OBJECT because they produce a single libwebkit.so.
+# bmalloc and WTF objects are absorbed into the JavaScriptCore dylib
+# (mirrors Xcode's -force_load libWTF.a / libbmalloc.a). Downstream
+# frameworks link JavaScriptCore only; WEBKIT_FRAMEWORK's LINKED_INTO
+# tracking redirects WTF/bmalloc references there.
 # PAL must be STATIC (not OBJECT) because it has Swift CryptoKit sources and
 # OBJECT libraries don't produce .swiftmodule files.
-set(WTF_LIBRARY_TYPE SHARED)
+set(WTF_LIBRARY_TYPE OBJECT)
 set(JavaScriptCore_LIBRARY_TYPE SHARED)
 set(PAL_LIBRARY_TYPE STATIC)
 set(WebCore_LIBRARY_TYPE SHARED)

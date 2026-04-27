@@ -92,7 +92,7 @@ target_link_libraries(WebGPU PRIVATE
     ${COREVIDEO_FRAMEWORK}
     ${FOUNDATION_FRAMEWORK}
     ${QUARTZCORE_FRAMEWORK}
-    WTF
+    JavaScriptCore
 )
 
 target_include_directories(WebGPU PRIVATE
