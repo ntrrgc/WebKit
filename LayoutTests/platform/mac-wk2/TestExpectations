@@ -2406,6 +2406,8 @@ webkit.org/b/309621 [ Debug ] imported/w3c/web-platform-tests/css/cssom-view/int
 
 webkit.org/b/307889 http/tests/multipart/multipart-async-image.html [ Pass Failure ]
 
+webkit.org/b/313282 fonts/font-cache-memory-pressure-crash.html [ Pass Failure ]
+
 webkit.org/b/310302 imported/w3c/web-platform-tests/uievents/mouse/mouse_boundary_events_on_image_map.html [ Pass Failure ]
 
 # FIXME <https://webkit.org/b/311136>: Additional work needed to pass these tests
