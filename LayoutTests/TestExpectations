@@ -2207,11 +2207,6 @@ imported/w3c/web-platform-tests/quirks/tables-inherit-color-from-body-quirk-004.
 imported/w3c/web-platform-tests/quirks/tables-inherit-color-from-body-quirk-005.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/quirks/tables-inherit-color-from-body-quirk-007.html [ ImageOnlyFailure ]
 
-# WPT tests requiring DTR/WTR to allow other URLs than localhost to not be blocked and be reachable (www2.localhost)
-imported/w3c/web-platform-tests/xhr/send-redirect-bogus.htm [ Skip ]
-imported/w3c/web-platform-tests/xhr/send-redirect-to-cors.htm [ Skip ]
-imported/w3c/web-platform-tests/xhr/send-redirect-to-non-cors.htm [ Skip ]
-
 imported/w3c/web-platform-tests/resource-timing/test_resource_timing.html [ Pass Failure ]
 imported/w3c/web-platform-tests/resource-timing/test_resource_timing.https.html [ Pass Failure ]
 imported/w3c/web-platform-tests/resource-timing/buffer-full-add-entries-during-callback-that-drop.html [ Skip ]
