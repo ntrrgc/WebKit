@@ -768,8 +768,6 @@ public:
     JSFunction* parseIntFunction() const LIFETIME_BOUND { return m_parseIntFunction.get(this); }
     JSFunction* parseFloatFunction() const LIFETIME_BOUND { return m_parseFloatFunction.get(this); }
 
-    JSFunction* promiseEmptyOnFulfilledFunction() const;
-    JSFunction* promiseEmptyOnRejectedFunction() const;
     JSFunction* evalFunction() const;
     JSFunction* throwTypeErrorFunction() const;
     JSFunction* objectProtoToStringFunction() const LIFETIME_BOUND { return m_objectProtoToStringFunction.get(this); }

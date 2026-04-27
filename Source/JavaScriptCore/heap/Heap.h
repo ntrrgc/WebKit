@@ -300,7 +300,8 @@ class Heap;
     v(wrapForValidIteratorSpace, cellHeapCellType, JSWrapForValidIterator) \
     v(promiseCombinatorsContextSpace, cellHeapCellType, JSPromiseCombinatorsContext) \
     v(promiseCombinatorsGlobalContextSpace, cellHeapCellType, JSPromiseCombinatorsGlobalContext) \
-    v(promiseReactionSpace, cellHeapCellType, JSPromiseReaction) \
+    v(slimPromiseReactionSpace, cellHeapCellType, JSSlimPromiseReaction) \
+    v(fullPromiseReactionSpace, cellHeapCellType, JSFullPromiseReaction) \
     v(asyncFromSyncIteratorSpace, cellHeapCellType, JSAsyncFromSyncIterator) \
     v(regExpStringIteratorSpace, cellHeapCellType, JSRegExpStringIterator) \
     v(disposableStackSpace, cellHeapCellType, JSDisposableStack) \
