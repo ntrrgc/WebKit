@@ -118,6 +118,7 @@
 #include <algorithm>
 #include <pal/spi/cg/CoreGraphicsSPI.h>
 #include <wtf/Scope.h>
+#include <wtf/SetForScope.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/cocoa/TypeCastsCocoa.h>
 #include <wtf/spi/darwin/OSVariantSPI.h>
