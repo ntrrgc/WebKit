@@ -4876,7 +4876,6 @@ fast/text/user-installed-fonts/shadow-family.html [ Skip ]
 fast/text/user-installed-fonts/shadow-postscript-family.html [ Skip ]
 fast/text/user-installed-fonts/shadow-postscript.html [ Skip ]
 fast/text/user-installed-fonts/shadow.html [ Skip ]
-fast/text/user-installed-fonts/system-ui.html [ Skip ]
 
 # This feature is only enabled on Mac and iOS right now.
 contentfiltering/ [ Skip ]
@@ -4909,8 +4908,6 @@ webkit.org/b/217821 imported/w3c/web-platform-tests/density-size-correction/ [ S
 fast/harness/platform-layer-tree-as-text.html [ Skip ]
 
 webkit.org/b/286580 http/tests/media/clearkey/clear-key-session-id.html [ Failure ]
-
-fast/canvas/font-family-system-ui-canvas.html [ ImageOnlyFailure ]
 
 http/tests/iframe-memory-monitor/media-video-autoplay-in-frames.html [ Skip ] # Timeout.
 media/media-source/media-source-rendering-update-count.html [ Skip ] # Timeout.

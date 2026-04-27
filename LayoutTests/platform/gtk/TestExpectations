@@ -503,9 +503,6 @@ imported/w3c/web-platform-tests/css/css-text/hyphens/hyphenate-character-002.htm
 
 imported/w3c/web-platform-tests/html/browsers/the-window-object/open-close/open-features-non-integer-screeny.html [ Failure ]
 
-webkit.org/b/209727 fast/forms/placeholder-content-line-height.html [ ImageOnlyFailure ]
-webkit.org/b/209727 fast/forms/placeholder-content-center.html [ ImageOnlyFailure ]
-
 webkit.org/b/212233 fast/repaint/iframe-on-subpixel-position.html [ Failure ]
 
 webkit.org/b/214454 imported/w3c/web-platform-tests/css/css-backgrounds/background-attachment-margin-root-001.html [ ImageOnlyFailure ]
