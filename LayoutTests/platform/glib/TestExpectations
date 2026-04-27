@@ -3589,17 +3589,20 @@ ipc/empty-svgfilterrenderer-expression-crash.html [ Crash ]
 # Read-Only shared-memory handle not supported, see https://bugs.webkit.org/show_bug.cgi?id=131542
 ipc/stream-sync-reply-shared-memory.html [ Failure ]
 
+# (From wk2/TestExpectations)
+# These tests are checking that WebProcess is terminated when performing an invalid IPC operation for WK2.
+# They crash (as expected) so we skip them there. <rdar://problem/117742950>
+
+ipc/restrictedendpoints/deny-access-testOnlyIPC.html [ Skip ]
+ipc/restrictedendpoints/deny-access-updateQuotaBasedOnSpaceUsageForTesting.html [ Skip ]
+ipc/restrictedendpoints/deny-access-webGPU.html [ Skip ]
+ipc/restrictedendpoints/deny-access-webPush.html [ Skip ]
+ipc/validate-message-check-in-networkconnectiontowebproces-crash.html [ Skip ]
+
 ### NEEDS PROPER TRIAGGING/GARDENING
 
 ipc/invalid-addSourceBuffer-to-GPU-process-crash.html [ Failure ]
 ipc/serialized-type-info.html [ Failure ]
-
-ipc/restrictedendpoints/deny-access-testOnlyIPC.html [ Crash ]
-ipc/restrictedendpoints/deny-access-webGPU.html [ Crash ]
-ipc/validate-message-check-in-networkconnectiontowebproces-crash.html [ Crash ]
-
-webkit.org/b/313204 ipc/restrictedendpoints/deny-access-updateQuotaBasedOnSpaceUsageForTesting.html [ Timeout ]
-webkit.org/b/313204 ipc/restrictedendpoints/deny-access-webPush.html [ Timeout ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of IPC testing
