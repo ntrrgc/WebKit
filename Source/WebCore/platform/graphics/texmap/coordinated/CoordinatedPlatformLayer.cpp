@@ -72,7 +72,13 @@ CoordinatedPlatformLayer::CoordinatedPlatformLayer(Client* client)
     ASSERT(isMainThread());
 }
 
-CoordinatedPlatformLayer::~CoordinatedPlatformLayer() = default;
+CoordinatedPlatformLayer::~CoordinatedPlatformLayer()
+{
+    ASSERT(!m_target);
+#if USE(SKIA)
+    ASSERT(!m_skiaTarget);
+#endif
+}
 
 void CoordinatedPlatformLayer::setOwner(GraphicsLayerCoordinated* owner)
 {
