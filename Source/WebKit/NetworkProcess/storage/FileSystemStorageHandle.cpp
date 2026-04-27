@@ -179,7 +179,7 @@ std::optional<FileSystemStorageError> FileSystemStorageHandle::removeEntry(const
     return result;
 }
 
-Expected<Vector<String>, FileSystemStorageError> FileSystemStorageHandle::resolve(WebCore::FileSystemHandleIdentifier identifier)
+Expected<std::optional<Vector<String>>, FileSystemStorageError> FileSystemStorageHandle::resolve(WebCore::FileSystemHandleIdentifier identifier)
 {
     RefPtr manager = m_manager.get();
     if (!manager)
@@ -190,10 +190,13 @@ Expected<Vector<String>, FileSystemStorageError> FileSystemStorageHandle::resolv
         return makeUnexpected(FileSystemStorageError::Unknown);
 
     if (!path.startsWith(m_path))
-        return Vector<String> { };
+        return { std::nullopt };
 
     auto restPath = path.substring(m_path.length());
-    return restPath.split(pathSeparator);
+    if (!restPath.isEmpty() && !restPath.startsWith(pathSeparator))
+        return { std::nullopt };
+
+    return { restPath.split(pathSeparator) };
 }
 
 Expected<FileSystemSyncAccessHandleInfo, FileSystemStorageError> FileSystemStorageHandle::createSyncAccessHandle()
