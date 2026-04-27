@@ -1112,6 +1112,11 @@ void WebsiteDataStore::resetServiceWorkerTimeoutForTesting()
     protect(networkProcess())->sendSync(Messages::NetworkProcess::ResetServiceWorkerFetchTimeoutForTesting(), 0);
 }
 
+void WebsiteDataStore::clearCrossOriginPreflightResultCacheForTesting()
+{
+    protect(networkProcess())->sendSync(Messages::NetworkProcess::ClearCrossOriginPreflightResultCacheForTesting(), 0);
+}
+
 bool WebsiteDataStore::hasServiceWorkerBackgroundActivityForTesting() const
 {
     return std::ranges::any_of(WebProcessPool::allProcessPools(), [](auto& pool) { return pool->hasServiceWorkerBackgroundActivityForTesting(); });
