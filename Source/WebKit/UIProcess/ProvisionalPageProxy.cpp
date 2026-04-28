@@ -726,6 +726,7 @@ void ProvisionalPageProxy::didReceiveMessage(IPC::Connection& connection, IPC::D
         || decoder.messageName() == Messages::WebPageProxy::ContentRuleListNotification::name()
 #endif
         || decoder.messageName() == Messages::WebPageProxy::AddMessageToConsoleForTesting::name()
+        || decoder.messageName() == Messages::WebPageProxy::HandleMessage::name()
         )
     {
         if (RefPtr page = m_page.get())
