@@ -233,7 +233,6 @@ http/tests/workers/service/page-cache-service-worker-pending-promise.https.html 
 http/tests/workers/service/page-caching.html [ Failure ]
 http/tests/xmlhttprequest/origin-allow-list-all.html [ Failure ]
 http/tests/xmlhttprequest/origin-allow-list-ip-addresses.html [ Failure ]
-http/wpt/clear-site-data/partitioning.html [ Failure ]
 http/wpt/css/css-view-transitions/navigation/cross-origin-bfcache.html [ Failure ]
 http/wpt/css/css-view-transitions/navigation/old_vt_promises_bfcache.html [ Failure ]
 http/wpt/fetch/fetch-metadata-for-sandbox-iframes-reuse.html [ Failure ]
