@@ -2455,6 +2455,4 @@ webkit.org/b/313278 [ Tahoe+ ] imported/w3c/web-platform-tests/css/css-images/gr
 
 webkit.org/b/313346 [ Sequoia+ Debug ] imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-audio-jitterBufferTarget-stats.https.html [ Pass Failure ]
 
-webkit.org/b/313352 [ Sequoia+ Release ] media/media-vp8-webm-with-preload.html [ Pass Failure ]
-
 webkit.org/b/313362 [ Sequoia+ ] imported/w3c/web-platform-tests/media-source/mediasource-changetype-play-implicit.html [ Pass Failure ]

@@ -1086,16 +1086,12 @@ void MediaPlayerPrivateMediaSourceAVFObjC::cdmInstanceAttached(CDMInstance& inst
 {
     ALWAYS_LOG(LOGIDENTIFIER);
     m_renderer->setCDMInstance(&instance);
-
-    needsVideoLayerChanged();
 }
 
 void MediaPlayerPrivateMediaSourceAVFObjC::cdmInstanceDetached(CDMInstance&)
 {
     ALWAYS_LOG(LOGIDENTIFIER);
     m_renderer->setCDMInstance(nullptr);
-
-    needsVideoLayerChanged();
 }
 
 void MediaPlayerPrivateMediaSourceAVFObjC::attemptToDecryptWithInstance(CDMInstance&)
