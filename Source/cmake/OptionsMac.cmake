@@ -141,6 +141,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
+# Don't relink dependents when a shared library they link against is rebuilt.
+# Xcode's EAGER_LINKING achieves the same effect.
+set(CMAKE_LINK_DEPENDS_NO_SHARED ON)
+
 # Avoid collision between flat-output executables and DerivedSources dirs of the same name.
 set(WebKitTestRunner_DERIVED_SOURCES_DIR "${CMAKE_BINARY_DIR}/DerivedSources/WebKitTestRunner")
 set(TestRunnerShared_DERIVED_SOURCES_DIR "${CMAKE_BINARY_DIR}/DerivedSources/TestRunnerShared")

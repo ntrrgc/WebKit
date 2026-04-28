@@ -22,6 +22,17 @@ filter_benign_warnings() {
 REAL_SWIFTC=swiftc
 args=()
 
+# CMake's Swift link rule injects <LANGUAGE_COMPILE_FLAGS> into the link
+# command, which includes -g, which causes swiftc to run dsymutil. 
+# dsymutil is super expensive, and we don't need it because we have DWARF
+# debug info in our object files.
+linking=
+for arg in "$@"; do
+    case "$arg" in
+        "-emit-library"|"-emit-executable") linking=1 ;;
+    esac
+done
+
 for arg in "$@"; do
     case "$arg" in
         "-mfpmath=sse") ;;
@@ -30,6 +41,11 @@ for arg in "$@"; do
         "-pthread") ;;
         "-fsanitize="*)
             args+=("-sanitize=${arg#-fsanitize=}")
+            ;;
+        "-g")
+            if [[ -z "$linking" ]]; then
+                args+=("$arg")
+            fi
             ;;
         "-include") skip_next=1 ;;
         # CMake leaks clang linker flags into swiftc; translate them.
