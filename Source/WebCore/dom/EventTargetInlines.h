@@ -55,13 +55,6 @@ inline void EventTarget::deref()
         derefEventTarget();
 }
 
-#if !PLATFORM(WIN)
-inline WebCoreOpaqueRoot EventTarget::opaqueRoot() const
-{
-    return WebCoreOpaqueRoot { const_cast<EventTarget*>(this) };
-}
-#endif
-
 inline bool EventTarget::hasEventListeners() const
 {
     auto* data = eventTargetData();

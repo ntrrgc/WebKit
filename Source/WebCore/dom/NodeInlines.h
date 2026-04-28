@@ -52,18 +52,6 @@ inline ContainerNode* Node::parentOrShadowHostNode() const
     return parentNode();
 }
 
-#if !PLATFORM(WIN)
-SUPPRESS_NODELETE inline WebCoreOpaqueRoot Node::opaqueRoot() const
-{
-    if (isConnected()) {
-        Locker locker { TreeScope::treeScopeMutationLock() };
-        return WebCoreOpaqueRoot { &treeScope().documentScope() };
-    }
-    // FIXME: Possible race?
-    return traverseToOpaqueRoot();
-}
-#endif
-
 inline Document* Node::ownerDocument() const
 {
     auto* document = &this->document();

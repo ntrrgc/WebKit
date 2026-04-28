@@ -83,12 +83,10 @@ EventTarget::~EventTarget()
         eventTargetData->clear();
 }
 
-#if PLATFORM(WIN)
 WebCoreOpaqueRoot EventTarget::opaqueRoot() const
 {
     return WebCoreOpaqueRoot { const_cast<EventTarget*>(this) };
 }
-#endif
 
 bool EventTarget::isPaymentRequest() const
 {

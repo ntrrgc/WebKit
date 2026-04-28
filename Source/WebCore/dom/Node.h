@@ -318,11 +318,7 @@ public:
     };
     Node& NODELETE getRootNode(const GetRootNodeOptions&) const;
 
-#if PLATFORM(WIN)
     WebCoreOpaqueRoot opaqueRoot() const final;
-#else
-    inline WebCoreOpaqueRoot opaqueRoot() const final;
-#endif
 
     WebCoreOpaqueRoot NODELETE traverseToOpaqueRoot() const;
 

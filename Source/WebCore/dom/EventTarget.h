@@ -97,11 +97,7 @@ public:
     virtual enum EventTargetInterfaceType NODELETE eventTargetInterface() const = 0;
     virtual ScriptExecutionContext* scriptExecutionContext() const = 0;
 
-#if PLATFORM(WIN)
     virtual WebCoreOpaqueRoot NODELETE opaqueRoot() const;
-#else
-    virtual inline WebCoreOpaqueRoot NODELETE opaqueRoot() const; // Defined in EventTargetInlines.h.
-#endif
 
     virtual bool NODELETE isPaymentRequest() const;
 

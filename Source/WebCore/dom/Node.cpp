@@ -1490,7 +1490,6 @@ Node& Node::shadowIncludingRoot() const
     return root;
 }
 
-#if PLATFORM(WIN)
 SUPPRESS_NODELETE WebCoreOpaqueRoot Node::opaqueRoot() const
 {
     if (isConnected()) {
@@ -1500,7 +1499,6 @@ SUPPRESS_NODELETE WebCoreOpaqueRoot Node::opaqueRoot() const
     // FIXME: Possible race?
     return traverseToOpaqueRoot();
 }
-#endif
 
 Node& Node::getRootNode(const GetRootNodeOptions& options) const
 {
