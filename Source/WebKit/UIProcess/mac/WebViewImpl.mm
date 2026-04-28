@@ -4718,7 +4718,9 @@ void WebViewImpl::startDrag(const WebCore::DragItem& item, ShareableBitmap::Hand
             RefPtr page = protectedThis->page();
             RetainPtr view = protectedThis->view();
 
+            // clientDragLocation is the bottom-left of the image, but setDraggingFrame: expects a top-left origin.
             auto clientDragLocation = IntPoint(dragLocationInMainFrameCoordinates.value());
+            auto draggingFrame = NSMakeRect(clientDragLocation.x(), clientDragLocation.y() - size.height(), size.width(), size.height());
 
             bool isImageDrag = protectedThis->m_promisedImageDragData && sourceAction == WebCore::DragSourceAction::Image;
             bool canUseFilePromiseForImageDrag = isImageDrag && !protectedThis->m_promisedImageDragData->imageUTI.isEmpty();
@@ -4762,12 +4764,12 @@ void WebViewImpl::startDrag(const WebCore::DragItem& item, ShareableBitmap::Hand
                 RetainPtr context = adoptNS([[WKPromisedAttachmentContext alloc] initWithIdentifier:promisedAttachmentInfo.attachmentIdentifier.createNSString().get() fileName:fileName.get()]);
                 [provider setUserInfo:context.get()];
                 draggingItem = adoptNS([[NSDraggingItem alloc] initWithPasteboardWriter:provider.get()]);
-                [draggingItem setDraggingFrame:NSMakeRect(clientDragLocation.x(), clientDragLocation.y() - size.height(), size.width(), size.height()) contents:dragNSImage.get()];
+                [draggingItem setDraggingFrame:draggingFrame contents:dragNSImage];
             } else if (canUseFilePromiseForImageDrag) {
                 RetainPtr imageUTI = protectedThis->m_promisedImageDragData->imageUTI.createNSString();
                 RetainPtr provider = adoptNS([[NSFilePromiseProvider alloc] initWithFileType:imageUTI.get() delegate:(id<NSFilePromiseProviderDelegate>)view.get()]);
                 draggingItem = adoptNS([[NSDraggingItem alloc] initWithPasteboardWriter:provider.get()]);
-                [draggingItem setDraggingFrame:NSMakeRect(clientDragLocation.x(), clientDragLocation.y(), size.width(), size.height()) contents:dragNSImage.get()];
+                [draggingItem setDraggingFrame:draggingFrame contents:dragNSImage];
             } else {
                 protectedThis->clearPromisedImageDragData();
 
@@ -4782,7 +4784,7 @@ void WebViewImpl::startDrag(const WebCore::DragItem& item, ShareableBitmap::Hand
                 RetainPtr pasteboardItem = adoptNS([[NSPasteboardItem alloc] init]);
                 [pasteboardItem setData:[NSData data] forType:UTTypeData.identifier];
                 draggingItem = adoptNS([[NSDraggingItem alloc] initWithPasteboardWriter:pasteboardItem.get()]);
-                [draggingItem setDraggingFrame:NSMakeRect(clientDragLocation.x(), clientDragLocation.y(), size.width(), size.height()) contents:dragNSImage.get()];
+                [draggingItem setDraggingFrame:draggingFrame contents:dragNSImage];
             }
 #if HAVE(APPKIT_GESTURES_SUPPORT)
             if (RetainPtr gesture = [gestureController activeDragGestureRecognizer]) {

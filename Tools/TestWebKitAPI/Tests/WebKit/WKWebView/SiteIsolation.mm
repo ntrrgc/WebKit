@@ -7457,7 +7457,7 @@ TEST(SiteIsolation, DragImageLocation)
     [webView waitForNextPresentationUpdate];
     [simulator runFrom:CGPointMake(300, 300) to:CGPointMake(350, 350)];
 
-    EXPECT_EQ([simulator initialDragImageLocationInView], NSMakePoint(252, 352));
+    EXPECT_EQ([simulator initialDragImageLocationInView], NSMakePoint(252, 252));
 }
 
 TEST(SiteIsolation, MouseClickAfterIncompleteDragging)
