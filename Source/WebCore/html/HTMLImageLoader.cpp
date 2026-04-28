@@ -31,6 +31,7 @@
 #include "HTMLObjectElement.h"
 #include "HTMLVideoElement.h"
 #include "LocalDOMWindow.h"
+#include "MIMETypeRegistry.h"
 #include "Settings.h"
 
 #include "JSDOMWindowBase.h"

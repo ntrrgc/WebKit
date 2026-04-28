@@ -35,6 +35,7 @@
 #include "CSSViewTransitionRule.h"
 #include "DeclarationOrigin.h"
 #include "DocumentInlines.h"
+#include "DocumentPage.h"
 #include "ExtensionStyleSheets.h"
 #include "FrameLoader.h"
 #include "HTMLNames.h"

@@ -24,6 +24,7 @@
 #include <WebCore/Document.h>
 #include <WebCore/Element.h>
 #include <WebCore/EventLoop.h>
+#include <WebCore/EventTargetInlines.h>
 #include <WebCore/GCReachableRef.h>
 #include <WebCore/InspectorInstrumentationPublic.h>
 #include <WebCore/LayoutRect.h>
