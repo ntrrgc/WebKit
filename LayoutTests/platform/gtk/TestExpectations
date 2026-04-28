@@ -1498,9 +1498,6 @@ webkit.org/b/311927 accessibility/combobox/gtk/combobox-collapsed-selection-chan
 
 webkit.org/b/311930 fonts/font-cache-memory-pressure-crash.html [ Failure Pass ]
 
-webkit.org/b/312269 imported/w3c/web-platform-tests/webrtc/protocol/vp8-fmtp.html [ Pass Crash ]
-webkit.org/b/312269 imported/w3c/web-platform-tests/webrtc/RTCSctpTransport-constructor.html [ Pass Crash ]
-
 webkit.org/b/312888 inspector/debugger/async-stack-trace-basic.html [ Pass Crash ]
 webkit.org/b/312889 media/video-seek-past-end-paused.html [ Pass Timeout ]
 webkit.org/b/312892 imported/w3c/web-platform-tests/html/browsers/browsing-the-web/navigating-across-documents/replace-before-load/window-open-self.html [ Pass Failure ]
