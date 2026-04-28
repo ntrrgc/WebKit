@@ -335,6 +335,11 @@ header: <WebCore/PlatformXR.h>
     size_t numImages;
 };
 
+enum class PlatformXR::CompositionLayerType : uint8_t {
+    Quad,
+    Equirect,
+};
+
 enum class PlatformXR::LayerLayout : uint8_t {
     Mono,
     StereoLeftRight,

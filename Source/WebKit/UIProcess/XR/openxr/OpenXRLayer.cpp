@@ -53,6 +53,11 @@ namespace WebKit {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(OpenXRLayer);
 WTF_MAKE_TZONE_ALLOCATED_IMPL(OpenXRLayerProjection);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(OpenXRCompositionLayer);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(OpenXRQuadLayer);
+#if defined(XR_KHR_composition_layer_equirect2)
+WTF_MAKE_TZONE_ALLOCATED_IMPL(OpenXREquirectLayer);
+#endif
 
 OpenXRLayer::OpenXRLayer(UniqueRef<OpenXRSwapchain>&& swapchain)
     : m_swapchain(WTF::move(swapchain))
@@ -424,14 +429,19 @@ Vector<XrCompositionLayerBaseHeader*> OpenXRLayerProjection::endFrame(const Plat
 
 #if ENABLE(WEBXR_LAYERS)
 
+OpenXRCompositionLayer::OpenXRCompositionLayer(UniqueRef<OpenXRSwapchain>&& swapchain, PlatformXR::LayerLayout layout)
+    : OpenXRLayer(WTF::move(swapchain))
+    , m_layout(layout)
+{
+}
+
 std::unique_ptr<OpenXRQuadLayer> OpenXRQuadLayer::create(std::unique_ptr<OpenXRSwapchain>&& swapchain, PlatformXR::LayerLayout layout)
 {
     return std::unique_ptr<OpenXRQuadLayer>(new OpenXRQuadLayer(makeUniqueRefFromNonNullUniquePtr(WTF::move(swapchain)), layout));
 }
 
 OpenXRQuadLayer::OpenXRQuadLayer(UniqueRef<OpenXRSwapchain>&& swapchain, PlatformXR::LayerLayout layout)
-    : OpenXRLayer(WTF::move(swapchain))
-    , m_layout(layout)
+    : OpenXRCompositionLayer(WTF::move(swapchain), layout)
 {
     m_layers.resize(layout == PlatformXR::LayerLayout::Mono ? 1 : 2);
     m_layers.fill(createOpenXRStruct<XrCompositionLayerQuad, XR_TYPE_COMPOSITION_LAYER_QUAD>());
@@ -509,8 +519,8 @@ Vector<XrCompositionLayerBaseHeader*> OpenXRQuadLayer::endFrame(const PlatformXR
     };
     auto flags = layer.blendTextureSourceAlpha ? XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT : 0;
 
-    auto isLeftEyeIndex = [layout = m_layout](int layerIndex) {
-        switch (layout) {
+    auto isLeftEyeIndex = [this](int layerIndex) {
+        switch (m_layout) {
         case PlatformXR::LayerLayout::Mono:
         case PlatformXR::LayerLayout::StereoLeftRight:
             return !layerIndex;
@@ -565,8 +575,7 @@ std::unique_ptr<OpenXREquirectLayer> OpenXREquirectLayer::create(std::unique_ptr
 }
 
 OpenXREquirectLayer::OpenXREquirectLayer(UniqueRef<OpenXRSwapchain>&& swapchain, PlatformXR::LayerLayout layout)
-    : OpenXRLayer(WTF::move(swapchain))
-    , m_layout(layout)
+    : OpenXRCompositionLayer(WTF::move(swapchain), layout)
 {
     m_layers.resize(layout == PlatformXR::LayerLayout::Mono ? 1 : 2);
     m_layers.fill(createOpenXRStruct<XrCompositionLayerEquirect2KHR, XR_TYPE_COMPOSITION_LAYER_EQUIRECT2_KHR>());

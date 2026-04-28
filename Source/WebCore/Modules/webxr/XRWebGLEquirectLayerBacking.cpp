@@ -62,7 +62,7 @@ ExceptionOr<Ref<XRWebGLEquirectLayerBacking>> XRWebGLEquirectLayerBacking::creat
 
     auto [ equirectLayerSize, equirectLayerLayout ] = computeEquirectLayerData(init);
 
-    auto layerInfo = device->createEquirectLayer(equirectLayerSize, equirectLayerLayout);
+    auto layerInfo = device->createCompositionLayer(PlatformXR::CompositionLayerType::Equirect, equirectLayerSize, equirectLayerLayout);
     if (!layerInfo)
         return Exception { ExceptionCode::OperationError, "Unable to create an equirect layer."_s };
 
