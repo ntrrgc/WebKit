@@ -3,13 +3,13 @@ var loadCount = 0;
 
 async function loaded()
 {
-    testRunner?.waitUntilDone();
+    window.testRunner?.waitUntilDone();
     loadCount++;
     if (loadCount == 2) {
         document.body.offsetTop;
         await beginTest();
     }
-    testRunner?.notifyDone();
+    window.testRunner?.notifyDone();
 }
 
 async function beginTest()
