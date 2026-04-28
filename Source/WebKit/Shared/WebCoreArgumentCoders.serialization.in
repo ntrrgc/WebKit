@@ -2406,6 +2406,9 @@ header: <WebCore/ScreenProperties.h>
 #if PLATFORM(MAC) || PLATFORM(IOS_FAMILY)
     float scaleFactor;
 #endif
+#if PLATFORM(MAC)
+    bool reserved;
+#endif
 };
 
 #if HAVE(SUPPORT_HDR_DISPLAY)

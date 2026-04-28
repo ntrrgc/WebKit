@@ -105,6 +105,7 @@ public:
     Ref<GenericPromise> finishSeek(const MediaTime&) final;
     void notifyEffectiveRateChanged(Function<void(double)>&&) final;
     bool seeking() const final;
+    void setScreenReserved(bool) final;
 
     // AudioInterface
     void setVolume(float) final;

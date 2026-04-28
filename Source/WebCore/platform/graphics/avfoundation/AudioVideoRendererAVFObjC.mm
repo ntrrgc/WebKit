@@ -69,6 +69,12 @@
 #import <pal/cf/CoreMediaSoftLink.h>
 #import <pal/cocoa/AVFoundationSoftLink.h>
 
+#if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/AVSampleBufferRenderSynchronizerAdditions.mm>)
+#import <WebKitAdditions/AVSampleBufferRenderSynchronizerAdditions.mm>
+#else
+static void setSynchronizerScreenReserved(AVSampleBufferRenderSynchronizer *, bool) { }
+#endif
+
 @interface AVSampleBufferDisplayLayer (Staging_100128644)
 @property (assign, nonatomic) BOOL preventsAutomaticBackgroundingDuringVideoPlayback;
 @end
@@ -1002,6 +1008,11 @@ void AudioVideoRendererAVFObjC::destroyAudioRenderers()
 bool AudioVideoRendererAVFObjC::seeking() const
 {
     return m_seekState != SeekCompleted;
+}
+
+void AudioVideoRendererAVFObjC::setScreenReserved(bool reserved)
+{
+    setSynchronizerScreenReserved(m_synchronizer, reserved);
 }
 
 MediaTime AudioVideoRendererAVFObjC::clampTimeToLastSeekTime(const MediaTime& time) const

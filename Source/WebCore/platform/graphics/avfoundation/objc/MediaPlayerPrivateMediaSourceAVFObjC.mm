@@ -120,6 +120,10 @@ MediaPlayerPrivateMediaSourceAVFObjC::MediaPlayerPrivateMediaSourceAVFObjC(Media
     , m_renderer(createRenderer(*this, player.clientIdentifier(), m_playerIdentifier))
 {
     ALWAYS_LOG(LOGIDENTIFIER);
+
+#if PLATFORM(MAC)
+    m_renderer->setScreenReserved(player.screenReserved());
+#endif
 }
 
 MediaPlayerPrivateMediaSourceAVFObjC::~MediaPlayerPrivateMediaSourceAVFObjC()
@@ -1495,6 +1499,13 @@ void MediaPlayerPrivateMediaSourceAVFObjC::setVideoLayerSizeFenced(const WebCore
 {
     m_renderer->setVideoLayerSizeFenced(size, WTF::move(sendRightAnnotated));
 }
+
+#if PLATFORM(MAC)
+void MediaPlayerPrivateMediaSourceAVFObjC::screenReservedChanged(bool reserved)
+{
+    m_renderer->setScreenReserved(reserved);
+}
+#endif
 
 } // namespace WebCore
 
