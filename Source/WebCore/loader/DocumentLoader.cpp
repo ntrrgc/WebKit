@@ -1364,12 +1364,19 @@ void DocumentLoader::commitData(const SharedBuffer& data)
         }
         // Call receivedFirstData() exactly once per load. We should only reach this point multiple times
         // for multipart loads, and FrameLoader::isMultipartReplacing() will be true after the first time.
+        bool frameHadNoTreeParent = frame && !frame->tree().parent();
         if (!isMultipartReplacingLoad())
             protect(frameLoader())->receivedFirstData();
 
         // The load could be canceled under receivedFirstData(), which makes delegate calls and even sometimes dispatches DOM events.
         if (!isLoading())
             return;
+
+        // Under site isolation, receivedFirstData() commits the provisional frame into the
+        // frame tree via commitProvisionalFrame(), setting the correct parent. Re-register
+        // the service worker client so ancestorOrigins reflects the updated frame tree.
+        if (m_canUseServiceWorkers && frameHadNoTreeParent && frame->tree().parent())
+            document->updateServiceWorkerClientData();
 
         if (RefPtr window = document->window()) {
             window->prewarmLocalStorageIfNecessary();
