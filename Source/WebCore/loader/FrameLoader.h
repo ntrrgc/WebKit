@@ -264,7 +264,7 @@ public:
 
     void frameDetached();
 
-    void setOutgoingReferrer(const URL&);
+    WEBCORE_EXPORT void setOutgoingReferrer(const URL&);
 
     void loadDone(LoadCompletionType);
     void subresourceLoadDone(LoadCompletionType);
