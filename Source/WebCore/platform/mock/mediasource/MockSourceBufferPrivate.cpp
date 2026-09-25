@@ -180,12 +180,51 @@ Ref<MediaPromise> MockSourceBufferPrivate::appendInternal(Ref<SharedBuffer>&& da
     return MediaPromise::createAndResolve();
 }
 
+MockSourceBufferPrivate::MockTrackSampleSink::MockTrackSampleSink(MockSourceBufferPrivate& priv, MockTrack& track, TrackID trackID)
+    : m_trackID(trackID)
+    , m_track(track)
+    , m_private(priv)
+{
+}
+
+MockSourceBufferPrivate::MockTrack::MockTrack(MockSourceBufferPrivate& priv, TrackID trackID)
+    : innerSink(MockTrackSampleSink::create(priv, *this, trackID))
+    , activeSink(innerSink)
+{
+}
+
+bool MockSourceBufferPrivate::isReadyForMoreSamples(TrackID trackID)
+{
+    return m_tracks.at(trackID)->activeSink->isReadyForMoreSamples();
+}
+
+bool MockSourceBufferPrivate::MockTrackSampleSink::isReadyForMoreSamples()
+{
+    RefPtr<MockTrack> track = m_track.get();
+    return !track->maxQueueDepth || track->enqueuedSamples.size() < track->maxQueueDepth.value();
+}
+
+void MockSourceBufferPrivate::flush(TrackID trackID)
+{
+    m_tracks.at(trackID)->activeSink->flush();
+}
+
+void MockSourceBufferPrivate::MockTrackSampleSink::flush()
+{
+    RefPtr<MockTrack> track = m_track.get();
+    track->enqueuedSamples.clear();
+}
+
 void MockSourceBufferPrivate::didReceiveInitializationSegment(const MockInitializationBox& initBox)
 {
     SourceBufferPrivateClient::InitializationSegment segment;
     segment.duration = initBox.duration();
 
     for (auto& trackBox : initBox.tracks()) {
+        TrackID trackID = trackBox.trackID();
+        if (!m_tracks.contains(trackID))
+            m_tracks.emplace(trackID, MockTrack::create(*this, trackID));
+
         if (trackBox.kind() == MockTrackBox::Video) {
             SourceBufferPrivateClient::InitializationSegment::VideoTrackInformation info;
             info.track = MockVideoTrackPrivate::create(trackBox);
@@ -216,16 +255,31 @@ void MockSourceBufferPrivate::resetParserStateInternal()
 {
 }
 
-Ref<SourceBufferPrivate::SamplesPromise> MockSourceBufferPrivate::enqueuedSamplesForTrackID(TrackID)
+Ref<SourceBufferPrivate::SamplesPromise> MockSourceBufferPrivate::enqueuedSamplesForTrackID(TrackID trackID)
 {
-    return SamplesPromise::createAndResolve(copyToVector(m_enqueuedSamples));
+    RefPtr<MockTrack> track = m_tracks.at(trackID);
+    return SamplesPromise::createAndResolve(copyToVector(track->enqueuedSamples));
 }
 
 void MockSourceBufferPrivate::setMaximumQueueDepthForTrackID(TrackID trackID, uint64_t maxQueueDepth)
 {
-    m_maxQueueDepth = maxQueueDepth;
+    RefPtr<MockTrack> track = m_tracks.at(trackID);
+    track->maxQueueDepth = maxQueueDepth;
     // After the change we may be ready for more samples.
     provideMediaData(trackID);
+}
+
+void MockSourceBufferPrivate::setSmoothSwitchStrategyForTrackID(TrackID trackID, const AtomString& strategy)
+{
+    // Currently the only supported option is "gop" (SmoothSwitchOnGOP).
+    // By default (if this method is never called), no smooth switch strategy is applied.
+    if (strategy != "gop")
+        return; // Unsupported strategy.
+    RefPtr<MockTrack> track = m_tracks.at(trackID);
+    if (track->smoothSwitchStrategy == SmoothSwitchStrategy::GOP)
+        return; // Already configured
+    track->smoothSwitchStrategy = SmoothSwitchStrategy::GOP;
+    track->activeSink = SmoothSwitchOnGOP::create(track->innerSink);
 }
 
 bool MockSourceBufferPrivate::canSetMinimumUpcomingPresentationTime(TrackID) const
@@ -242,9 +296,18 @@ bool MockSourceBufferPrivate::canSwitchToType(const ContentType& contentType)
     return MockMediaPlayerMediaSource::supportsType(parameters) != MediaPlayer::SupportsType::IsNotSupported;
 }
 
-void MockSourceBufferPrivate::enqueueSample(Ref<MediaSample>&& sample, TrackID)
+void MockSourceBufferPrivate::enqueueSample(Ref<MediaSample>&& sample, TrackID trackID)
 {
-    RefPtr mediaSource = mediaSourcePrivate();
+    RefPtr<MockTrack> track = m_tracks.at(trackID);
+    track->activeSink->enqueueSample(std::move(sample));
+}
+
+void MockSourceBufferPrivate::MockTrackSampleSink::enqueueSample(Ref<MediaSample>&& sample)
+{
+    RefPtr sourceBufferPrivate = m_private.get();
+    if (!sourceBufferPrivate)
+        return;
+    RefPtr mediaSource = sourceBufferPrivate->mediaSourcePrivate();
     if (!mediaSource)
         return;
 
@@ -263,7 +326,8 @@ void MockSourceBufferPrivate::enqueueSample(Ref<MediaSample>&& sample, TrackID)
     if (box->isDelayed())
         mediaSource->incrementTotalFrameDelayBy(MediaTime(1, 1));
 
-    m_enqueuedSamples.append(toString(sample.get()));
+    RefPtr<MockTrack> track = sourceBufferPrivate->m_tracks.at(m_trackID);
+    track->enqueuedSamples.append(toString(sample.get()));
 }
 
 #if !RELEASE_LOG_DISABLED

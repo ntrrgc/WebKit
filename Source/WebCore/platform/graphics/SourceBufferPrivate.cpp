@@ -515,6 +515,11 @@ void SourceBufferPrivate::reenqueueMediaIfNeeded(const MediaTime& currentTime)
     });
 }
 
+static PlatformTimeRanges removeSamplesFromTrackBuffer(const DecodeOrderSampleMap::MapType& samples, TrackBuffer& trackBuffer, ASCIILiteral logPrefix)
+{
+    return trackBuffer.removeSamples(samples, logPrefix);
+}
+
 MediaTime SourceBufferPrivate::findPreviousSyncSamplePresentationTime(const MediaTime& time)
 {
     MediaTime previousSyncSamplePresentationTime = time;
@@ -1038,11 +1043,18 @@ Ref<MediaPromise> SourceBufferPrivate::append(Ref<SharedBuffer>&& buffer)
             return OperationPromise::createAndReject(!result ? result.error() : PlatformMediaError::BufferRemoved);
         assertIsCurrent(protectedThis->m_dispatcher.get());
 
-        // Flush any tracks marked needsReenqueueing during this append (overlap detection
-        // in didReceiveSample) before the main thread reacts to bufferedChanged. The flush
-        // IPC must reach the renderer queue ahead of any subsequent play()/setRate() IPC
+        // The overlap detection in didReceiveSample() may have triggered and marked some
+        // tracks as needing reenqueueing, in which case we need to have the port handle it,
+        // either via flush or some kind of smooth switch.
+        // It is important that this is handled before the append is complete so that in case
+        // of a flush it is processed ahead ahead of any subsequent play()/setRate() IPC
         // dispatched in response to the readyState change.
-        protectedThis->flushTracksThatNeedReenqueueing();
+        for (auto& trackBufferPair : protectedThis->m_trackBufferMap) {
+            TrackID trackID = trackBufferPair.first;
+            TrackBuffer& trackBuffer = trackBufferPair.second;
+            if (trackBuffer.needsReenqueueing())
+                protectedThis->handleChangeInAlreadyEnqueuedContent(trackID, trackBuffer.takeNotYetEnqueuedSamples());
+        }
 
         protectedThis->computeEvictionData();
 
@@ -1067,6 +1079,16 @@ Ref<MediaPromise> SourceBufferPrivate::append(Ref<SharedBuffer>&& buffer)
         return MediaPromise::all(promises).get();
     });
     return m_currentSourceBufferOperation.get();
+}
+
+void SourceBufferPrivate::handleChangeInAlreadyEnqueuedContent(TrackID trackID, DecodeOrderSampleMap::MapType notYetEnqueuedSamples)
+{
+    // The default behavior is to discard the previous set of not yet enqueued samples
+    // and to flush the renderer.
+    // Ports can override this method to perform various flushless smooth switch strategies
+    // instead, where they will continue processing a mix of old and new samples.
+    UNUSED_PARAM(notYetEnqueuedSamples);
+    flush(trackID);
 }
 
 auto SourceBufferPrivate::findPrioritySample(const SamplesVector& samples) const -> PrioritySample
@@ -1628,20 +1650,19 @@ bool SourceBufferPrivate::processMediaSample(SourceBufferPrivateClient& client, 
                     dependentSamples.insert(entry);
             }
 
-            PlatformTimeRanges erasedRanges = trackBuffer.removeSamplesFromMap(dependentSamples, "didReceiveSample"_s);
+            PlatformTimeRanges erasedRanges = removeSamplesFromTrackBuffer(dependentSamples, trackBuffer, "didReceiveSample"_s);
 
             // Only force the TrackBuffer to re-enqueue if the removed ranges overlap with enqueued and possibly
             // not yet displayed samples.
             MediaTime currentTime = this->currentTime();
-            bool needsSmoothSwitch = false;
             if (trackBuffer.highestEnqueuedPresentationTime().isValid() && currentTime < trackBuffer.highestEnqueuedPresentationTime()) {
                 PlatformTimeRanges possiblyEnqueuedRanges(currentTime, trackBuffer.highestEnqueuedPresentationTime());
                 possiblyEnqueuedRanges.intersectWith(erasedRanges);
-                if (possiblyEnqueuedRanges.length())
-                    needsSmoothSwitch = true;
+                if (possiblyEnqueuedRanges.length()) {
+                    // TODO: use new API here or thereabouts
+                    trackBuffer.setNeedsReenqueueing(true);
+                }
             }
-            if (!needsSmoothSwitch)
-                trackBuffer.removeSamplesFromDecodeQueue(dependentSamples, "didReceiveSample"_s);
 
             erasedRanges.invert();
             trackBuffer.buffered().intersectWith(erasedRanges);

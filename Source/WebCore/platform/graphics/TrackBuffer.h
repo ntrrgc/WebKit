@@ -70,8 +70,7 @@ public:
     bool reenqueueMediaForTime(const MediaTime&, bool isEnded = false);
     MediaTime findSeekTimeForTargetTime(const MediaTime& targetTime, const MediaTime& negativeThreshold, const MediaTime& positiveThreshold);
     int64_t removeCodedFrames(const MediaTime& start, const MediaTime& end, const MediaTime& currentTime);
-    PlatformTimeRanges removeSamplesFromMap(const DecodeOrderSampleMap::MapType&, ASCIILiteral);
-    void removeSamplesFromDecodeQueue(const DecodeOrderSampleMap::MapType&, ASCIILiteral);
+    PlatformTimeRanges removeSamples(const DecodeOrderSampleMap::MapType&, ASCIILiteral);
     int64_t codedFramesIntervalSize(const MediaTime& start, const MediaTime& end);
 
     RefPtr<MediaSample> nextSample();
@@ -128,6 +127,8 @@ public:
     const PlatformTimeRanges& buffered() const LIFETIME_BOUND { return m_buffered; }
     PlatformTimeRanges& buffered() LIFETIME_BOUND { return m_buffered; }
 
+    DecodeOrderSampleMap::MapType takeNotYetEnqueuedSamples();
+
 #if !RELEASE_LOG_DISABLED
     void setLogger(const Logger&, uint64_t);
     const Logger& logger() const final { ASSERT(m_logger); return *m_logger.get(); }
@@ -139,9 +140,6 @@ public:
 private:
     friend UniqueRef<TrackBuffer> WTF::makeUniqueRefWithoutFastMallocCheck<TrackBuffer>(RefPtr<WebCore::MediaDescription>&&, IsAcceptableEnqueueGapFn&&);
     TrackBuffer(RefPtr<MediaDescription>&&, IsAcceptableEnqueueGapFn&&);
-
-    void advanceFurthestContiguousSample();
-    void updateFurthestContiguousSampleBeforeErase(DecodeOrderSampleMap::iterator);
 
     // Returns true if the DTS gap from `fromTime` to `toTime` is small
     // enough to enqueue across. Gaps within
@@ -198,15 +196,6 @@ private:
     MediaTime m_enqueueDiscontinuityBoundary;
     MediaTime m_lastEnqueueDecodeEnd;
     IsAcceptableEnqueueGapFn m_isAcceptableEnqueueGap;
-
-    DecodeOrderSampleMap::iterator m_furthestContiguousSample;
-
-    // The decode key of the sync sample of the latest appeneded GOP.
-    DecodeOrderSampleMap::KeyType m_appendGroupDecodeKey { MediaTime::invalidTime(), MediaTime::invalidTime() };
-    // Whether samples of the latest appended GOP need to be withheld from the decodeQueue at this point.
-    bool m_isWithholdingSamples { false };
-    // Whether we are currently enqueueing non-displaying samples for a smooth switch, to allow the decoder to catch up.
-    bool m_isCatchingUpForSmoothSwitch { false };
 
     MediaTime m_roundedTimestampOffset { MediaTime::invalidTime() };
 
