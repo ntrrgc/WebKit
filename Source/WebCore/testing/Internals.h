@@ -982,6 +982,7 @@ public:
     double minimumUpcomingPresentationTimeForTrackID(SourceBuffer&, const AtomString&);
     void setShouldGenerateTimestamps(SourceBuffer&, bool);
     void setMaximumQueueDepthForTrackID(SourceBuffer&, const AtomString&, size_t);
+    void setSmoothSwitchStrategy(SourceBuffer&, const AtomString&, const AtomString&);
     size_t evictableSize(SourceBuffer&);
 #endif
 

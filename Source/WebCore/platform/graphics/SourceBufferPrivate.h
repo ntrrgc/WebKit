@@ -171,6 +171,7 @@ public:
     WEBCORE_EXPORT virtual Ref<SamplesPromise> enqueuedSamplesForTrackID(TrackID);
     WEBCORE_EXPORT MediaTime minimumUpcomingPresentationTimeForTrackID(TrackID);
     virtual void setMaximumQueueDepthForTrackID(TrackID, uint64_t) { }
+    virtual void setSmoothSwitchStrategyForTrackID(TrackID, const AtomString&) { }
 
 #if !RELEASE_LOG_DISABLED
     virtual const Logger& sourceBufferLogger() const = 0;
@@ -197,6 +198,7 @@ protected:
     virtual Ref<MediaPromise> appendInternal(Ref<SharedBuffer>&&) = 0;
     virtual void resetParserStateInternal() = 0;
     virtual void flush(TrackID) { }
+    virtual void handleChangeInAlreadyEnqueuedContent(TrackID, DecodeOrderSampleMap::MapType notYetEnqueuedSamples);
     virtual void enqueueSample(Ref<MediaSample>&&, TrackID) { }
     virtual void allSamplesInTrackEnqueued(TrackID) { }
     virtual bool isReadyForMoreSamples(TrackID) { return false; }
