@@ -28,6 +28,7 @@
 #if ENABLE(MEDIA_SOURCE)
 
 #include "SourceBufferPrivate.h"
+#include "SmoothSwitchOnGOP.h"
 
 namespace WebCore {
 
@@ -39,6 +40,11 @@ class MockSampleBox;
 class TimeRanges;
 class VideoTrackPrivate;
 
+enum class SmoothSwitchStrategy {
+    None,
+    GOP
+};
+
 class MockSourceBufferPrivate final : public SourceBufferPrivate {
 public:
     static Ref<MockSourceBufferPrivate> create(MockMediaSourcePrivate&);
@@ -46,6 +52,41 @@ public:
 
     constexpr MediaPlatformType platformType() const final { return MediaPlatformType::Mock; }
 private:
+    struct MockTrack;
+
+    class MockTrackSampleSink final : public SampleSink, public ThreadSafeRefCounted<MockTrackSampleSink> {
+    public:
+        void ref() const final { ThreadSafeRefCounted::ref(); }
+        void deref() const final { ThreadSafeRefCounted::deref(); }
+        static Ref<MockTrackSampleSink> create(MockSourceBufferPrivate& priv, MockTrack& track, TrackID trackID) { return adoptRef(*new MockTrackSampleSink(priv, track, trackID)); }
+
+        bool isReadyForMoreSamples() final;
+        void notifyWhenReadyForMoreSamples(std::function<void()>&&) final {}
+        void enqueueSample(Ref<MediaSample>&&) final;
+        void allSamplesEnqueued() final {}
+        void flush() final;
+
+    private:
+        MockTrackSampleSink(MockSourceBufferPrivate&, MockTrack&, TrackID);
+
+        TrackID m_trackID;
+        ThreadSafeWeakPtr<MockTrack> m_track;
+        ThreadSafeWeakPtr<MockSourceBufferPrivate> m_private;
+    };
+
+    struct MockTrack final : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<MockTrack> {
+        static Ref<MockTrack> create(MockSourceBufferPrivate& priv, TrackID trackID) { return adoptRef(*new MockTrack(priv, trackID)); }
+
+        std::optional<uint64_t> maxQueueDepth { std::nullopt };
+        Vector<String> enqueuedSamples;
+
+        Ref<MockTrackSampleSink> innerSink;
+        Ref<SampleSink> activeSink;
+        SmoothSwitchStrategy smoothSwitchStrategy;
+    private:
+        MockTrack(MockSourceBufferPrivate&, TrackID);
+    };
+
     explicit MockSourceBufferPrivate(MockMediaSourcePrivate&);
     RefPtr<MockMediaSourcePrivate> mediaSourcePrivate() const;
 
@@ -55,12 +96,13 @@ private:
     bool canSetMinimumUpcomingPresentationTime(TrackID) const final;
     bool canSwitchToType(const ContentType&) final;
 
-    void flush(TrackID) final { m_enqueuedSamples.clear(); }
+    void flush(TrackID) final;
     void enqueueSample(Ref<MediaSample>&&, TrackID) final;
-    bool isReadyForMoreSamples(TrackID) final { return !m_maxQueueDepth || m_enqueuedSamples.size() < m_maxQueueDepth.value(); }
+    bool isReadyForMoreSamples(TrackID) final;
 
     Ref<SamplesPromise> enqueuedSamplesForTrackID(TrackID) final;
     void setMaximumQueueDepthForTrackID(TrackID, uint64_t) final;
+    void setSmoothSwitchStrategyForTrackID(TrackID, const AtomString&) final;
 
     void didReceiveInitializationSegment(const MockInitializationBox&);
     void didReceiveSample(const MockSampleBox&);
@@ -75,8 +117,7 @@ private:
     uint64_t sourceBufferLogIdentifier() final { return logIdentifier(); }
 #endif
 
-    Vector<String> m_enqueuedSamples;
-    std::optional<uint64_t> m_maxQueueDepth;
+    StdUnorderedMap<TrackID, RefPtr<MockTrack>> m_tracks;
     Vector<uint8_t> m_inputBuffer;
 
 #if !RELEASE_LOG_DISABLED

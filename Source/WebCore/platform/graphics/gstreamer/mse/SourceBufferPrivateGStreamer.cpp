@@ -180,6 +180,7 @@ void SourceBufferPrivateGStreamer::flush(TrackID trackId)
         return;
 
     RefPtr player = this->player();
+    // TODO smooth switch here?
 
     ASSERT(m_tracks.contains(trackId));
     auto track = m_tracks[trackId];
@@ -203,6 +204,13 @@ void SourceBufferPrivateGStreamer::flush(TrackID trackId)
     if (auto source = player->webKitMediaSrc())
         webKitMediaSrcFlush(source, track->id());
 }
+
+// TODO
+// void handleChangeInAlreadyEnqueuedContent(TrackID trackID, DecodeOrderSampleMap::MapType notYetEnqueuedSamples)
+// {
+//     UNUSED_PARAM(trackID);
+//     UNUSED_PARAM(notYetEnqueuedSamples);
+// }
 
 void SourceBufferPrivateGStreamer::enqueueSample(Ref<MediaSample>&& sample, TrackID trackId)
 {
@@ -234,7 +242,7 @@ void SourceBufferPrivateGStreamer::enqueueSample(Ref<MediaSample>&& sample, Trac
         }
     }
 #endif
-    track->enqueueObject(adoptGRef(GST_MINI_OBJECT(gstSample.leakRef())));
+    track->enqueueSample(std::move(sample));
 }
 
 bool SourceBufferPrivateGStreamer::isReadyForMoreSamples(TrackID trackId)
@@ -270,7 +278,7 @@ void SourceBufferPrivateGStreamer::allSamplesInTrackEnqueued(TrackID trackId)
     auto track = m_tracks[trackId];
     if (RefPtr player = this->player())
         GST_DEBUG_OBJECT(player->pipeline(), "Enqueueing EOS for track '%" PRIu64 "'", track->id());
-    track->enqueueObject(adoptGRef(GST_MINI_OBJECT(gst_event_new_eos())));
+    track->allSamplesEnqueued();
 }
 
 bool SourceBufferPrivateGStreamer::precheckInitializationSegment(const InitializationSegment& segment)

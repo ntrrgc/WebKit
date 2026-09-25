@@ -2774,6 +2774,7 @@ platform/graphics/RotationDirection.cpp
 platform/graphics/ShadowBlur.cpp
 platform/graphics/ShareableBitmap.cpp
 platform/graphics/ShareableBitmapHandle.cpp
+platform/graphics/SmoothSwitchOnGOP.cpp
 platform/graphics/SourceBrush.cpp
 platform/graphics/SourceBufferPrivate.cpp
 platform/graphics/SourceImage.cpp

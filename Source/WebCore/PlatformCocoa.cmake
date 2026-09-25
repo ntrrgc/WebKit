@@ -1058,6 +1058,7 @@ list(REMOVE_ITEM WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/PathStream.h
     platform/graphics/PlatformDisplay.h
     platform/graphics/TrackBuffer.h
+    platform/graphics/SmoothSwitchOnGOP.h
 
     platform/graphics/angle/ANGLEHeaders.h
 

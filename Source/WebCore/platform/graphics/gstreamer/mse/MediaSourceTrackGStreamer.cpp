@@ -43,7 +43,8 @@ MediaSourceTrackGStreamer::MediaSourceTrackGStreamer(GStreamerTrackType type, Tr
     : m_type(type)
     , m_id(trackId)
     , m_initialCaps(WTF::move(initialCaps))
-    , m_queueDataMutex(trackId)
+    , m_innerSink(adoptRef(*new GStreamerTrackSampleSink(trackId)))
+    , m_activeSink(m_innerSink)
 {
     static std::once_flag debugRegisteredFlag;
     std::call_once(debugRegisteredFlag, [] {
@@ -61,31 +62,49 @@ Ref<MediaSourceTrackGStreamer> MediaSourceTrackGStreamer::create(GStreamerTrackT
     return adoptRef(*new MediaSourceTrackGStreamer(type, trackId, WTF::move(initialCaps)));
 }
 
-bool MediaSourceTrackGStreamer::isReadyForMoreSamples()
+bool MediaSourceTrackGStreamer::GStreamerTrackSampleSink::isReadyForMoreSamples()
 {
     ASSERT(isMainThread());
     DataMutexLocker queue { m_queueDataMutex };
     return !queue->isFull();
 }
 
-void MediaSourceTrackGStreamer::notifyWhenReadyForMoreSamples(TrackQueue::LowLevelHandler&& handler)
+void MediaSourceTrackGStreamer::GStreamerTrackSampleSink::notifyWhenReadyForMoreSamples(TrackQueue::LowLevelHandler&& handler)
 {
     ASSERT(isMainThread());
     DataMutexLocker queue { m_queueDataMutex };
     queue->notifyWhenLowLevel(WTF::move(handler));
 }
 
-void MediaSourceTrackGStreamer::enqueueObject(GRefPtr<GstMiniObject>&& object)
+void MediaSourceTrackGStreamer::GStreamerTrackSampleSink::enqueueObject(GRefPtr<GstMiniObject>&& object)
 {
     ASSERT(isMainThread());
     DataMutexLocker queue { m_queueDataMutex };
     queue->enqueueObject(WTF::move(object));
 }
 
+void MediaSourceTrackGStreamer::GStreamerTrackSampleSink::enqueueSample(Ref<MediaSample>&& sample)
+{
+    GRefPtr<GstSample> gstSample = sample->platformSample().gstSample();
+    ASSERT(gstSample);
+    enqueueObject(adoptGRef(GST_MINI_OBJECT(gstSample.leakRef())));
+}
+
+void MediaSourceTrackGStreamer::GStreamerTrackSampleSink::allSamplesEnqueued()
+{
+    enqueueObject(adoptGRef(GST_MINI_OBJECT(gst_event_new_eos())));
+}
+
+void MediaSourceTrackGStreamer::GStreamerTrackSampleSink::flush()
+{
+    // TODO
+    // Probably will have to make a way to call SourceBufferPrivateGStreamer::flush()
+}
+
 void MediaSourceTrackGStreamer::clearQueue()
 {
     ASSERT(isMainThread());
-    DataMutexLocker queue { m_queueDataMutex };
+    DataMutexLocker queue { queueDataMutex() };
     queue->clear();
 }
 

@@ -1311,6 +1311,11 @@ void SourceBuffer::setMaximumQueueDepthForTrackID(TrackID trackID, uint64_t maxQ
     m_private->setMaximumQueueDepthForTrackID(trackID, maxQueueDepth);
 }
 
+void SourceBuffer::setSmoothSwitchStrategyForTrackID(TrackID trackID, const AtomString& strategy)
+{
+    m_private->setSmoothSwitchStrategyForTrackID(trackID, strategy);
+}
+
 Ref<GenericPromise> SourceBuffer::setMaximumSourceBufferSize(uint64_t size)
 {
     m_maximumBufferSize = size;

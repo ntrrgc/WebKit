@@ -5349,6 +5349,11 @@ void Internals::setMaximumQueueDepthForTrackID(SourceBuffer& buffer, const AtomS
     buffer.setMaximumQueueDepthForTrackID(parseInteger<TrackID>(trackID).value_or(0), maxQueueDepth);
 }
 
+void Internals::setSmoothSwitchStrategy(SourceBuffer& buffer, const AtomString& trackID, const AtomString& strategy)
+{
+    buffer.setSmoothSwitchStrategyForTrackID(parseInteger<TrackID>(trackID).value_or(0), strategy);
+}
+
 size_t Internals::evictableSize(SourceBuffer& buffer)
 {
     return buffer.evictableSize();
