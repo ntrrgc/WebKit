@@ -35,6 +35,7 @@
 
 #include "TrackPrivateBaseGStreamer.h"
 #include "TrackQueue.h"
+#include "SmoothSwitchOnGOP.h"
 #include <wtf/DataMutex.h>
 
 namespace WebCore {
@@ -47,13 +48,13 @@ public:
     GStreamerTrackType type() const { return m_type; }
     TrackID id() const { return m_id; }
     GRefPtr<GstCaps>& initialCaps() { return m_initialCaps; }
-    DataMutex<TrackQueue>& queueDataMutex() LIFETIME_BOUND { return m_queueDataMutex; }
+    DataMutex<TrackQueue>& queueDataMutex() LIFETIME_BOUND { return m_innerSink->queueDataMutex(); }
 
-    bool isReadyForMoreSamples();
-
-    void notifyWhenReadyForMoreSamples(TrackQueue::LowLevelHandler&&);
-
-    void enqueueObject(GRefPtr<GstMiniObject>&&);
+    bool isReadyForMoreSamples() { return m_activeSink->isReadyForMoreSamples(); }
+    void notifyWhenReadyForMoreSamples(TrackQueue::LowLevelHandler&& callback) { m_activeSink->notifyWhenReadyForMoreSamples(WTF::move(callback)); }
+    void enqueueSample(Ref<MediaSample>&& sample) { m_activeSink->enqueueSample(WTF::move(sample)); }
+    void allSamplesEnqueued() { m_activeSink->allSamplesEnqueued(); }
+    void flush() { m_activeSink->flush(); }
 
     // This method is provided to clear the TrackQueue in cases where the stream hasn't been started (e.g. because
     // another SourceBuffer hasn't received the necessary initalization segment for playback).
@@ -66,10 +67,35 @@ public:
 private:
     explicit MediaSourceTrackGStreamer(GStreamerTrackType, TrackID, GRefPtr<GstCaps>&& initialCaps);
 
+    class GStreamerTrackSampleSink final : public SampleSink, public ThreadSafeRefCounted<GStreamerTrackSampleSink> {
+    public:
+        void ref() const final { ThreadSafeRefCounted::ref(); }
+        void deref() const final { ThreadSafeRefCounted::deref(); }
+
+        GStreamerTrackSampleSink(TrackID trackID)
+            : m_queueDataMutex(trackID)
+        {}
+
+        bool isReadyForMoreSamples() final;
+        void notifyWhenReadyForMoreSamples(std::function<void()>&&) final;
+        void enqueueSample(Ref<MediaSample>&&) final;
+        void allSamplesEnqueued() final;
+        void flush() final;
+
+        DataMutex<TrackQueue>& queueDataMutex() { return m_queueDataMutex; }
+
+    private:
+        void enqueueObject(GRefPtr<GstMiniObject>&&);
+
+        DataMutex<TrackQueue> m_queueDataMutex;
+    };
+
     GStreamerTrackType m_type;
     TrackID m_id;
     GRefPtr<GstCaps> m_initialCaps;
-    DataMutex<TrackQueue> m_queueDataMutex;
+
+    Ref<GStreamerTrackSampleSink> m_innerSink;
+    Ref<SampleSink> m_activeSink;
 
     bool m_isRemoved { false };
 };

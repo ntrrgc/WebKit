@@ -73,6 +73,8 @@ public:
     void startChangingType() final;
 
     void flush(TrackID) final;
+    // TODO
+    // void handleChangeInAlreadyEnqueuedContent(TrackID, DecodeOrderSampleMap::MapType notYetEnqueuedSamples) final;
     void enqueueSample(Ref<MediaSample>&&, TrackID) final;
     void allSamplesInTrackEnqueued(TrackID) final;
     bool isReadyForMoreSamples(TrackID) final;
