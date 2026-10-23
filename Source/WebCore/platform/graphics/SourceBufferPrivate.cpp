@@ -1052,8 +1052,8 @@ Ref<MediaPromise> SourceBufferPrivate::append(Ref<SharedBuffer>&& buffer)
         for (auto& trackBufferPair : protectedThis->m_trackBufferMap) {
             TrackID trackID = trackBufferPair.first;
             TrackBuffer& trackBuffer = trackBufferPair.second;
-            if (trackBuffer.needsReenqueueing())
-                protectedThis->handleChangeInAlreadyEnqueuedContent(trackID, trackBuffer.takeNotYetEnqueuedSamples());
+            if (auto contentChange = trackBuffer.takePreparedChangeInAlreadyEnqueuedContent())
+                protectedThis->handleChangeInAlreadyEnqueuedContent(trackID, WTF::move(contentChange).value());
         }
 
         protectedThis->computeEvictionData();
@@ -1081,13 +1081,12 @@ Ref<MediaPromise> SourceBufferPrivate::append(Ref<SharedBuffer>&& buffer)
     return m_currentSourceBufferOperation.get();
 }
 
-void SourceBufferPrivate::handleChangeInAlreadyEnqueuedContent(TrackID trackID, DecodeOrderSampleMap::MapType notYetEnqueuedSamples)
+void SourceBufferPrivate::handleChangeInAlreadyEnqueuedContent(TrackID trackID, ChangeInAlreadyEnqueuedContent)
 {
     // The default behavior is to discard the previous set of not yet enqueued samples
     // and to flush the renderer.
     // Ports can override this method to perform various flushless smooth switch strategies
     // instead, where they will continue processing a mix of old and new samples.
-    UNUSED_PARAM(notYetEnqueuedSamples);
     flush(trackID);
 }
 
@@ -1659,8 +1658,8 @@ bool SourceBufferPrivate::processMediaSample(SourceBufferPrivateClient& client, 
                 PlatformTimeRanges possiblyEnqueuedRanges(currentTime, trackBuffer.highestEnqueuedPresentationTime());
                 possiblyEnqueuedRanges.intersectWith(erasedRanges);
                 if (possiblyEnqueuedRanges.length()) {
-                    // TODO: use new API here or thereabouts
                     trackBuffer.setNeedsReenqueueing(true);
+                    trackBuffer.prepareChangeInAlreadyEnqueuedContent(dependentSamples);
                 }
             }
 

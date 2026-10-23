@@ -27,6 +27,7 @@
 
 #if ENABLE(MEDIA_SOURCE)
 
+#include "ChangeInAlreadyEnqueuedContent.h"
 #include "MediaDescription.h"
 #include "MediaSample.h"
 #include "PlatformTimeRanges.h"
@@ -95,8 +96,6 @@ public:
     void setHighestEnqueuedPresentationTime(MediaTime timestamp) { m_highestEnqueuedPresentationTime = WTF::move(timestamp); }
     const MediaTime& minimumEnqueuedPresentationTime() const LIFETIME_BOUND { return m_minimumEnqueuedPresentationTime; }
 
-    MediaTime futureDiscontinuityBoundary() const;
-
     // Raises the tracked reorder depth. Call once per init segment with the
     // codec-declared max_num_reorder_frames / sps_max_num_reorder_pics when
     // available. The running observation in addSample() can only grow it further.
@@ -127,7 +126,8 @@ public:
     const PlatformTimeRanges& buffered() const LIFETIME_BOUND { return m_buffered; }
     PlatformTimeRanges& buffered() LIFETIME_BOUND { return m_buffered; }
 
-    DecodeOrderSampleMap::MapType takeNotYetEnqueuedSamples();
+    void prepareChangeInAlreadyEnqueuedContent(const DecodeOrderSampleMap::MapType& erasedSamples);
+    std::optional<ChangeInAlreadyEnqueuedContent> takePreparedChangeInAlreadyEnqueuedContent();
 
 #if !RELEASE_LOG_DISABLED
     void setLogger(const Logger&, uint64_t);
@@ -198,6 +198,8 @@ private:
     IsAcceptableEnqueueGapFn m_isAcceptableEnqueueGap;
 
     MediaTime m_roundedTimestampOffset { MediaTime::invalidTime() };
+
+    std::optional<ChangeInAlreadyEnqueuedContent> m_changeInAlreadyEnqueuedContent;
 
 #if !RELEASE_LOG_DISABLED
     RefPtr<const Logger> m_logger;

@@ -26,9 +26,12 @@
 
 #pragma once
 
+#include <variant>
 #include "WebCore/MediaSample.h"
 #include "WebCore/SampleMap.h"
+#include "WebCore/SourceBufferPrivate.h"
 #include "wtf/AbstractRefCounted.h"
+#include "wtf/LoggerHelper.h"
 
 namespace WebCore {
 
@@ -40,37 +43,69 @@ public:
     virtual void enqueueSample(Ref<MediaSample>&&) = 0;
     virtual void allSamplesEnqueued() = 0;
     virtual void flush() = 0;
-    virtual void handleChangeInAlreadyEnqueuedContent(DecodeOrderSampleMap::MapType) { flush(); }
+    virtual void handleChangeInAlreadyEnqueuedContent(ChangeInAlreadyEnqueuedContent) {
+        flush();
+    }
 };
 
-class SmoothSwitchOnGOP final: public ThreadSafeRefCounted<SmoothSwitchOnGOP>, public SampleSink {
+class SmoothSwitchOnGOP final
+    : public ThreadSafeRefCounted<SmoothSwitchOnGOP>
+    , public SampleSink
+#if !RELEASE_LOG_DISABLED
+    , public LoggerHelper
+#endif
+{
     WTF_MAKE_TZONE_ALLOCATED(SmoothSwitchOnGOP);
 public:
     void ref() const final { ThreadSafeRefCounted::ref(); }
     void deref() const final { ThreadSafeRefCounted::deref(); }
 
-    static Ref<SmoothSwitchOnGOP> create(const Ref<SampleSink>& innerSink) { return adoptRef(*new SmoothSwitchOnGOP(innerSink)); }
+    static Ref<SmoothSwitchOnGOP> create(SourceBufferPrivate& sourceBufferPrivate, const Ref<SampleSink>& innerSink) { return adoptRef(*new SmoothSwitchOnGOP(sourceBufferPrivate, innerSink)); }
 
     bool isReadyForMoreSamples() final;
     void notifyWhenReadyForMoreSamples(std::function<void()>&&) final;
     void enqueueSample(Ref<MediaSample>&&) final;
     void allSamplesEnqueued() final;
     void flush() final;
-    void handleChangeInAlreadyEnqueuedContent(DecodeOrderSampleMap::MapType notYetEnqueuedSamples) final;
+    void handleChangeInAlreadyEnqueuedContent(ChangeInAlreadyEnqueuedContent) final;
 
 private:
-    SmoothSwitchOnGOP(const Ref<SampleSink>& innerSink)
+    SmoothSwitchOnGOP(SourceBufferPrivate& sourceBufferPrivate, const Ref<SampleSink>& innerSink)
         : m_innerSink(innerSink)
+#if !RELEASE_LOG_DISABLED
+        , m_logger(sourceBufferPrivate.sourceBufferLogger())
+        , m_logIdentifier(sourceBufferPrivate.sourceBufferLogIdentifier())
+#endif
     {}
     Ref<SampleSink> m_innerSink;
 
-    MediaTime m_highestDeliveredPTS { MediaTime::invalidTime() };
+    MediaTime m_highestDeliveredPresentationEndTime { MediaTime::invalidTime() };
     DecodeOrderSampleMap::KeyType m_lastDeliveredDecodeKey { MediaTime::invalidTime(), MediaTime::invalidTime() };
 
-    DecodeOrderSampleMap::MapType m_oldSamples;
-    DecodeOrderSampleMap::MapType m_newSamples;
+    struct StateCollecting {
+        DecodeOrderSampleMap::MapType oldSamples;
+        DecodeOrderSampleMap::MapType newGop;
+        MediaTime futureEnqueueDiscontinuityBoundary;
+    };
+    struct StateVacating {
+        DecodeOrderSampleMap::MapType vacatingQueue;
+    };
+    typedef std::variant<StateCollecting, StateVacating> State;
+    State m_currentState { StateVacating { } };
 
+    void deliverSample(Ref<MediaSample>&&);
     void tryFeedInnerSink();
+    void tryFeedInnerSinkSamples(DecodeOrderSampleMap::MapType&);
+
+#if !RELEASE_LOG_DISABLED
+    const Logger& logger() const final { return m_logger; }
+    uint64_t logIdentifier() const final { return m_logIdentifier; }
+    ASCIILiteral logClassName() const { return "SmoothSwitchOnGOP"_s; }
+    WTFLogChannel& NODELETE logChannel() const;
+
+    const Ref<const Logger> m_logger;
+    const uint64_t m_logIdentifier;
+#endif
 };
 
 } // namespace WebCore
