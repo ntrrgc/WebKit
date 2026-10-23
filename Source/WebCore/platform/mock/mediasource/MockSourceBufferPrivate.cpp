@@ -209,6 +209,11 @@ void MockSourceBufferPrivate::flush(TrackID trackID)
     m_tracks.at(trackID)->activeSink->flush();
 }
 
+void MockSourceBufferPrivate::handleChangeInAlreadyEnqueuedContent(TrackID trackID, ChangeInAlreadyEnqueuedContent change)
+{
+    m_tracks.at(trackID)->activeSink->handleChangeInAlreadyEnqueuedContent(WTF::move(change));
+}
+
 void MockSourceBufferPrivate::MockTrackSampleSink::flush()
 {
     RefPtr<MockTrack> track = m_track.get();
@@ -279,7 +284,7 @@ void MockSourceBufferPrivate::setSmoothSwitchStrategyForTrackID(TrackID trackID,
     if (track->smoothSwitchStrategy == SmoothSwitchStrategy::GOP)
         return; // Already configured
     track->smoothSwitchStrategy = SmoothSwitchStrategy::GOP;
-    track->activeSink = SmoothSwitchOnGOP::create(track->innerSink);
+    track->activeSink = SmoothSwitchOnGOP::create(*this, track->innerSink);
 }
 
 bool MockSourceBufferPrivate::canSetMinimumUpcomingPresentationTime(TrackID) const

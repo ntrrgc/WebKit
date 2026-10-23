@@ -2748,6 +2748,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/TileGridIdentifier.h
     platform/graphics/TiledBacking.h
     platform/graphics/TrackBuffer.h
+    platform/graphics/ChangeInAlreadyEnqueuedContent.h
     platform/graphics/TrackPrivateBase.h
     platform/graphics/TrackPrivateBaseClient.h
     platform/graphics/TypedArrayPixelBuffer.h

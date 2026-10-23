@@ -123,6 +123,8 @@ function smoothSwitchTest(callback) {
         run('sourceBuffer.appendBuffer(initSegment)');
         await waitFor(sourceBuffer, 'updateend');
 
+        run('internals.setSmoothSwitchStrategy(sourceBuffer, TRACK_ID, "gop")');
+
         await callback();
         endTest();
     });

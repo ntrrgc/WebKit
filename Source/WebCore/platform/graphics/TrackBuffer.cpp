@@ -666,12 +666,6 @@ void TrackBuffer::clearSamples()
     m_buffered = PlatformTimeRanges();
 }
 
-MediaTime TrackBuffer::futureDiscontinuityBoundary() const
-{
-    // TODO
-    return MediaTime::invalidTime();
-}
-
 void TrackBuffer::clearDecodeQueue()
 {
     m_decodeQueue.clear();
@@ -686,14 +680,43 @@ void TrackBuffer::clearDecodeQueue()
     m_samplesSinceMaxPresentationTime = 0;
 }
 
-DecodeOrderSampleMap::MapType TrackBuffer::takeNotYetEnqueuedSamples()
+void TrackBuffer::prepareChangeInAlreadyEnqueuedContent(const DecodeOrderSampleMap::MapType& erasedSamples)
 {
-    // It only makes sense to call this function when we're about to clear
-    // the decodeQueue for a reenqueue.
-    ASSERT(needsReenqueueing());
-    DecodeOrderSampleMap::MapType samples = std::move(m_decodeQueue);
-    clearDecodeQueue();
-    return samples;
+    // If nothing has been enqueued it makes no sense to call this method.
+    ASSERT(m_lastEnqueuedDecodeKey.first.isValid());
+
+    if (m_changeInAlreadyEnqueuedContent.has_value())
+        return; // Nested smooth switch within the same append: preserve the old samples.
+
+    DecodeOrderSampleMap::MapType notYetEnqueuedSamples;
+    // Add any erased samples that have not been enqueued yet.
+    notYetEnqueuedSamples.insert(erasedSamples.upper_bound(m_lastEnqueuedDecodeKey), erasedSamples.end());
+
+    // Add remaining samples from the decode queue up to the first discontinuity.
+    // Those are samples that were not erased when this function was called but may end up erased as new samples are processed
+    // and remain useful for smooth switch implementations.
+    //   |  1  |  1  |
+    //   |   2   |
+    //   ^     ^
+    //   |     `-- later sample that causes erase without prepareChangeInAlreadyEnqueuedContent()
+    //   `-- sample that causes original prepareChangeInAlreadyEnqueuedContent()
+    MediaTime futureEnqueueDiscontinuityBoundary = m_enqueueDiscontinuityBoundary;
+    auto it = m_decodeQueue.begin();
+    for (; it != m_decodeQueue.end(); ++it) {
+        Ref<MediaSample> sample = it->second;
+        if (futureEnqueueDiscontinuityBoundary.isValid() && sample->decodeTime() > futureEnqueueDiscontinuityBoundary
+                && (!m_isAcceptableEnqueueGap || !m_isAcceptableEnqueueGap(m_lastEnqueueDecodeEnd, sample->decodeTime())))
+            break;
+        futureEnqueueDiscontinuityBoundary = virtualDecodeEnd(sample) + PlatformTimeRanges::timeFudgeFactor();
+        notYetEnqueuedSamples.insert(*it);
+    }
+
+    m_changeInAlreadyEnqueuedContent = { notYetEnqueuedSamples, futureEnqueueDiscontinuityBoundary };
+}
+
+std::optional<ChangeInAlreadyEnqueuedContent> TrackBuffer::takePreparedChangeInAlreadyEnqueuedContent()
+{
+    return std::exchange(m_changeInAlreadyEnqueuedContent, std::nullopt);
 }
 
 void TrackBuffer::setRoundedTimestampOffset(const MediaTime& time, uint32_t timeScale, const MediaTime& roundingMargin)

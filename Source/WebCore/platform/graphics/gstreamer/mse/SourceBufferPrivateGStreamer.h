@@ -74,7 +74,7 @@ public:
 
     void flush(TrackID) final;
     // TODO
-    // void handleChangeInAlreadyEnqueuedContent(TrackID, DecodeOrderSampleMap::MapType notYetEnqueuedSamples) final;
+    // void handleChangeInAlreadyEnqueuedContent(TrackID, DecodeOrderSampleMap::MapType notYetEnqueuedSamples, MediaTime futureEnqueueDiscontinuityBoundary) final;
     void enqueueSample(Ref<MediaSample>&&, TrackID) final;
     void allSamplesInTrackEnqueued(TrackID) final;
     bool isReadyForMoreSamples(TrackID) final;

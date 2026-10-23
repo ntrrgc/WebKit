@@ -206,10 +206,11 @@ void SourceBufferPrivateGStreamer::flush(TrackID trackId)
 }
 
 // TODO
-// void handleChangeInAlreadyEnqueuedContent(TrackID trackID, DecodeOrderSampleMap::MapType notYetEnqueuedSamples)
+// void handleChangeInAlreadyEnqueuedContent(TrackID trackID, DecodeOrderSampleMap::MapType notYetEnqueuedSamples, MediaTime futureEnqueueDiscontinuityBoundary)
 // {
 //     UNUSED_PARAM(trackID);
 //     UNUSED_PARAM(notYetEnqueuedSamples);
+//     UNUSED_PARAM(futureEnqueueDiscontinuityBoundary);
 // }
 
 void SourceBufferPrivateGStreamer::enqueueSample(Ref<MediaSample>&& sample, TrackID trackId)
