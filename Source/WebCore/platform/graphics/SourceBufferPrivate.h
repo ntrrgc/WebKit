@@ -33,6 +33,7 @@
 
 #if ENABLE(MEDIA_SOURCE)
 
+#include <WebCore/ChangeInAlreadyEnqueuedContent.h>
 #include <WebCore/InbandTextTrackPrivate.h>
 #include <WebCore/MediaDescription.h>
 #include <WebCore/MediaPlayer.h>
@@ -198,7 +199,7 @@ protected:
     virtual Ref<MediaPromise> appendInternal(Ref<SharedBuffer>&&) = 0;
     virtual void resetParserStateInternal() = 0;
     virtual void flush(TrackID) { }
-    virtual void handleChangeInAlreadyEnqueuedContent(TrackID, DecodeOrderSampleMap::MapType notYetEnqueuedSamples);
+    virtual void handleChangeInAlreadyEnqueuedContent(TrackID, ChangeInAlreadyEnqueuedContent);
     virtual void enqueueSample(Ref<MediaSample>&&, TrackID) { }
     virtual void allSamplesInTrackEnqueued(TrackID) { }
     virtual bool isReadyForMoreSamples(TrackID) { return false; }
