@@ -82,7 +82,7 @@ private:
 
         Ref<MockTrackSampleSink> innerSink;
         Ref<SampleSink> activeSink;
-        SmoothSwitchStrategy smoothSwitchStrategy;
+        SmoothSwitchStrategy smoothSwitchStrategy { SmoothSwitchStrategy::None };
     private:
         MockTrack(MockSourceBufferPrivate&, TrackID);
     };
