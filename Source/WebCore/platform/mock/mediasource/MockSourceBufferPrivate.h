@@ -61,7 +61,7 @@ private:
         static Ref<MockTrackSampleSink> create(MockSourceBufferPrivate& priv, MockTrack& track, TrackID trackID) { return adoptRef(*new MockTrackSampleSink(priv, track, trackID)); }
 
         bool isReadyForMoreSamples() final;
-        void notifyWhenReadyForMoreSamples(std::function<void()>&&) final {}
+        void notifyWhenReadyForMoreSamples(std::function<void()>&&) final;
         void enqueueSample(Ref<MediaSample>&&) final;
         void allSamplesEnqueued() final {}
         void flush() final;
@@ -77,6 +77,7 @@ private:
     struct MockTrack final : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<MockTrack> {
         static Ref<MockTrack> create(MockSourceBufferPrivate& priv, TrackID trackID) { return adoptRef(*new MockTrack(priv, trackID)); }
 
+        std::function<void()> readyForMoreSamplesCallback;
         std::optional<uint64_t> maxQueueDepth { std::nullopt };
         Vector<String> enqueuedSamples;
 
@@ -99,6 +100,7 @@ private:
     void flush(TrackID) final;
     void enqueueSample(Ref<MediaSample>&&, TrackID) final;
     bool isReadyForMoreSamples(TrackID) final;
+    void notifyClientWhenReadyForMoreSamples(TrackID) final;
     void handleChangeInAlreadyEnqueuedContent(TrackID, ChangeInAlreadyEnqueuedContent) final;
 
     Ref<SamplesPromise> enqueuedSamplesForTrackID(TrackID) final;

@@ -685,8 +685,10 @@ void TrackBuffer::prepareChangeInAlreadyEnqueuedContent(const DecodeOrderSampleM
     // If nothing has been enqueued it makes no sense to call this method.
     ASSERT(m_lastEnqueuedDecodeKey.first.isValid());
 
-    if (m_changeInAlreadyEnqueuedContent.has_value())
-        return; // Nested smooth switch within the same append: preserve the old samples.
+    if (m_changeInAlreadyEnqueuedContent.has_value()) {
+        DEBUG_LOG(LOGIDENTIFIER, "Nested smooth switch within the same append: will preserve the old samples instead.");
+        return;
+    }
 
     DecodeOrderSampleMap::MapType notYetEnqueuedSamples;
     // Add any erased samples that have not been enqueued yet.
@@ -711,6 +713,7 @@ void TrackBuffer::prepareChangeInAlreadyEnqueuedContent(const DecodeOrderSampleM
         notYetEnqueuedSamples.insert(*it);
     }
 
+    DEBUG_LOG(LOGIDENTIFIER, "notYetEnqueuedSamples has ", notYetEnqueuedSamples.size(), " samples, with discontinuity boundary: ", futureEnqueueDiscontinuityBoundary.toDouble());
     m_changeInAlreadyEnqueuedContent = { notYetEnqueuedSamples, futureEnqueueDiscontinuityBoundary };
 }
 
