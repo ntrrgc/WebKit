@@ -31,17 +31,49 @@
 
 namespace WebCore {
 
+#if !RELEASE_LOG_DISABLED
+String sampleMapToRangeString(const DecodeOrderSampleMap::MapType& samples)
+{
+    if (samples.empty())
+        return "[]"_s;
+    double start = samples.begin()->first.first.toDouble();
+    Ref<MediaSample> lastSample = samples.rbegin()->second;
+    double end = (lastSample->decodeTime() + lastSample->duration()).toDouble();
+    return makeString("["_s, start, ", "_s, end, "]"_s);
+}
+#endif
+
 void SmoothSwitchOnGOP::handleChangeInAlreadyEnqueuedContent(ChangeInAlreadyEnqueuedContent change)
 {
+    DEBUG_LOG(LOGIDENTIFIER, "Change with not yet enqueued samples ", sampleMapToRangeString(change.notYetEnqueuedSamples), ", discontinuity boundary: ", change.futureEnqueueDiscontinuityBoundary.toDouble());
     if (std::holds_alternative<StateCollecting>(m_currentState)) {
         DEBUG_LOG(LOGIDENTIFIER, "Ignoring content change due to already being in collecting state");
         return;
     }
 
-    DEBUG_LOG(LOGIDENTIFIER, "Transferred not yet enqueued samples, will start collecting new frames");
-    // TODO Handle edge case: change while vacating. The old samples and vacating queue need to be merged, but what is the correct way to do it?
-    // TODO How should the futureEnqueueDiscontinuityBoundary be merged? Max?
-    m_currentState = StateCollecting { WTF::move(change.notYetEnqueuedSamples), {}, change.futureEnqueueDiscontinuityBoundary };
+    DEBUG_LOG(LOGIDENTIFIER, "Current vacating queue sample range: ", sampleMapToRangeString(std::get<StateVacating>(m_currentState).vacatingQueue));
+    // TODO debugging code, remove later
+    const DecodeOrderSampleMap::MapType& vacating = std::get<StateVacating>(m_currentState).vacatingQueue;
+    if (!vacating.empty() && !change.notYetEnqueuedSamples.empty()) {
+        PlatformTimeRanges vacatingRange(vacating.begin()->first.first, vacating.rbegin()->first.first + protect(vacating.rbegin()->second)->duration());
+        PlatformTimeRanges notYetEnqRange(change.notYetEnqueuedSamples.begin()->first.first, change.notYetEnqueuedSamples.rbegin()->first.first + protect(change.notYetEnqueuedSamples.rbegin()->second)->duration());
+        vacatingRange.intersectWith(notYetEnqRange);
+        if (vacatingRange.length()) {
+            DEBUG_LOG(LOGIDENTIFIER, "MIAU SUS OVERLAP!! ", vacatingRange.toString());
+            ::abort();
+        }
+    }
+
+    // TODO Does the order of concatenation (i.e. which set gets priority) matter?
+    // So far it doesn't seem so, supporting the hypothesis that the sets are disjoint.
+    // Option A:
+    StateCollecting newState { WTF::move(std::get<StateVacating>(m_currentState).vacatingQueue), {}, change.futureEnqueueDiscontinuityBoundary };
+    newState.oldSamples.insert(change.notYetEnqueuedSamples.begin(), change.notYetEnqueuedSamples.end());
+    // Option B:
+    // StateCollecting newState { WTF::move(change.notYetEnqueuedSamples), {}, change.futureEnqueueDiscontinuityBoundary };
+    // newState.oldSamples.insert(std::get<StateVacating>(m_currentState).vacatingQueue.begin(), std::get<StateVacating>(m_currentState).vacatingQueue.end());
+
+    m_currentState = WTF::move(newState);
 }
 
 bool SmoothSwitchOnGOP::isReadyForMoreSamples()
@@ -65,7 +97,7 @@ void SmoothSwitchOnGOP::notifyWhenReadyForMoreSamples(std::function<void()>&& ca
 
 void SmoothSwitchOnGOP::enqueueSample(Ref<MediaSample>&& sample)
 {
-    DEBUG_LOG(LOGIDENTIFIER, "Enqueue with DTS=", sample->decodeTime().toDouble());
+    DEBUG_LOG(LOGIDENTIFIER, "Upper layer enqueued sample with DTS=", sample->decodeTime().toDouble());
     DecodeOrderSampleMap::KeyType decodeKey { sample->decodeTime(), sample->presentationTime() };
 
     if (auto* current = std::get_if<StateVacating>(&m_currentState))
@@ -103,6 +135,7 @@ void SmoothSwitchOnGOP::deliverSample(Ref<MediaSample>&& sample)
     if (m_highestDeliveredPresentationEndTime.isInvalid() || sample->presentationEndTime() > m_highestDeliveredPresentationEndTime)
         m_highestDeliveredPresentationEndTime = sample->presentationEndTime();
     m_lastDeliveredDecodeKey = { sample->decodeTime(), sample->presentationTime() };
+    DEBUG_LOG(LOGIDENTIFIER, "Delivering sample to inner sink: DTS=", sample->decodeTime().toDouble(), " PTS=", sample->presentationTime().toDouble());
     m_innerSink->enqueueSample(WTF::move(sample));
 }
 
@@ -117,19 +150,34 @@ void SmoothSwitchOnGOP::flush()
 
 void SmoothSwitchOnGOP::tryFeedInnerSink()
 {
-    if (auto* current = std::get_if<StateCollecting>(&m_currentState))
+    if (auto* current = std::get_if<StateCollecting>(&m_currentState)) {
+        DEBUG_LOG(LOGIDENTIFIER, "Feeding inner sink, current state: collecting");
         tryFeedInnerSinkSamples(current->oldSamples);
-    else if (auto* current = std::get_if<StateVacating>(&m_currentState))
+    } else if (auto* current = std::get_if<StateVacating>(&m_currentState)) {
+        DEBUG_LOG(LOGIDENTIFIER, "Feeding inner sink, current state: vacating");
         tryFeedInnerSinkSamples(current->vacatingQueue);
-    else
+    } else
         ASSERT_NOT_REACHED();
+}
+
+void SmoothSwitchOnGOP::innerSinkNotifiedReadyForMoreSamples()
+{
+    DEBUG_LOG(LOGIDENTIFIER, "Inner sink reports being now ready for more samples.");
+    tryFeedInnerSink();
 }
 
 void SmoothSwitchOnGOP::tryFeedInnerSinkSamples(DecodeOrderSampleMap::MapType& samples)
 {
+    DEBUG_LOG(LOGIDENTIFIER, samples.size(), " samples available to feed the inner sink.");
     while (!samples.empty()) {
-        if (!m_innerSink->isReadyForMoreSamples())
+        if (!m_innerSink->isReadyForMoreSamples()) {
+            DEBUG_LOG(LOGIDENTIFIER, "Inner sink not ready for more samples.");
+            m_innerSink->notifyWhenReadyForMoreSamples([weakThis = ThreadSafeWeakPtr { *this }]() {
+                if (RefPtr<SmoothSwitchOnGOP> protectedThis = weakThis.get())
+                    protectedThis->innerSinkNotifiedReadyForMoreSamples();
+            });
             return;
+        }
         Ref<MediaSample> sample = samples.begin()->second;
         samples.erase(samples.begin());
         deliverSample(WTF::move(sample));

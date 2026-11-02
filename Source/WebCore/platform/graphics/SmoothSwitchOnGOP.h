@@ -49,7 +49,7 @@ public:
 };
 
 class SmoothSwitchOnGOP final
-    : public ThreadSafeRefCounted<SmoothSwitchOnGOP>
+    : public WTF::ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<SmoothSwitchOnGOP>
     , public SampleSink
 #if !RELEASE_LOG_DISABLED
     , public LoggerHelper
@@ -57,8 +57,8 @@ class SmoothSwitchOnGOP final
 {
     WTF_MAKE_TZONE_ALLOCATED(SmoothSwitchOnGOP);
 public:
-    void ref() const final { ThreadSafeRefCounted::ref(); }
-    void deref() const final { ThreadSafeRefCounted::deref(); }
+    void ref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::ref(); }
+    void deref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::deref(); }
 
     static Ref<SmoothSwitchOnGOP> create(SourceBufferPrivate& sourceBufferPrivate, const Ref<SampleSink>& innerSink) { return adoptRef(*new SmoothSwitchOnGOP(sourceBufferPrivate, innerSink)); }
 
@@ -94,6 +94,7 @@ private:
     State m_currentState { StateVacating { } };
 
     void deliverSample(Ref<MediaSample>&&);
+    void innerSinkNotifiedReadyForMoreSamples();
     void tryFeedInnerSink();
     void tryFeedInnerSinkSamples(DecodeOrderSampleMap::MapType&);
 
