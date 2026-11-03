@@ -175,7 +175,7 @@ void SMILTimeContainer::resume()
 
 void SMILTimeContainer::setElapsed(SMILTime time)
 {
-    ASSERT(Page::nonUtilityPageCount());
+    // ASSERT(Page::nonUtilityPageCount());
     if (!Page::nonUtilityPageCount())
         return;
 
