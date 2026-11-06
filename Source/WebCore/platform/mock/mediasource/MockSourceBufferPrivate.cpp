@@ -281,6 +281,7 @@ Ref<SourceBufferPrivate::SamplesPromise> MockSourceBufferPrivate::enqueuedSample
 void MockSourceBufferPrivate::setMaximumQueueDepthForTrackID(TrackID trackID, uint64_t maxQueueDepth)
 {
     RefPtr<MockTrack> track = m_tracks.at(trackID);
+    DEBUG_LOG(LOGIDENTIFIER, "New maximum queue depth: ", maxQueueDepth);
     track->maxQueueDepth = maxQueueDepth;
     // After the change we may be ready for more samples.
     if (track->enqueuedSamples.size() < track->maxQueueDepth) {
