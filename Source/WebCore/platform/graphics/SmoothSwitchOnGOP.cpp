@@ -28,6 +28,7 @@
 
 #include "SmoothSwitchOnGOP.h"
 #include "Logging.h"
+#include <wtf/StringPrintStream.h>
 
 namespace WebCore {
 
@@ -95,23 +96,50 @@ void SmoothSwitchOnGOP::notifyWhenReadyForMoreSamples(std::function<void()>&& ca
     UNUSED_PARAM(callback);
 }
 
+static DecodeOrderSampleMap::const_iterator findSampleAfterLastDisplayable(const DecodeOrderSampleMap::MapType& samples, MediaTime highestDeliveredPresentationEndTime)
+{
+    // If no sample is displayable, we consider the last displayable sample was before the start of the map.
+    // This is consistent with the use case for this function: we want to delete samples after the last displayable
+    // because they will be redundant, if no samples are displayable, they all are redundant.
+    auto sampleAfterLastDisplayable = samples.begin();
+    auto it = samples.begin();
+    for (; it != samples.end(); ++it) {
+        Ref<MediaSample> sample = it->second;
+        bool isDisplayable = highestDeliveredPresentationEndTime.isInvalid() || sample->presentationEndTime() > highestDeliveredPresentationEndTime;
+        if (isDisplayable)
+            sampleAfterLastDisplayable = std::next(it);
+
+        if (highestDeliveredPresentationEndTime.isInvalid() || sample->presentationEndTime() > highestDeliveredPresentationEndTime)
+            highestDeliveredPresentationEndTime = sample->presentationEndTime();
+    }
+    return sampleAfterLastDisplayable;
+}
+
 void SmoothSwitchOnGOP::enqueueSample(Ref<MediaSample>&& sample)
 {
-    DEBUG_LOG(LOGIDENTIFIER, "Upper layer enqueued sample with DTS=", sample->decodeTime().toDouble());
     DecodeOrderSampleMap::KeyType decodeKey { sample->decodeTime(), sample->presentationTime() };
 
-    if (auto* current = std::get_if<StateVacating>(&m_currentState))
+    if (auto* current = std::get_if<StateVacating>(&m_currentState)) {
+        DEBUG_LOG(LOGIDENTIFIER, "Inserting in vacatingQueue: ", toString(sample.get()));
         current->vacatingQueue.insert({ decodeKey, sample });
-    else if (auto* current = std::get_if<StateCollecting>(&m_currentState)) {
-        if (sample->isSync())
+    } else if (auto* current = std::get_if<StateCollecting>(&m_currentState)) {
+        if (sample->isSync()) {
+            DEBUG_LOG(LOGIDENTIFIER, "Cleared newGop.");
             current->newGop.clear();
+        }
+        DEBUG_LOG(LOGIDENTIFIER, "Inserting in newGop: ", toString(sample.get()));
         current->newGop.insert({ decodeKey, sample });
 
         if (sample->isSync() && (m_lastDeliveredDecodeKey.first.isInvalid() || decodeKey > m_lastDeliveredDecodeKey)) {
             DEBUG_LOG(LOGIDENTIFIER, "Switching to new GOP with DTS=", sample->decodeTime().toDouble());
-            current->oldSamples.erase(current->oldSamples.lower_bound(decodeKey), current->oldSamples.end());
-            current->oldSamples.insert({ decodeKey, WTF::move(sample) });
-            m_currentState = StateVacating { WTF::move(current->oldSamples) };
+            DecodeOrderSampleMap::MapType vacatingQueue = WTF::move(current->oldSamples);
+            // Anything with later DTS than the new GOP can be safely deleted.
+            vacatingQueue.erase(vacatingQueue.lower_bound(decodeKey), vacatingQueue.end());
+            // Everything after the last displayable sample in oldSamples is redundant and can be deleted.
+            // (See DTS=3 of generation 2 in media-source-smooth-switch-twice.html for an example)
+            vacatingQueue.erase(findSampleAfterLastDisplayable(vacatingQueue, m_highestDeliveredPresentationEndTime), vacatingQueue.end());
+            vacatingQueue.insert({ decodeKey, WTF::move(sample) });
+            m_currentState = StateVacating { WTF::move(vacatingQueue) };
         } else if (!sample->isSync() && sample->decodeTime() > current->futureEnqueueDiscontinuityBoundary)  {
             DEBUG_LOG(LOGIDENTIFIER, "Switch to collected GOP (expensive case), will need to use non-displaying copies for samples with presentation end <= ", m_highestDeliveredPresentationEndTime.toDouble());
             m_currentState = StateVacating { WTF::move(current->newGop) };
@@ -135,7 +163,7 @@ void SmoothSwitchOnGOP::deliverSample(Ref<MediaSample>&& sample)
     if (m_highestDeliveredPresentationEndTime.isInvalid() || sample->presentationEndTime() > m_highestDeliveredPresentationEndTime)
         m_highestDeliveredPresentationEndTime = sample->presentationEndTime();
     m_lastDeliveredDecodeKey = { sample->decodeTime(), sample->presentationTime() };
-    DEBUG_LOG(LOGIDENTIFIER, "Delivering sample to inner sink: DTS=", sample->decodeTime().toDouble(), " PTS=", sample->presentationTime().toDouble());
+    DEBUG_LOG(LOGIDENTIFIER, "Delivering sample to inner sink: ", toString(sample));
     m_innerSink->enqueueSample(WTF::move(sample));
 }
 
