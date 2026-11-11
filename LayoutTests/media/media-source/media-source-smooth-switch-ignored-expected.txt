@@ -40,6 +40,7 @@ Buffered samples:
 A non-overlapping append afterwards should still work:
 RUN(sourceBuffer.appendBuffer(gops(3, [[9,12]])))
 EVENT(updateend)
+RUN(source.endOfStream())
 Enqueued samples:
 {PTS({0/1 = 0.000000}), DTS({0/1 = 0.000000}), duration({1/1 = 1.000000}), flags(1), generation(1)}
 {PTS({1/1 = 1.000000}), DTS({1/1 = 1.000000}), duration({1/1 = 1.000000}), flags(0), generation(1)}
@@ -53,6 +54,7 @@ Enqueued samples:
 {PTS({9/1 = 9.000000}), DTS({9/1 = 9.000000}), duration({1/1 = 1.000000}), flags(1), generation(3)}
 {PTS({10/1 = 10.000000}), DTS({10/1 = 10.000000}), duration({1/1 = 1.000000}), flags(0), generation(3)}
 {PTS({11/1 = 11.000000}), DTS({11/1 = 11.000000}), duration({1/1 = 1.000000}), flags(0), generation(3)}
+{(END OF STREAM)}
 
 Seeking should flush and therefore [0, 3] should use generation 2:
 RUN(video.currentTime = 0.5)
@@ -69,5 +71,6 @@ Enqueued samples:
 {PTS({9/1 = 9.000000}), DTS({9/1 = 9.000000}), duration({1/1 = 1.000000}), flags(1), generation(3)}
 {PTS({10/1 = 10.000000}), DTS({10/1 = 10.000000}), duration({1/1 = 1.000000}), flags(0), generation(3)}
 {PTS({11/1 = 11.000000}), DTS({11/1 = 11.000000}), duration({1/1 = 1.000000}), flags(0), generation(3)}
+{(END OF STREAM)}
 END OF TEST
 

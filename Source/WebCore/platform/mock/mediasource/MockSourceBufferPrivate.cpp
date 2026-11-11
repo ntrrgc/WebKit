@@ -379,7 +379,7 @@ void MockSourceBufferPrivate::MockTrackSampleSink::allSamplesEnqueued()
 
     RefPtr<MockTrack> track = sourceBufferPrivate->m_tracks.at(m_trackID);
     if (track->shouldRenderEndOfStreamAsSample)
-        track->enqueuedSamples.append("(end of stream)"_s);
+        track->enqueuedSamples.append("{(END OF STREAM)}"_s);
 }
 
 #if !RELEASE_LOG_DISABLED

@@ -19,6 +19,7 @@
 
         consoleWrite("<br>A non-overlapping append afterwards should still work:")
         await sourceBufferAppend(3, [[9, 12]]);
+        run('source.endOfStream()');
         await showEnqueuedSamples();
 
         consoleWrite("<br>Seeking should flush and therefore [0, 3] should use generation 2:");

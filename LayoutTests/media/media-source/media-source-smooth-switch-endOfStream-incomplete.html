@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>media-source-smooth-switch-endOfStream</title>
+    <script src="mock-media-source.js"></script>
+    <script src="../video-test.js"></script>
+    <script src="smooth-switch-test.js"></script>
+    <script>
+    smoothSwitchTest(async () => {
+        run('internals.setMaximumQueueDepthForTrackID(sourceBuffer, TRACK_ID, 6)');
+        await sourceBufferAppend(1, [[0, 4], [4, 8]]);
+        await showEnqueuedSamples();
+
+        await sourceBufferAppend(2, [[5, 7]]);
+        run('source.endOfStream()');
+        run('internals.setMaximumQueueDepthForTrackID(sourceBuffer, TRACK_ID, QUEUE_DEPTH_UNLIMITED)');
+        consoleWrite("<br>Second generation must be ignored entirely.")
+        await showEnqueuedSamples();
+        await showBufferedSamples();
+    });
+    </script>
+</head>
+<body>
+    <video controls></video>
+</body>
+</html>

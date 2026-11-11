@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>media-source-smooth-switch-endOfStream</title>
+    <script src="mock-media-source.js"></script>
+    <script src="../video-test.js"></script>
+    <script src="smooth-switch-test.js"></script>
+    <script>
+    smoothSwitchTest(async () => {
+        consoleWrite("<br>Test that a smooth switch will complete after endOfStream.")
+        run('internals.setMaximumQueueDepthForTrackID(sourceBuffer, TRACK_ID, 5)');
+        await sourceBufferAppend(1, [[0, 3], [3, 6]]);
+        await showEnqueuedSamples();
+
+        await sourceBufferAppend(2, [[3, 9]]);
+        run('source.endOfStream()');
+        run('internals.setMaximumQueueDepthForTrackID(sourceBuffer, TRACK_ID, QUEUE_DEPTH_UNLIMITED)');
+        consoleWrite("<br>Second generation must be enqueued entirely, partially with non-displaying samples.")
+        await showEnqueuedSamples();
+        await showBufferedSamples();
+    });
+    </script>
+</head>
+<body>
+    <video controls></video>
+</body>
+</html>

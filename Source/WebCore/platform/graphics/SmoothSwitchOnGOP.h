@@ -95,11 +95,14 @@ private:
 
     std::function<void()> m_readyForMoreSamplesCallback { std::function<void()>() };
 
+    bool m_hasAllSamples { false };
+
     void deliverSample(Ref<MediaSample>&&);
     void innerSinkNotifiedReadyForMoreSamples();
     void tryFeedInnerSink();
     void tryFeedInnerSinkSamples(DecodeOrderSampleMap::MapType&);
     void tryNotifyReadyForMoreSamples();
+    bool isEmpty();
 
 #if !RELEASE_LOG_DISABLED
     const Logger& logger() const final { return m_logger; }
