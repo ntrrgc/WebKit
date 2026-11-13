@@ -93,10 +93,13 @@ private:
     typedef std::variant<StateCollecting, StateVacating> State;
     State m_currentState { StateVacating { } };
 
+    std::function<void()> m_readyForMoreSamplesCallback { std::function<void()>() };
+
     void deliverSample(Ref<MediaSample>&&);
     void innerSinkNotifiedReadyForMoreSamples();
     void tryFeedInnerSink();
     void tryFeedInnerSinkSamples(DecodeOrderSampleMap::MapType&);
+    void tryNotifyReadyForMoreSamples();
 
 #if !RELEASE_LOG_DISABLED
     const Logger& logger() const final { return m_logger; }

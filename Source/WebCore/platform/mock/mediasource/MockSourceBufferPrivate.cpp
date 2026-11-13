@@ -196,7 +196,11 @@ MockSourceBufferPrivate::MockTrack::MockTrack(MockSourceBufferPrivate& priv, Tra
 void MockSourceBufferPrivate::notifyClientWhenReadyForMoreSamples(TrackID trackID)
 {
     RefPtr<MockTrack> track = m_tracks.at(trackID);
-    // TODO
+
+    track->activeSink->notifyWhenReadyForMoreSamples([weakThis = ThreadSafeWeakPtr { *this }, trackID]() {
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->provideMediaData(trackID);
+    });
 }
 
 bool MockSourceBufferPrivate::isReadyForMoreSamples(TrackID trackID)
@@ -284,12 +288,11 @@ void MockSourceBufferPrivate::setMaximumQueueDepthForTrackID(TrackID trackID, ui
     DEBUG_LOG(LOGIDENTIFIER, "New maximum queue depth: ", maxQueueDepth);
     track->maxQueueDepth = maxQueueDepth;
     // After the change we may be ready for more samples.
-    if (track->enqueuedSamples.size() < track->maxQueueDepth) {
-        std::function<void()> readyForMoreSamplesCallback = std::exchange(track->readyForMoreSamplesCallback, std::function<void()>());
-        if (readyForMoreSamplesCallback)
-            readyForMoreSamplesCallback();
-        provideMediaData(trackID); // TODO: remove?
-    }
+    if (track->enqueuedSamples.size() >= track->maxQueueDepth)
+        return;
+    std::function<void()> readyForMoreSamplesCallback = std::exchange(track->readyForMoreSamplesCallback, std::function<void()>());
+    if (readyForMoreSamplesCallback)
+        readyForMoreSamplesCallback();
 }
 
 void MockSourceBufferPrivate::setSmoothSwitchStrategyForTrackID(TrackID trackID, const AtomString& strategy)
