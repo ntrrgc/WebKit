@@ -218,6 +218,7 @@ private:
     WEBCORE_EXPORT MediaTime minimumUpcomingPresentationTimeForTrackID(TrackID);
     WEBCORE_EXPORT void setMaximumQueueDepthForTrackID(TrackID, uint64_t);
     WEBCORE_EXPORT void setSmoothSwitchStrategyForTrackID(TrackID, const AtomString&);
+    WEBCORE_EXPORT void setRenderEndOfStreamAsSample(TrackID, bool);
     WEBCORE_EXPORT Ref<GenericPromise> setMaximumSourceBufferSize(uint64_t);
     NODELETE WEBCORE_EXPORT size_t evictableSize() const;
 

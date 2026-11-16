@@ -63,7 +63,7 @@ private:
         bool isReadyForMoreSamples() final;
         void notifyWhenReadyForMoreSamples(std::function<void()>&&) final;
         void enqueueSample(Ref<MediaSample>&&) final;
-        void allSamplesEnqueued() final {}
+        void allSamplesEnqueued() final;
         void flush() final;
 
     private:
@@ -84,6 +84,7 @@ private:
         Ref<MockTrackSampleSink> innerSink;
         Ref<SampleSink> activeSink;
         SmoothSwitchStrategy smoothSwitchStrategy { SmoothSwitchStrategy::None };
+        bool shouldRenderEndOfStreamAsSample { false };
     private:
         MockTrack(MockSourceBufferPrivate&, TrackID);
     };
@@ -99,6 +100,7 @@ private:
 
     void flush(TrackID) final;
     void enqueueSample(Ref<MediaSample>&&, TrackID) final;
+    void allSamplesInTrackEnqueued(TrackID) final;
     bool isReadyForMoreSamples(TrackID) final;
     void notifyClientWhenReadyForMoreSamples(TrackID) final;
     void handleChangeInAlreadyEnqueuedContent(TrackID, ChangeInAlreadyEnqueuedContent) final;
@@ -106,6 +108,7 @@ private:
     Ref<SamplesPromise> enqueuedSamplesForTrackID(TrackID) final;
     void setMaximumQueueDepthForTrackID(TrackID, uint64_t) final;
     void setSmoothSwitchStrategyForTrackID(TrackID, const AtomString&) final;
+    void setRenderEndOfStreamAsSample(TrackID, bool) final;
 
     void didReceiveInitializationSegment(const MockInitializationBox&);
     void didReceiveSample(const MockSampleBox&);

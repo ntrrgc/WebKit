@@ -173,6 +173,7 @@ public:
     WEBCORE_EXPORT MediaTime minimumUpcomingPresentationTimeForTrackID(TrackID);
     virtual void setMaximumQueueDepthForTrackID(TrackID, uint64_t) { }
     virtual void setSmoothSwitchStrategyForTrackID(TrackID, const AtomString&) { }
+    virtual void setRenderEndOfStreamAsSample(TrackID, bool) { }
 
 #if !RELEASE_LOG_DISABLED
     virtual const Logger& sourceBufferLogger() const = 0;

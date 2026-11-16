@@ -5780,6 +5780,11 @@ void Internals::setSmoothSwitchStrategy(SourceBuffer& buffer, const AtomString& 
     buffer.setSmoothSwitchStrategyForTrackID(parseInteger<TrackID>(trackID).value_or(0), strategy);
 }
 
+void Internals::setRenderEndOfStreamAsSample(SourceBuffer& buffer, const AtomString& trackID, bool shouldRenderAsSample)
+{
+    buffer.setRenderEndOfStreamAsSample(parseInteger<TrackID>(trackID).value_or(0), shouldRenderAsSample);
+}
+
 size_t Internals::evictableSize(SourceBuffer& buffer)
 {
     return buffer.evictableSize();

@@ -1318,6 +1318,11 @@ void SourceBuffer::setSmoothSwitchStrategyForTrackID(TrackID trackID, const Atom
     m_private->setSmoothSwitchStrategyForTrackID(trackID, strategy);
 }
 
+void SourceBuffer::setRenderEndOfStreamAsSample(TrackID trackID, bool shouldRenderAsSample)
+{
+    return m_private->setRenderEndOfStreamAsSample(trackID, shouldRenderAsSample);
+}
+
 Ref<GenericPromise> SourceBuffer::setMaximumSourceBufferSize(uint64_t size)
 {
     m_maximumBufferSize = size;

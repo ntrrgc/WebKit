@@ -983,6 +983,7 @@ public:
     void setShouldGenerateTimestamps(SourceBuffer&, bool);
     void setMaximumQueueDepthForTrackID(SourceBuffer&, const AtomString&, size_t);
     void setSmoothSwitchStrategy(SourceBuffer&, const AtomString&, const AtomString&);
+    void setRenderEndOfStreamAsSample(SourceBuffer&, const AtomString&, bool);
     size_t evictableSize(SourceBuffer&);
 #endif
 

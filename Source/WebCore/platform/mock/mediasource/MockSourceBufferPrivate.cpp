@@ -308,6 +308,12 @@ void MockSourceBufferPrivate::setSmoothSwitchStrategyForTrackID(TrackID trackID,
     track->activeSink = SmoothSwitchOnGOP::create(*this, track->innerSink);
 }
 
+void MockSourceBufferPrivate::setRenderEndOfStreamAsSample(TrackID trackID, bool shouldRenderAsSample)
+{
+    RefPtr<MockTrack> track = m_tracks.at(trackID);
+    track->shouldRenderEndOfStreamAsSample = shouldRenderAsSample;
+}
+
 bool MockSourceBufferPrivate::canSetMinimumUpcomingPresentationTime(TrackID) const
 {
     return true;
@@ -326,6 +332,12 @@ void MockSourceBufferPrivate::enqueueSample(Ref<MediaSample>&& sample, TrackID t
 {
     RefPtr<MockTrack> track = m_tracks.at(trackID);
     track->activeSink->enqueueSample(std::move(sample));
+}
+
+void MockSourceBufferPrivate::allSamplesInTrackEnqueued(TrackID trackID)
+{
+    RefPtr<MockTrack> track = m_tracks.at(trackID);
+    track->activeSink->allSamplesEnqueued();
 }
 
 void MockSourceBufferPrivate::MockTrackSampleSink::enqueueSample(Ref<MediaSample>&& sample)
@@ -354,6 +366,20 @@ void MockSourceBufferPrivate::MockTrackSampleSink::enqueueSample(Ref<MediaSample
 
     RefPtr<MockTrack> track = sourceBufferPrivate->m_tracks.at(m_trackID);
     track->enqueuedSamples.append(toString(sample.get()));
+}
+
+void MockSourceBufferPrivate::MockTrackSampleSink::allSamplesEnqueued()
+{
+    RefPtr sourceBufferPrivate = m_private.get();
+    if (!sourceBufferPrivate)
+        return;
+    RefPtr mediaSource = sourceBufferPrivate->mediaSourcePrivate();
+    if (!mediaSource)
+        return;
+
+    RefPtr<MockTrack> track = sourceBufferPrivate->m_tracks.at(m_trackID);
+    if (track->shouldRenderEndOfStreamAsSample)
+        track->enqueuedSamples.append("(end of stream)"_s);
 }
 
 #if !RELEASE_LOG_DISABLED
