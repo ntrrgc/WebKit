@@ -32,6 +32,10 @@
 #include "config.h"
 #include "MediaSourceTrackGStreamer.h"
 
+#include "MediaPlayerPrivateGStreamerMSE.h"
+#include "MediaSourcePrivateGStreamer.h"
+#include "WebKitMediaSourceGStreamer.h"
+
 #if ENABLE(MEDIA_SOURCE) && USE(GSTREAMER)
 
 GST_DEBUG_CATEGORY_STATIC(webkit_mse_track_debug);
@@ -39,17 +43,19 @@ GST_DEBUG_CATEGORY_STATIC(webkit_mse_track_debug);
 
 namespace WebCore {
 
-MediaSourceTrackGStreamer::MediaSourceTrackGStreamer(GStreamerTrackType type, TrackID trackId, GRefPtr<GstCaps>&& initialCaps)
+MediaSourceTrackGStreamer::MediaSourceTrackGStreamer(GStreamerTrackType type, TrackID trackId, GRefPtr<GstCaps>&& initialCaps, Ref<SourceBufferPrivate> sourceBuffer, RefPtr<MediaSourcePrivateGStreamer> mediaSource, RefPtr<MediaPlayerPrivateGStreamerMSE> player)
     : m_type(type)
     , m_id(trackId)
     , m_initialCaps(WTF::move(initialCaps))
-    , m_innerSink(adoptRef(*new GStreamerTrackSampleSink(trackId)))
+    , m_innerSink(GStreamerTrackSampleSink::create(trackId, type, mediaSource, player))
     , m_activeSink(m_innerSink)
 {
     static std::once_flag debugRegisteredFlag;
     std::call_once(debugRegisteredFlag, [] {
         GST_DEBUG_CATEGORY_INIT(webkit_mse_track_debug, "webkitmsetrack", 0, "WebKit MSE Track");
     });
+    // Activate SmoothSwitchOnGOP:
+    m_activeSink = SmoothSwitchOnGOP::create(sourceBuffer, m_innerSink);
 }
 
 MediaSourceTrackGStreamer::~MediaSourceTrackGStreamer()
@@ -57,14 +63,18 @@ MediaSourceTrackGStreamer::~MediaSourceTrackGStreamer()
     ASSERT(m_isRemoved);
 }
 
-Ref<MediaSourceTrackGStreamer> MediaSourceTrackGStreamer::create(GStreamerTrackType type, TrackID trackId, GRefPtr<GstCaps>&& initialCaps)
+Ref<MediaSourceTrackGStreamer::GStreamerTrackSampleSink> MediaSourceTrackGStreamer::GStreamerTrackSampleSink::create(TrackID trackId, GStreamerTrackType trackType, RefPtr<MediaSourcePrivateGStreamer> mediaSource, RefPtr<MediaPlayerPrivateGStreamerMSE> player)
 {
-    return adoptRef(*new MediaSourceTrackGStreamer(type, trackId, WTF::move(initialCaps)));
+    return adoptRef(*new MediaSourceTrackGStreamer::GStreamerTrackSampleSink(trackId, trackType, WTF::move(mediaSource), WTF::move(player)));
+}
+
+Ref<MediaSourceTrackGStreamer> MediaSourceTrackGStreamer::create(GStreamerTrackType type, TrackID trackId, GRefPtr<GstCaps>&& initialCaps, Ref<SourceBufferPrivate> sourceBuffer, RefPtr<MediaSourcePrivateGStreamer> mediaSource, RefPtr<MediaPlayerPrivateGStreamerMSE> player)
+{
+    return adoptRef(*new MediaSourceTrackGStreamer(type, trackId, WTF::move(initialCaps), WTF::move(sourceBuffer), WTF::move(mediaSource), WTF::move(player)));
 }
 
 bool MediaSourceTrackGStreamer::GStreamerTrackSampleSink::isReadyForMoreSamples()
 {
-    ASSERT(isMainThread());
     DataMutexLocker queue { m_queueDataMutex };
     return !queue->isFull();
 }
@@ -97,8 +107,34 @@ void MediaSourceTrackGStreamer::GStreamerTrackSampleSink::allSamplesEnqueued()
 
 void MediaSourceTrackGStreamer::GStreamerTrackSampleSink::flush()
 {
-    // TODO
-    // Probably will have to make a way to call SourceBufferPrivateGStreamer::flush()
+    ASSERT(isMainThread());
+
+    RefPtr<MediaSourcePrivateGStreamer> mediaSource = m_mediaSource.get();
+    RefPtr<MediaPlayerPrivateGStreamerMSE> player = m_player.get();
+    if (!mediaSource)
+        return;
+
+    if (!mediaSource->hasAllTracks()) {
+        if (player)
+            GST_DEBUG_OBJECT(player->pipeline(), "Source element has not emitted tracks yet, so we only need to clear the queue. trackId = '%" PRIu64 "'", m_trackId);
+        DataMutexLocker queue { queueDataMutex() };
+        queue->clear();
+        return;
+    }
+
+    if (m_trackType == GStreamerTrackType::Text) {
+        if (player)
+            GST_DEBUG_OBJECT(player->pipeline(), "Track is a text stream, so we only need to clear the queue. trackId = '%" PRIu64 "'", m_trackId);
+        DataMutexLocker queue { queueDataMutex() };
+        queue->clear();
+        return;
+    }
+
+    if (!player)
+        return;
+    GST_DEBUG_OBJECT(player->pipeline(), "Source element has emitted tracks, let it handle the flush, which may cause a pipeline flush as well. trackId = '%" PRIu64 "'", m_trackId);
+    if (auto source = player->webKitMediaSrc())
+        webKitMediaSrcFlush(source, m_trackId);
 }
 
 void MediaSourceTrackGStreamer::clearQueue()

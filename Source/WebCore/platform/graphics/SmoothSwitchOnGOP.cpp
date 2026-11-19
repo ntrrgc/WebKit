@@ -206,6 +206,7 @@ void SmoothSwitchOnGOP::tryFeedInnerSink()
         ASSERT_NOT_REACHED();
 }
 
+// TODO move above tryFeedInnerSink()
 void SmoothSwitchOnGOP::innerSinkNotifiedReadyForMoreSamples()
 {
     DEBUG_LOG(LOGIDENTIFIER, "Inner sink reports being now ready for more samples.");
@@ -215,22 +216,31 @@ void SmoothSwitchOnGOP::innerSinkNotifiedReadyForMoreSamples()
 void SmoothSwitchOnGOP::tryFeedInnerSinkSamples(DecodeOrderSampleMap::MapType& samples)
 {
     DEBUG_LOG(LOGIDENTIFIER, samples.size(), " samples available to feed the inner sink.");
+    DEBUG_LOG(LOGIDENTIFIER, "MIAU 1.");
     while (!samples.empty() && m_innerSink->isReadyForMoreSamples()) {
         Ref<MediaSample> sample = samples.begin()->second;
         samples.erase(samples.begin());
         deliverSample(WTF::move(sample));
     }
+    DEBUG_LOG(LOGIDENTIFIER, "MIAU 2.");
 
     if (m_hasAllSamples && samples.empty()) {
+        DEBUG_LOG(LOGIDENTIFIER, "No samples left and m_hasAllSamples set, delivering allSamplesEnqueued() notification to the inner sink.");
         m_innerSink->allSamplesEnqueued();
         return;
     }
+    DEBUG_LOG(LOGIDENTIFIER, "MIAU 3.");
 
+    DEBUG_LOG(LOGIDENTIFIER, "MIAU inner ready? ", m_innerSink->isReadyForMoreSamples() ? "yes" : "no");
+    DEBUG_LOG(LOGIDENTIFIER, "MIAU 3.after.");
     // If inner sink is still ready for more samples, signal to upper layers to provide more.
     if (samples.empty() && m_innerSink->isReadyForMoreSamples()) {
         // If inner sink is still ready for more samples, signal to upper layers to provide more.
+        DEBUG_LOG(LOGIDENTIFIER, "MIAU 4a.");
+        DEBUG_LOG(LOGIDENTIFIER, "MIAU signal to upper layers to provide more.");
         tryNotifyReadyForMoreSamples();
     } else if (!m_innerSink->isReadyForMoreSamples()) {
+        DEBUG_LOG(LOGIDENTIFIER, "MIAU 4b.");
         DEBUG_LOG(LOGIDENTIFIER, "Inner sink not ready for more samples.");
         m_innerSink->notifyWhenReadyForMoreSamples([weakThis = ThreadSafeWeakPtr { *this }]() {
             if (RefPtr<SmoothSwitchOnGOP> protectedThis = weakThis.get())

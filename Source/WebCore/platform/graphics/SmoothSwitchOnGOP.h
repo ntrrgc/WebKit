@@ -60,7 +60,7 @@ public:
     void ref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::ref(); }
     void deref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::deref(); }
 
-    static Ref<SmoothSwitchOnGOP> create(SourceBufferPrivate& sourceBufferPrivate, const Ref<SampleSink>& innerSink) { return adoptRef(*new SmoothSwitchOnGOP(sourceBufferPrivate, innerSink)); }
+    static Ref<SmoothSwitchOnGOP> create(Ref<SourceBufferPrivate> sourceBufferPrivate, const Ref<SampleSink>& innerSink) { return adoptRef(*new SmoothSwitchOnGOP(sourceBufferPrivate, innerSink)); }
 
     bool isReadyForMoreSamples() final;
     void notifyWhenReadyForMoreSamples(std::function<void()>&&) final;
@@ -70,11 +70,11 @@ public:
     void handleChangeInAlreadyEnqueuedContent(ChangeInAlreadyEnqueuedContent) final;
 
 private:
-    SmoothSwitchOnGOP(SourceBufferPrivate& sourceBufferPrivate, const Ref<SampleSink>& innerSink)
+    SmoothSwitchOnGOP(Ref<SourceBufferPrivate> sourceBufferPrivate, const Ref<SampleSink>& innerSink)
         : m_innerSink(innerSink)
 #if !RELEASE_LOG_DISABLED
-        , m_logger(sourceBufferPrivate.sourceBufferLogger())
-        , m_logIdentifier(sourceBufferPrivate.sourceBufferLogIdentifier())
+        , m_logger(sourceBufferPrivate->sourceBufferLogger())
+        , m_logIdentifier(sourceBufferPrivate->sourceBufferLogIdentifier())
 #endif
     {}
     Ref<SampleSink> m_innerSink;

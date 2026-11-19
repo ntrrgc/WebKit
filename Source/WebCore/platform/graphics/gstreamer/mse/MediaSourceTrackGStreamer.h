@@ -40,9 +40,12 @@
 
 namespace WebCore {
 
+class MediaSourcePrivateGStreamer;
+class MediaPlayerPrivateGStreamerMSE;
+
 class MediaSourceTrackGStreamer final: public ThreadSafeRefCounted<MediaSourceTrackGStreamer> {
 public:
-    static Ref<MediaSourceTrackGStreamer> create(GStreamerTrackType, TrackID, GRefPtr<GstCaps>&& initialCaps);
+    static Ref<MediaSourceTrackGStreamer> create(GStreamerTrackType, TrackID, GRefPtr<GstCaps>&& initialCaps, Ref<SourceBufferPrivate>, RefPtr<MediaSourcePrivateGStreamer>, RefPtr<MediaPlayerPrivateGStreamerMSE>);
     ~MediaSourceTrackGStreamer();
 
     GStreamerTrackType type() const { return m_type; }
@@ -55,6 +58,7 @@ public:
     void enqueueSample(Ref<MediaSample>&& sample) { m_activeSink->enqueueSample(WTF::move(sample)); }
     void allSamplesEnqueued() { m_activeSink->allSamplesEnqueued(); }
     void flush() { m_activeSink->flush(); }
+    void handleChangeInAlreadyEnqueuedContent(ChangeInAlreadyEnqueuedContent change) { m_activeSink->handleChangeInAlreadyEnqueuedContent(WTF::move(change)); }
 
     // This method is provided to clear the TrackQueue in cases where the stream hasn't been started (e.g. because
     // another SourceBuffer hasn't received the necessary initalization segment for playback).
@@ -65,16 +69,14 @@ public:
     void remove();
 
 private:
-    explicit MediaSourceTrackGStreamer(GStreamerTrackType, TrackID, GRefPtr<GstCaps>&& initialCaps);
+    explicit MediaSourceTrackGStreamer(GStreamerTrackType, TrackID, GRefPtr<GstCaps>&& initialCaps, Ref<SourceBufferPrivate>, RefPtr<MediaSourcePrivateGStreamer>, RefPtr<MediaPlayerPrivateGStreamerMSE>);
 
     class GStreamerTrackSampleSink final : public SampleSink, public ThreadSafeRefCounted<GStreamerTrackSampleSink> {
     public:
         void ref() const final { ThreadSafeRefCounted::ref(); }
         void deref() const final { ThreadSafeRefCounted::deref(); }
 
-        GStreamerTrackSampleSink(TrackID trackID)
-            : m_queueDataMutex(trackID)
-        {}
+        static Ref<GStreamerTrackSampleSink> create(TrackID, GStreamerTrackType, RefPtr<MediaSourcePrivateGStreamer>, RefPtr<MediaPlayerPrivateGStreamerMSE>);
 
         bool isReadyForMoreSamples() final;
         void notifyWhenReadyForMoreSamples(std::function<void()>&&) final;
@@ -85,9 +87,23 @@ private:
         DataMutex<TrackQueue>& queueDataMutex() { return m_queueDataMutex; }
 
     private:
+        GStreamerTrackSampleSink(TrackID trackID, GStreamerTrackType trackType, RefPtr<MediaSourcePrivateGStreamer> mediaSource, RefPtr<MediaPlayerPrivateGStreamerMSE> player)
+            : m_queueDataMutex(trackID)
+            , m_trackId(trackID)
+            , m_trackType(trackType)
+            , m_mediaSource(mediaSource)
+            , m_player(player)
+        {}
+
         void enqueueObject(GRefPtr<GstMiniObject>&&);
 
         DataMutex<TrackQueue> m_queueDataMutex;
+
+        // Needed for flush logic:
+        TrackID m_trackId;
+        GStreamerTrackType m_trackType;
+        ThreadSafeWeakPtr<MediaSourcePrivateGStreamer> m_mediaSource;
+        ThreadSafeWeakPtr<MediaPlayerPrivateGStreamerMSE> m_player;
     };
 
     GStreamerTrackType m_type;

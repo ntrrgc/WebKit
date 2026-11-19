@@ -73,8 +73,7 @@ public:
     void startChangingType() final;
 
     void flush(TrackID) final;
-    // TODO
-    // void handleChangeInAlreadyEnqueuedContent(TrackID, DecodeOrderSampleMap::MapType notYetEnqueuedSamples, MediaTime futureEnqueueDiscontinuityBoundary) final;
+    void handleChangeInAlreadyEnqueuedContent(TrackID trackId, ChangeInAlreadyEnqueuedContent change) final;
     void enqueueSample(Ref<MediaSample>&&, TrackID) final;
     void allSamplesInTrackEnqueued(TrackID) final;
     bool isReadyForMoreSamples(TrackID) final;
@@ -111,6 +110,7 @@ private:
 
     SourceBufferPrivateGStreamer(MediaSourcePrivateGStreamer&, const ContentType&, bool textTracksEnabled);
     RefPtr<MediaPlayerPrivateGStreamerMSE> player() const;
+    RefPtr<MediaSourcePrivateGStreamer> mediaSource() const;
 
     void notifyClientWhenReadyForMoreSamples(TrackID) override;
 
