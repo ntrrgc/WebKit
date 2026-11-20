@@ -56,7 +56,7 @@ MediaSourceTrackGStreamer::MediaSourceTrackGStreamer(GStreamerTrackType type, Tr
         GST_DEBUG_CATEGORY_INIT(webkit_mse_track_debug, "webkitmsetrack", 0, "WebKit MSE Track");
     });
     // Activate SmoothSwitchOnGOP:
-    m_activeSink = SmoothSwitchOnGOP::create(sourceBuffer, RunLoop::mainSingleton(), m_innerSink);
+    m_activeSink = SmoothSwitchOnGOP::create(sourceBuffer, m_innerSink);
 }
 
 MediaSourceTrackGStreamer::~MediaSourceTrackGStreamer()
@@ -85,7 +85,9 @@ void MediaSourceTrackGStreamer::GStreamerTrackSampleSink::notifyWhenReadyForMore
 {
     ASSERT(isMainThread());
     DataMutexLocker queue { m_queueDataMutex };
-    queue->notifyWhenLowLevel(WTF::move(handler));
+    queue->notifyWhenLowLevel([handler = WTF::move(handler)] mutable {
+        RunLoop::mainSingleton().dispatch(WTF::move(handler));
+    });
 }
 
 void MediaSourceTrackGStreamer::GStreamerTrackSampleSink::enqueueObject(GRefPtr<GstMiniObject>&& object)

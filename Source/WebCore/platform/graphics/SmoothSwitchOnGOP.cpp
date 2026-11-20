@@ -79,11 +79,6 @@ void SmoothSwitchOnGOP::handleChangeInAlreadyEnqueuedContent(ChangeInAlreadyEnqu
     // newState.oldSamples.insert(std::get<StateVacating>(m_currentState).vacatingQueue.begin(), std::get<StateVacating>(m_currentState).vacatingQueue.end());
 
     m_currentState = WTF::move(newState);
-
-    // Unless the inner sink is ready anyways, signal now that we are ready for more samples,
-    // so we are able to resolve the switch ASAP.
-    if (!m_innerSink->isReadyForMoreSamples())
-        tryNotifyReadyForMoreSamples();
 }
 
 bool SmoothSwitchOnGOP::isReadyForMoreSamples()
@@ -103,7 +98,8 @@ void SmoothSwitchOnGOP::notifyWhenReadyForMoreSamples(std::function<void()>&& ca
     // would only get a negative isReadyForMoreSamples() in Vacating state.
     ASSERT(std::holds_alternative<StateVacating>(m_currentState));
 
-    m_innerSink->notifyWhenReadyForMoreSamples(WTF::move(callback));
+    m_upstreamReadyForMoreSamplesCallback = WTF::move(callback);
+    hookDownstreamReadyForMoreSamples();
 }
 
 static DecodeOrderSampleMap::const_iterator findSampleAfterLastDisplayable(const DecodeOrderSampleMap::MapType& samples, MediaTime highestDeliveredPresentationEndTime)
@@ -164,8 +160,10 @@ void SmoothSwitchOnGOP::allSamplesEnqueued()
     DEBUG_LOG(LOGIDENTIFIER, "All samples have been enqueued");
     m_hasAllSamples = true;
 
-    if (isEmpty())
+    if (!m_hasDeliveredEndOfStream && isEmpty()) {
         m_innerSink->allSamplesEnqueued();
+        m_hasDeliveredEndOfStream = true;
+    }
 }
 
 bool SmoothSwitchOnGOP::isEmpty()
@@ -199,6 +197,7 @@ void SmoothSwitchOnGOP::flush()
     m_highestDeliveredPresentationEndTime = MediaTime::invalidTime();
     m_currentState = StateVacating { };
     m_hasAllSamples = false;
+    m_hasDeliveredEndOfStream = false;
 }
 
 void SmoothSwitchOnGOP::tryFeedInnerSink()
@@ -218,6 +217,11 @@ void SmoothSwitchOnGOP::innerSinkNotifiedReadyForMoreSamples()
 {
     DEBUG_LOG(LOGIDENTIFIER, "Inner sink reports being now ready for more samples.");
     tryFeedInnerSink();
+    if (m_innerSink->isReadyForMoreSamples()) {
+        // The inner sink could accept all samples we had buffered, so further notify upstream to give us more.
+        if (std::function<void()> callback = std::exchange(m_upstreamReadyForMoreSamplesCallback, std::function<void()>()))
+            callback();
+    }
 }
 
 void SmoothSwitchOnGOP::tryFeedInnerSinkSamples(DecodeOrderSampleMap::MapType& samples)
@@ -231,48 +235,26 @@ void SmoothSwitchOnGOP::tryFeedInnerSinkSamples(DecodeOrderSampleMap::MapType& s
     }
     DEBUG_LOG(LOGIDENTIFIER, "MIAU 2.");
 
-    if (m_hasAllSamples && samples.empty()) {
+    if (!m_hasDeliveredEndOfStream && m_hasAllSamples && samples.empty()) {
         DEBUG_LOG(LOGIDENTIFIER, "No samples left and m_hasAllSamples set, delivering allSamplesEnqueued() notification to the inner sink.");
         m_innerSink->allSamplesEnqueued();
+        m_hasDeliveredEndOfStream = true;
         return;
     }
     DEBUG_LOG(LOGIDENTIFIER, "MIAU 3.");
 
-    GST_DEBUG("AWAWAWA MIAU 3.");
-    DEBUG_LOG(LOGIDENTIFIER, "MIAU inner ready? ", m_innerSink->isReadyForMoreSamples() ? "yes" : "no");
-    DEBUG_LOG(LOGIDENTIFIER, "MIAU 3.after.");
-    GST_DEBUG("MIAU 3.after.");
-    // If inner sink is still ready for more samples, signal to upper layers to provide more.
-    if (samples.empty() && m_innerSink->isReadyForMoreSamples()) {
-        // If inner sink is still ready for more samples, signal to upper layers to provide more.
-        DEBUG_LOG(LOGIDENTIFIER, "MIAU 4a.");
-        DEBUG_LOG(LOGIDENTIFIER, "MIAU signal to upper layers to provide more.");
-        tryNotifyReadyForMoreSamples();
-    } else if (!m_innerSink->isReadyForMoreSamples()) {
-        DEBUG_LOG(LOGIDENTIFIER, "MIAU 4b.");
-        DEBUG_LOG(LOGIDENTIFIER, "Inner sink not ready for more samples.");
-        m_innerSink->notifyWhenReadyForMoreSamples([weakThis = ThreadSafeWeakPtr { *this }] mutable {
-            RefPtr<SmoothSwitchOnGOP> protectedThis = weakThis;
-            if (!protectedThis)
-                return;
-            RefPtr<SerialFunctionDispatcher> protectedDispatcher = protectedThis->m_dispatcher;
-            if (!protectedDispatcher)
-                return;
-            protectedDispatcher->dispatch([weakThis = WTF::move(weakThis)] {
-                if (RefPtr<SmoothSwitchOnGOP> protectedThis = weakThis.get())
-                    protectedThis->innerSinkNotifiedReadyForMoreSamples();
-            });
-        });
-    }
+    // SBP may not have the need to enqueue anything more while still have samples left because the inner sink was not ready:
+    // we still want those samples to be delivered.
+    if (!samples.empty() && !m_innerSink->isReadyForMoreSamples())
+        hookDownstreamReadyForMoreSamples();
 }
 
-void SmoothSwitchOnGOP::tryNotifyReadyForMoreSamples()
+void SmoothSwitchOnGOP::hookDownstreamReadyForMoreSamples()
 {
-    auto callback = std::exchange(m_readyForMoreSamplesCallback, std::function<void()>());
-    if (!callback)
-        return;
-    DEBUG_LOG(LOGIDENTIFIER, "Notifying upper layer that we are ready for more samples.");
-    callback();
+    m_innerSink->notifyWhenReadyForMoreSamples([weakThis = ThreadSafeWeakPtr { *this }] {
+        if (RefPtr<SmoothSwitchOnGOP> strongThis = weakThis.get())
+            strongThis->innerSinkNotifiedReadyForMoreSamples();
+    });
 }
 
 #if !RELEASE_LOG_DISABLED

@@ -61,7 +61,7 @@ public:
     void ref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::ref(); }
     void deref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::deref(); }
 
-    static Ref<SmoothSwitchOnGOP> create(Ref<SourceBufferPrivate> sourceBufferPrivate, Ref<SerialFunctionDispatcher> dispatcher, const Ref<SampleSink>& innerSink) { return adoptRef(*new SmoothSwitchOnGOP(sourceBufferPrivate, WTF::move(dispatcher), innerSink)); }
+    static Ref<SmoothSwitchOnGOP> create(Ref<SourceBufferPrivate> sourceBufferPrivate, const Ref<SampleSink>& innerSink) { return adoptRef(*new SmoothSwitchOnGOP(sourceBufferPrivate, innerSink)); }
 
     bool isReadyForMoreSamples() final;
     void notifyWhenReadyForMoreSamples(std::function<void()>&&) final;
@@ -71,9 +71,8 @@ public:
     void handleChangeInAlreadyEnqueuedContent(ChangeInAlreadyEnqueuedContent) final;
 
 private:
-    SmoothSwitchOnGOP(Ref<SourceBufferPrivate> sourceBufferPrivate, Ref<SerialFunctionDispatcher> dispatcher, const Ref<SampleSink>& innerSink)
+    SmoothSwitchOnGOP(Ref<SourceBufferPrivate> sourceBufferPrivate, const Ref<SampleSink>& innerSink)
         : m_innerSink(innerSink)
-        , m_dispatcher(WTF::move(dispatcher))
 #if !RELEASE_LOG_DISABLED
         , m_logger(sourceBufferPrivate->sourceBufferLogger())
         , m_logIdentifier(sourceBufferPrivate->sourceBufferLogIdentifier())
@@ -95,17 +94,16 @@ private:
     typedef std::variant<StateCollecting, StateVacating> State;
     State m_currentState { StateVacating { } };
 
-    std::function<void()> m_readyForMoreSamplesCallback { std::function<void()>() };
-    ThreadSafeWeakPtr<SerialFunctionDispatcher> m_dispatcher;
-
     bool m_hasAllSamples { false };
+    bool m_hasDeliveredEndOfStream { false };
+    std::function<void()> m_upstreamReadyForMoreSamplesCallback;
 
     void deliverSample(Ref<MediaSample>&&);
     void innerSinkNotifiedReadyForMoreSamples();
     void tryFeedInnerSink();
     void tryFeedInnerSinkSamples(DecodeOrderSampleMap::MapType&);
-    void tryNotifyReadyForMoreSamples();
     bool isEmpty();
+    void hookDownstreamReadyForMoreSamples();
 
 #if !RELEASE_LOG_DISABLED
     const Logger& logger() const final { return m_logger; }
