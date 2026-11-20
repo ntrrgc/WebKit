@@ -37,6 +37,7 @@ namespace WebCore {
 
 class SampleSink : public AbstractRefCounted {
 public:
+    // All these methods are called only by the producer-side.
     virtual ~SampleSink() {}
     virtual bool isReadyForMoreSamples() = 0;
     virtual void notifyWhenReadyForMoreSamples(std::function<void()>&& callback) = 0;
@@ -60,7 +61,7 @@ public:
     void ref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::ref(); }
     void deref() const final { ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr::deref(); }
 
-    static Ref<SmoothSwitchOnGOP> create(Ref<SourceBufferPrivate> sourceBufferPrivate, const Ref<SampleSink>& innerSink) { return adoptRef(*new SmoothSwitchOnGOP(sourceBufferPrivate, innerSink)); }
+    static Ref<SmoothSwitchOnGOP> create(Ref<SourceBufferPrivate> sourceBufferPrivate, Ref<SerialFunctionDispatcher> dispatcher, const Ref<SampleSink>& innerSink) { return adoptRef(*new SmoothSwitchOnGOP(sourceBufferPrivate, WTF::move(dispatcher), innerSink)); }
 
     bool isReadyForMoreSamples() final;
     void notifyWhenReadyForMoreSamples(std::function<void()>&&) final;
@@ -70,8 +71,9 @@ public:
     void handleChangeInAlreadyEnqueuedContent(ChangeInAlreadyEnqueuedContent) final;
 
 private:
-    SmoothSwitchOnGOP(Ref<SourceBufferPrivate> sourceBufferPrivate, const Ref<SampleSink>& innerSink)
+    SmoothSwitchOnGOP(Ref<SourceBufferPrivate> sourceBufferPrivate, Ref<SerialFunctionDispatcher> dispatcher, const Ref<SampleSink>& innerSink)
         : m_innerSink(innerSink)
+        , m_dispatcher(WTF::move(dispatcher))
 #if !RELEASE_LOG_DISABLED
         , m_logger(sourceBufferPrivate->sourceBufferLogger())
         , m_logIdentifier(sourceBufferPrivate->sourceBufferLogIdentifier())
@@ -94,6 +96,7 @@ private:
     State m_currentState { StateVacating { } };
 
     std::function<void()> m_readyForMoreSamplesCallback { std::function<void()>() };
+    ThreadSafeWeakPtr<SerialFunctionDispatcher> m_dispatcher;
 
     bool m_hasAllSamples { false };
 

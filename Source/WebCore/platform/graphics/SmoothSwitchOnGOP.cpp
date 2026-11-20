@@ -29,6 +29,10 @@
 #include "SmoothSwitchOnGOP.h"
 #include "Logging.h"
 #include <wtf/StringPrintStream.h>
+#include <gst/gst.h>
+
+GST_DEBUG_CATEGORY_EXTERN(webkit_media_player_debug);
+#define GST_CAT_DEFAULT webkit_media_player_debug
 
 namespace WebCore {
 
@@ -95,8 +99,11 @@ bool SmoothSwitchOnGOP::isReadyForMoreSamples()
 
 void SmoothSwitchOnGOP::notifyWhenReadyForMoreSamples(std::function<void()>&& callback)
 {
-    ASSERT(!isReadyForMoreSamples());
-    m_readyForMoreSamplesCallback = WTF::move(callback);
+    // In Collecting state, we always report being ready for more samples, so the producer
+    // would only get a negative isReadyForMoreSamples() in Vacating state.
+    ASSERT(std::holds_alternative<StateVacating>(m_currentState));
+
+    m_innerSink->notifyWhenReadyForMoreSamples(WTF::move(callback));
 }
 
 static DecodeOrderSampleMap::const_iterator findSampleAfterLastDisplayable(const DecodeOrderSampleMap::MapType& samples, MediaTime highestDeliveredPresentationEndTime)
@@ -231,8 +238,10 @@ void SmoothSwitchOnGOP::tryFeedInnerSinkSamples(DecodeOrderSampleMap::MapType& s
     }
     DEBUG_LOG(LOGIDENTIFIER, "MIAU 3.");
 
+    GST_DEBUG("AWAWAWA MIAU 3.");
     DEBUG_LOG(LOGIDENTIFIER, "MIAU inner ready? ", m_innerSink->isReadyForMoreSamples() ? "yes" : "no");
     DEBUG_LOG(LOGIDENTIFIER, "MIAU 3.after.");
+    GST_DEBUG("MIAU 3.after.");
     // If inner sink is still ready for more samples, signal to upper layers to provide more.
     if (samples.empty() && m_innerSink->isReadyForMoreSamples()) {
         // If inner sink is still ready for more samples, signal to upper layers to provide more.
@@ -242,9 +251,17 @@ void SmoothSwitchOnGOP::tryFeedInnerSinkSamples(DecodeOrderSampleMap::MapType& s
     } else if (!m_innerSink->isReadyForMoreSamples()) {
         DEBUG_LOG(LOGIDENTIFIER, "MIAU 4b.");
         DEBUG_LOG(LOGIDENTIFIER, "Inner sink not ready for more samples.");
-        m_innerSink->notifyWhenReadyForMoreSamples([weakThis = ThreadSafeWeakPtr { *this }]() {
-            if (RefPtr<SmoothSwitchOnGOP> protectedThis = weakThis.get())
-                protectedThis->innerSinkNotifiedReadyForMoreSamples();
+        m_innerSink->notifyWhenReadyForMoreSamples([weakThis = ThreadSafeWeakPtr { *this }] mutable {
+            RefPtr<SmoothSwitchOnGOP> protectedThis = weakThis;
+            if (!protectedThis)
+                return;
+            RefPtr<SerialFunctionDispatcher> protectedDispatcher = protectedThis->m_dispatcher;
+            if (!protectedDispatcher)
+                return;
+            protectedDispatcher->dispatch([weakThis = WTF::move(weakThis)] {
+                if (RefPtr<SmoothSwitchOnGOP> protectedThis = weakThis.get())
+                    protectedThis->innerSinkNotifiedReadyForMoreSamples();
+            });
         });
     }
 }

@@ -50,12 +50,13 @@ MediaSourceTrackGStreamer::MediaSourceTrackGStreamer(GStreamerTrackType type, Tr
     , m_innerSink(GStreamerTrackSampleSink::create(trackId, type, mediaSource, player))
     , m_activeSink(m_innerSink)
 {
+    ASSERT(isMainThread());
     static std::once_flag debugRegisteredFlag;
     std::call_once(debugRegisteredFlag, [] {
         GST_DEBUG_CATEGORY_INIT(webkit_mse_track_debug, "webkitmsetrack", 0, "WebKit MSE Track");
     });
     // Activate SmoothSwitchOnGOP:
-    m_activeSink = SmoothSwitchOnGOP::create(sourceBuffer, m_innerSink);
+    m_activeSink = SmoothSwitchOnGOP::create(sourceBuffer, RunLoop::mainSingleton(), m_innerSink);
 }
 
 MediaSourceTrackGStreamer::~MediaSourceTrackGStreamer()
@@ -75,6 +76,7 @@ Ref<MediaSourceTrackGStreamer> MediaSourceTrackGStreamer::create(GStreamerTrackT
 
 bool MediaSourceTrackGStreamer::GStreamerTrackSampleSink::isReadyForMoreSamples()
 {
+    ASSERT(isMainThread());
     DataMutexLocker queue { m_queueDataMutex };
     return !queue->isFull();
 }
@@ -95,6 +97,7 @@ void MediaSourceTrackGStreamer::GStreamerTrackSampleSink::enqueueObject(GRefPtr<
 
 void MediaSourceTrackGStreamer::GStreamerTrackSampleSink::enqueueSample(Ref<MediaSample>&& sample)
 {
+    ASSERT(isMainThread());
     GRefPtr<GstSample> gstSample = sample->platformSample().gstSample();
     ASSERT(gstSample);
     enqueueObject(adoptGRef(GST_MINI_OBJECT(gstSample.leakRef())));
@@ -102,6 +105,7 @@ void MediaSourceTrackGStreamer::GStreamerTrackSampleSink::enqueueSample(Ref<Medi
 
 void MediaSourceTrackGStreamer::GStreamerTrackSampleSink::allSamplesEnqueued()
 {
+    ASSERT(isMainThread());
     enqueueObject(adoptGRef(GST_MINI_OBJECT(gst_event_new_eos())));
 }
 
